@@ -20,9 +20,11 @@ export interface WebsiteData {
     images: number
     links: number
   }
+  screenshotUrl?: string
   rawData?: {
     paragraphs: string[]
     headings: string[]
     links: string[]
   }
+  createdAt?: Date
 }

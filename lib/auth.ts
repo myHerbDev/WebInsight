@@ -3,7 +3,6 @@ import { createHash } from "crypto"
 /**
  * Simple password hashing function using Node.js built-in crypto
  * This is a replacement for bcrypt to avoid build issues
- * Note: In a production app, you should use a proper password hashing library
  */
 export async function hashPassword(password: string): Promise<string> {
   // Add a simple salt - in production, use a unique salt per user
