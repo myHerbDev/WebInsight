@@ -1,193 +1,241 @@
 import { NextResponse } from "next/server"
-import clientPromise from "@/lib/mongodb"
+import { neon } from "@neondatabase/serverless"
+
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST(request: Request) {
   try {
-    const { analysisId, contentId, format } = await request.json()
+    const { analysisId, format, includeScreenshot } = await request.json()
 
-    if (!analysisId && !contentId) {
-      return NextResponse.json({ error: "Analysis ID or Content ID is required" }, { status: 400 })
+    if (!analysisId) {
+      return NextResponse.json({ error: "Analysis ID is required" }, { status: 400 })
     }
 
-    // For preview mode or when MongoDB is not available, use mock data
-    const mockAnalysis = {
-      title: "Example Website",
-      url: "https://example.com",
-      summary: "This is a modern website with various features and content sections.",
-      keyPoints: [
-        "Mobile-friendly design",
-        "Fast loading times",
-        "Clear navigation structure",
-        "Strong brand messaging",
-        "Effective call-to-actions",
-      ],
-      keywords: ["technology", "design", "innovation", "services", "solutions"],
-      sustainability: {
-        score: 78,
-        performance: 85,
-        scriptOptimization: 72,
-        duplicateContent: 92,
-        improvements: [
-          "Optimize image sizes",
-          "Implement lazy loading",
-          "Reduce third-party scripts",
-          "Enable browser caching",
-        ],
-      },
-      contentStats: {
-        wordCount: 2450,
-        paragraphs: 32,
-        headings: 18,
-        images: 24,
-        links: 47,
-      },
+    // Get the analysis data from database
+    let analysis
+    try {
+      const result = await sql`
+        SELECT * FROM website_analyzer.analyses 
+        WHERE id = ${analysisId}
+      `
+
+      if (result.length === 0) {
+        return NextResponse.json({ error: "Analysis not found" }, { status: 404 })
+      }
+
+      analysis = result[0]
+    } catch (dbError) {
+      console.error("Database error:", dbError)
+      return NextResponse.json({ error: "Failed to fetch analysis" }, { status: 500 })
     }
+
+    // Parse JSON fields
+    const keyPoints =
+      typeof analysis.key_points === "string" ? JSON.parse(analysis.key_points) : analysis.key_points || []
+    const keywords = typeof analysis.keywords === "string" ? JSON.parse(analysis.keywords) : analysis.keywords || []
+    const improvements =
+      typeof analysis.improvements === "string" ? JSON.parse(analysis.improvements) : analysis.improvements || []
+    const contentStats =
+      typeof analysis.content_stats === "string" ? JSON.parse(analysis.content_stats) : analysis.content_stats || {}
 
     let content = ""
-    let title = "Example Website"
-
-    // Try to get content from MongoDB if available
-    if (process.env.MONGODB_URI) {
-      try {
-        const client = await clientPromise
-        const db = client.db("website-analyzer")
-
-        if (contentId) {
-          const generatedContent = await db.collection("generated-content").findOne({
-            _id: contentId,
-          })
-
-          if (generatedContent) {
-            content = generatedContent.content
-
-            // Get analysis for title
-            const analysis = await db.collection("analyses").findOne({
-              _id: generatedContent.analysisId,
-            })
-
-            title = analysis ? analysis.title : "Generated Content"
-          }
-        } else if (analysisId) {
-          const analysis = await db.collection("analyses").findOne({
-            _id: analysisId,
-          })
-
-          if (analysis) {
-            title = analysis.title
-
-            // Create a simple export of the analysis
-            content = createAnalysisContent(analysis)
-          }
-        }
-      } catch (dbError) {
-        console.error("Database error:", dbError)
-        // Fall back to mock data if database operations fail
-        content = createAnalysisContent(mockAnalysis)
-      }
-    } else {
-      // Use mock data for preview
-      content = createAnalysisContent(mockAnalysis)
-    }
-
-    // Format content based on requested format
-    let formattedContent = content
+    const title = `Analysis of ${analysis.title}`
 
     switch (format) {
-      case "html":
-        // Simple markdown to HTML conversion
-        formattedContent = content
-          .replace(/^# (.*$)/gm, "<h1>$1</h1>")
-          .replace(/^## (.*$)/gm, "<h2>$1</h2>")
-          .replace(/^### (.*$)/gm, "<h3>$1</h3>")
-          .replace(/\*\*(.*)\*\*/gm, "<strong>$1</strong>")
-          .replace(/\*(.*)\*/gm, "<em>$1</em>")
-          .replace(/- (.*)/gm, "<li>$1</li>")
-          .replace(/\n\n/gm, "<br/><br/>")
-        formattedContent = `<html><head><title>${title}</title></head><body>${formattedContent}</body></html>`
-        break
-
-      case "plain":
-        // Strip markdown
-        formattedContent = content
-          .replace(/^# (.*$)/gm, "$1\n")
-          .replace(/^## (.*$)/gm, "$1\n")
-          .replace(/^### (.*$)/gm, "$1\n")
-          .replace(/\*\*(.*)\*\*/gm, "$1")
-          .replace(/\*(.*)\*/gm, "$1")
-          .replace(/- (.*)/gm, "• $1")
-        break
-
       case "markdown":
-      default:
-        // Keep as markdown
-        break
-    }
+        content = `# ${title}
 
-    // Try to log the export to MongoDB
-    if (process.env.MONGODB_URI) {
-      try {
-        const client = await clientPromise
-        const db = client.db("website-analyzer")
-        await db.collection("exports").insertOne({
-          analysisId: analysisId || null,
-          contentId: contentId || null,
-          format,
-          createdAt: new Date(),
-        })
-      } catch (logError) {
-        console.error("Error logging export:", logError)
-        // Continue even if logging fails
-      }
-    }
-
-    return NextResponse.json({
-      content: formattedContent,
-      title,
-      format,
-    })
-  } catch (error) {
-    console.error("Error exporting content:", error)
-    return NextResponse.json({
-      content: "# Error Exporting Content\n\nThere was an error exporting the content. Please try again.",
-      title: "Export Error",
-      format: "markdown",
-    })
-  }
-}
-
-// Helper function to create analysis content
-function createAnalysisContent(analysis: any) {
-  return `# Analysis of ${analysis.title}
-
-URL: ${analysis.url}
+**Website:** ${analysis.url}  
+**Analysis Date:** ${new Date(analysis.created_at).toLocaleDateString()}
 
 ## Summary
 ${analysis.summary}
 
-## Key Points
-${analysis.keyPoints.map((point: string) => `- ${point}`).join("\n")}
+## Key Findings
+${keyPoints.map((point: string) => `- ${point}`).join("\n")}
 
-## Keywords
-${analysis.keywords.join(", ")}
-
-## Sustainability Score: ${analysis.sustainability.score}%
-
-## Performance: ${analysis.sustainability.performance}%
-
-## Script Optimization: ${analysis.sustainability.scriptOptimization}%
-
-## Content Quality: ${analysis.sustainability.duplicateContent}%
-
-## Recommendations for Improvement
-${analysis.sustainability.improvements.map((imp: string) => `- ${imp}`).join("\n")}
+## Performance Metrics
+- **Sustainability Score:** ${analysis.sustainability_score}%
+- **Performance:** ${analysis.performance_score}%
+- **Script Optimization:** ${analysis.script_optimization_score}%
+- **Content Quality:** ${analysis.content_quality_score}%
 
 ## Content Statistics
-- Word Count: ${analysis.contentStats.wordCount}
-- Paragraphs: ${analysis.contentStats.paragraphs}
-- Headings: ${analysis.contentStats.headings}
-- Images: ${analysis.contentStats.images}
-- Links: ${analysis.contentStats.links}
+- **Word Count:** ${contentStats.wordCount || 0}
+- **Paragraphs:** ${contentStats.paragraphs || 0}
+- **Headings:** ${contentStats.headings || 0}
+- **Images:** ${contentStats.images || 0}
+- **Links:** ${contentStats.links || 0}
 
-Generated by WebInsight
-`
+## Keywords
+${keywords.join(", ")}
+
+## Recommendations
+${improvements.map((imp: string) => `- ${imp}`).join("\n")}
+
+---
+*Generated by DevSphere Website Analyzer*`
+        break
+
+      case "plain":
+        content = `${title}
+
+Website: ${analysis.url}
+Analysis Date: ${new Date(analysis.created_at).toLocaleDateString()}
+
+Summary:
+${analysis.summary}
+
+Key Findings:
+${keyPoints.map((point: string) => `• ${point}`).join("\n")}
+
+Performance Metrics:
+• Sustainability Score: ${analysis.sustainability_score}%
+• Performance: ${analysis.performance_score}%
+• Script Optimization: ${analysis.script_optimization_score}%
+• Content Quality: ${analysis.content_quality_score}%
+
+Content Statistics:
+• Word Count: ${contentStats.wordCount || 0}
+• Paragraphs: ${contentStats.paragraphs || 0}
+• Headings: ${contentStats.headings || 0}
+• Images: ${contentStats.images || 0}
+• Links: ${contentStats.links || 0}
+
+Keywords: ${keywords.join(", ")}
+
+Recommendations:
+${improvements.map((imp: string) => `• ${imp}`).join("\n")}
+
+Generated by DevSphere Website Analyzer`
+        break
+
+      case "pdf":
+        content = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${title}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
+        h1 { color: #333; border-bottom: 2px solid #6366f1; padding-bottom: 10px; }
+        h2 { color: #4f46e5; margin-top: 30px; }
+        .metric { background: #f8fafc; padding: 10px; margin: 5px 0; border-left: 4px solid #6366f1; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+        .stat-item { background: #f1f5f9; padding: 15px; text-align: center; border-radius: 5px; }
+        .keywords { background: #ecfdf5; padding: 15px; border-radius: 5px; }
+        ul { padding-left: 20px; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b; }
+    </style>
+</head>
+<body>
+    <h1>${title}</h1>
+    
+    <div class="metric">
+        <strong>Website:</strong> ${analysis.url}<br>
+        <strong>Analysis Date:</strong> ${new Date(analysis.created_at).toLocaleDateString()}
+    </div>
+
+    <h2>Summary</h2>
+    <p>${analysis.summary}</p>
+
+    <h2>Key Findings</h2>
+    <ul>
+        ${keyPoints.map((point: string) => `<li>${point}</li>`).join("")}
+    </ul>
+
+    <h2>Performance Metrics</h2>
+    <div class="stats">
+        <div class="stat-item">
+            <strong>${analysis.sustainability_score}%</strong><br>
+            Sustainability Score
+        </div>
+        <div class="stat-item">
+            <strong>${analysis.performance_score}%</strong><br>
+            Performance
+        </div>
+        <div class="stat-item">
+            <strong>${analysis.script_optimization_score}%</strong><br>
+            Script Optimization
+        </div>
+        <div class="stat-item">
+            <strong>${analysis.content_quality_score}%</strong><br>
+            Content Quality
+        </div>
+    </div>
+
+    <h2>Content Statistics</h2>
+    <div class="stats">
+        <div class="stat-item">
+            <strong>${contentStats.wordCount || 0}</strong><br>
+            Words
+        </div>
+        <div class="stat-item">
+            <strong>${contentStats.paragraphs || 0}</strong><br>
+            Paragraphs
+        </div>
+        <div class="stat-item">
+            <strong>${contentStats.headings || 0}</strong><br>
+            Headings
+        </div>
+        <div class="stat-item">
+            <strong>${contentStats.images || 0}</strong><br>
+            Images
+        </div>
+        <div class="stat-item">
+            <strong>${contentStats.links || 0}</strong><br>
+            Links
+        </div>
+    </div>
+
+    <h2>Keywords</h2>
+    <div class="keywords">
+        ${keywords.join(", ")}
+    </div>
+
+    <h2>Recommendations</h2>
+    <ul>
+        ${improvements.map((imp: string) => `<li>${imp}</li>`).join("")}
+    </ul>
+
+    <div class="footer">
+        Generated by DevSphere Website Analyzer
+    </div>
+</body>
+</html>`
+        break
+
+      default:
+        content = analysis.summary
+    }
+
+    // Try to save export log
+    try {
+      await sql`
+        INSERT INTO website_analyzer.exports 
+        (analysis_id, export_format, created_at)
+        VALUES (${analysisId}, ${format}, NOW())
+      `
+    } catch (logError) {
+      console.error("Failed to log export:", logError)
+      // Continue even if logging fails
+    }
+
+    return NextResponse.json({
+      content,
+      title,
+      websiteTitle: analysis.title,
+      websiteUrl: analysis.url,
+      format,
+    })
+  } catch (error) {
+    console.error("Export error:", error)
+    return NextResponse.json(
+      {
+        error: "Failed to export content",
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
+  }
 }
