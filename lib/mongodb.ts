@@ -1,7 +1,7 @@
 import { MongoClient, ServerApiVersion } from "mongodb"
 
 // Check if MongoDB URI exists, but don't throw an error that would break the app
-const uri = process.env.MONGODB_URI || ""
+const uri = process.env.MONGODB_URI || "mongodb://placeholder:placeholder@localhost:27017"
 const options = {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -14,7 +14,7 @@ let client
 let clientPromise: Promise<MongoClient>
 
 // Create a mock client if no MongoDB URI is provided
-if (!uri) {
+if (!process.env.MONGODB_URI) {
   console.warn("No MongoDB URI provided. Using mock client.")
 
   // Create a mock client that won't actually connect
@@ -54,3 +54,14 @@ if (!uri) {
 }
 
 export default clientPromise
+
+// Helper function to safely convert string to ObjectId
+export function safeObjectId(id: string) {
+  try {
+    const { ObjectId } = require("mongodb")
+    return new ObjectId(id)
+  } catch (error) {
+    console.error("Error converting to ObjectId:", error)
+    return id // Return the original string if conversion fails
+  }
+}

@@ -13,7 +13,6 @@ import {
   Download,
   FileText,
   Globe,
-  ImageIcon,
   Loader2,
   Mail,
   MessageSquare,
@@ -25,16 +24,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SustainabilityChart } from "@/components/sustainability-chart"
 import { ContentTypeGenerator } from "@/components/content-type-generator"
 import { toast } from "@/components/ui/use-toast"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import {
-  shareToTwitter,
-  shareToLinkedIn,
-  shareToFacebook,
-  shareViaGmail,
-  createGoogleDoc,
-  copyToClipboard,
-} from "@/lib/share"
 
 interface ResultsSectionProps {
   data: WebsiteData
@@ -49,7 +38,6 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
   const [toneVoice, setToneVoice] = useState("professional")
   const [isExporting, setIsExporting] = useState<string | null>(null)
   const [markdownEnabled, setMarkdownEnabled] = useState(true)
-  const [includeScreenshot, setIncludeScreenshot] = useState(true)
 
   const handleExport = async (format: string) => {
     setIsExporting(format)
@@ -62,115 +50,46 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
         },
         body: JSON.stringify({
           analysisId: data._id,
-          format: format === "pdf" ? "pdf" : markdownEnabled ? "markdown" : "plain",
-          includeScreenshot,
+          format: markdownEnabled ? "markdown" : "plain",
         }),
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Export failed")
+        throw new Error("Export failed")
       }
 
       const result = await response.json()
 
-      // Handle different export types with real functionality
+      // Handle different export types
       switch (format) {
         case "clipboard":
-          const success = await copyToClipboard(result.content)
-          if (success) {
-            toast({
-              title: "Copied to clipboard",
-              description: "Content has been copied to your clipboard",
-            })
-          } else {
-            throw new Error("Failed to copy to clipboard")
-          }
+          await navigator.clipboard.writeText(result.content)
+          toast({
+            title: "Copied to clipboard",
+            description: "Content has been copied to your clipboard",
+          })
           break
 
         case "pdf":
-          if (result.blobUrl) {
-            window.open(result.blobUrl, "_blank")
-            toast({
-              title: "PDF Export",
-              description: "PDF content opened in a new tab. Use Ctrl+P to print as PDF.",
-            })
-          } else {
-            // Fallback: create a blob and download
-            const blob = new Blob([result.content], { type: "text/html" })
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement("a")
-            a.href = url
-            a.download = `${result.websiteTitle?.replace(/[^a-z0-9]/gi, "_") || "analysis"}.html`
-            document.body.appendChild(a)
-            a.click()
-            document.body.removeChild(a)
-            URL.revokeObjectURL(url)
-
-            toast({
-              title: "PDF Export",
-              description: "HTML file downloaded. Open in browser and print as PDF.",
-            })
-          }
+          // In a real app, you'd generate a PDF and trigger download
+          toast({
+            title: "PDF Export",
+            description: "PDF export functionality would download a file in production",
+          })
           break
 
         case "gdocs":
-          createGoogleDoc(result.content, result.title)
-          toast({
-            title: "Google Docs",
-            description: "Content downloaded as text file. Upload to Google Docs to edit.",
-          })
-          break
-
         case "gmail":
-          shareViaGmail({
-            title: result.websiteTitle || result.title,
-            url: result.websiteUrl || data.url,
-            summary: data.summary,
-            analysisUrl: window.location.href,
-          })
-          toast({
-            title: "Gmail",
-            description: "Gmail compose window opened with analysis content.",
-          })
-          break
-
         case "twitter":
-          shareToTwitter({
-            title: result.websiteTitle || result.title,
-            url: result.websiteUrl || data.url,
-            summary: data.summary,
-            analysisUrl: window.location.href,
-          })
-          toast({
-            title: "Twitter",
-            description: "Twitter compose window opened.",
-          })
-          break
-
         case "linkedin":
-          shareToLinkedIn({
-            title: result.websiteTitle || result.title,
-            url: result.websiteUrl || data.url,
-            summary: data.summary,
-            analysisUrl: window.location.href,
-          })
+          // In a real app, you'd open a sharing dialog
+          window.open(
+            `https://example.com/share?platform=${format}&title=${encodeURIComponent(result.title)}`,
+            "_blank",
+          )
           toast({
-            title: "LinkedIn",
-            description: "LinkedIn share window opened.",
-          })
-          break
-
-        case "facebook":
-          shareToFacebook({
-            title: result.websiteTitle || result.title,
-            url: result.websiteUrl || data.url,
-            summary: data.summary,
-            analysisUrl: window.location.href,
-          })
-          toast({
-            title: "Facebook",
-            description: "Facebook share window opened.",
+            title: "Share",
+            description: `Sharing to ${format} would open in production`,
           })
           break
       }
@@ -178,7 +97,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
       console.error("Export error:", error)
       toast({
         title: "Export failed",
-        description: error instanceof Error ? error.message : "Failed to export content. Please try again.",
+        description: "Failed to export content. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -220,11 +139,10 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
         </div>
 
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="grid grid-cols-5 mb-6">
+          <TabsList className="grid grid-cols-4 mb-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="sustainability">Sustainability</TabsTrigger>
             <TabsTrigger value="content">Content</TabsTrigger>
-            <TabsTrigger value="screenshot">Screenshot</TabsTrigger>
             <TabsTrigger value="generate">Generate</TabsTrigger>
           </TabsList>
 
@@ -442,7 +360,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                       ) : (
                         <MessageSquare className="h-4 w-4 mr-2" />
                       )}
-                      Twitter
+                      X (Twitter)
                     </Button>
                     <Button
                       variant="outline"
@@ -483,26 +401,13 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                       )}
                       Export PDF
                     </Button>
-                    <Button
-                      variant="outline"
-                      className="justify-start"
-                      onClick={() => handleExport("facebook")}
-                      disabled={!!isExporting}
-                    >
-                      {isExporting === "facebook" ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Share2 className="h-4 w-4 mr-2" />
-                      )}
-                      Facebook
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Export Options</CardTitle>
+                  <CardTitle>Markdown Options</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -526,15 +431,6 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="include-screenshot"
-                        checked={includeScreenshot}
-                        onCheckedChange={(checked) => setIncludeScreenshot(checked as boolean)}
-                      />
-                      <Label htmlFor="include-screenshot">Include screenshot in PDF</Label>
-                    </div>
-
                     <div>
                       <label className="block text-sm font-medium mb-2">Tone and Voice</label>
                       <Select value={toneVoice} onValueChange={setToneVoice}>
@@ -554,55 +450,6 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
-
-          <TabsContent value="screenshot" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Website Screenshot</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {data.screenshotUrl ? (
-                  <div className="flex flex-col items-center">
-                    <div className="border rounded-lg overflow-hidden shadow-lg max-w-full">
-                      <img
-                        src={data.screenshotUrl || "/placeholder.svg"}
-                        alt={`Screenshot of ${data.title}`}
-                        className="max-w-full h-auto"
-                      />
-                    </div>
-                    <div className="mt-4 text-center text-sm text-gray-500">
-                      Screenshot captured on {new Date().toLocaleDateString()}
-                    </div>
-                    <div className="mt-4 flex space-x-2">
-                      <Button variant="outline" size="sm" onClick={() => window.open(data.screenshotUrl, "_blank")}>
-                        <ImageIcon className="h-4 w-4 mr-2" />
-                        View Full Size
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          navigator.clipboard.writeText(data.screenshotUrl || "")
-                          toast({
-                            title: "Copied to clipboard",
-                            description: "Screenshot URL has been copied to your clipboard",
-                          })
-                        }}
-                      >
-                        <Clipboard className="h-4 w-4 mr-2" />
-                        Copy URL
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <ImageIcon className="h-16 w-16 mx-auto text-gray-400" />
-                    <p className="mt-4 text-gray-500">No screenshot available for this website.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
           </TabsContent>
 
           <TabsContent value="generate" className="space-y-6">

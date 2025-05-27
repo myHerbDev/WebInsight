@@ -14,6 +14,15 @@ export function Footer() {
           >
             myHerb
           </Link>{" "}
+          •{" "}
+          <Link
+            href="https://github.com/sponsors/myHerbDev"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            DevSphere Project
+          </Link>{" "}
           @ all rights reserved
         </p>
       </div>

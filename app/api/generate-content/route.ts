@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server"
-import clientPromise from "@/lib/mongodb"
+import { neon } from "@neondatabase/serverless"
 import { generateText } from "ai"
 import { groq } from "@ai-sdk/groq"
+
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST(request: Request) {
   try {
@@ -15,17 +17,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Analysis ID is required" }, { status: 400 })
     }
 
-    // Get the analysis data
+    // Get the analysis data from Neon database
     let analysis = null
 
-    if (process.env.MONGODB_URI) {
-      try {
-        const client = await clientPromise
-        const db = client.db("website-analyzer")
-        analysis = await db.collection("analyses").findOne({ _id: analysisId })
-      } catch (dbError) {
-        console.error("Database error:", dbError)
+    try {
+      const result = await sql`
+        SELECT * FROM website_analyzer.analyses 
+        WHERE id = ${analysisId}
+      `
+
+      if (result.length > 0) {
+        analysis = result[0]
       }
+    } catch (dbError) {
+      console.error("Database error:", dbError)
+      return NextResponse.json({ error: "Analysis not found" }, { status: 404 })
     }
 
     if (!analysis) {
@@ -38,7 +44,7 @@ export async function POST(request: Request) {
 
     try {
       if (process.env.GROQ_API_KEY) {
-        // Create a more sophisticated prompt based on the analysis and content type
+        // Create a sophisticated prompt based on the analysis and content type
         const prompt = createAdvancedPrompt(analysis, contentType, tone || "professional")
 
         const { text } = await generateText({
@@ -53,23 +59,18 @@ export async function POST(request: Request) {
         content = getFallbackContent(contentType, analysis, tone || "professional")
       }
 
-      // Try to save the generated content to MongoDB
-      if (process.env.MONGODB_URI) {
-        try {
-          const client = await clientPromise
-          const db = client.db("website-analyzer")
-          const result = await db.collection("generated-content").insertOne({
-            analysisId: analysisId,
-            contentType,
-            tone: tone || "professional",
-            content,
-            createdAt: new Date(),
-          })
-          contentId = result.insertedId.toString()
-        } catch (saveError) {
-          console.error("Error saving content:", saveError)
-          // Continue even if saving fails
-        }
+      // Save the generated content to database
+      try {
+        const result = await sql`
+          INSERT INTO website_analyzer.generated_content 
+          (analysis_id, content_type, tone, content, created_at)
+          VALUES (${analysisId}, ${contentType}, ${tone || "professional"}, ${content}, NOW())
+          RETURNING id
+        `
+        contentId = result[0]?.id
+      } catch (saveError) {
+        console.error("Error saving content:", saveError)
+        // Continue even if saving fails
       }
     } catch (aiError) {
       console.error("AI generation error:", aiError)
@@ -91,10 +92,19 @@ export async function POST(request: Request) {
  * Creates an advanced prompt for Groq based on content type and analysis data
  */
 function createAdvancedPrompt(analysis: any, contentType: string, tone: string): string {
-  // Validate that we have real analysis data
-  if (!analysis.title || !analysis.url) {
-    throw new Error("Invalid analysis data - missing title or URL")
-  }
+  // Parse JSON fields if they're strings
+  const keyPoints =
+    typeof analysis.key_points === "string" ? JSON.parse(analysis.key_points) : analysis.key_points || []
+
+  const keywords = typeof analysis.keywords === "string" ? JSON.parse(analysis.keywords) : analysis.keywords || []
+
+  const improvements =
+    typeof analysis.improvements === "string" ? JSON.parse(analysis.improvements) : analysis.improvements || []
+
+  const contentStats =
+    typeof analysis.content_stats === "string" ? JSON.parse(analysis.content_stats) : analysis.content_stats || {}
+
+  const rawData = typeof analysis.raw_data === "string" ? JSON.parse(analysis.raw_data) : analysis.raw_data || {}
 
   const analysisData = `
     WEBSITE BEING ANALYZED: ${analysis.title}
@@ -103,31 +113,31 @@ function createAdvancedPrompt(analysis: any, contentType: string, tone: string):
     ANALYSIS SUMMARY: ${analysis.summary}
     
     KEY FINDINGS FROM THIS SPECIFIC WEBSITE:
-    ${analysis.keyPoints.map((point: string, i: number) => `${i + 1}. ${point}`).join("\n")}
+    ${keyPoints.map((point: string, i: number) => `${i + 1}. ${point}`).join("\n")}
     
-    KEYWORDS FOUND ON THIS WEBSITE: ${analysis.keywords.join(", ")}
+    KEYWORDS FOUND ON THIS WEBSITE: ${keywords.join(", ")}
     
     PERFORMANCE METRICS FOR ${analysis.title}:
-    - Overall Sustainability Score: ${analysis.sustainability.score}%
-    - Performance Score: ${analysis.sustainability.performance}%
-    - Script Optimization: ${analysis.sustainability.scriptOptimization}%
-    - Content Quality Score: ${analysis.sustainability.duplicateContent}%
+    - Overall Sustainability Score: ${analysis.sustainability_score}%
+    - Performance Score: ${analysis.performance_score}%
+    - Script Optimization: ${analysis.script_optimization_score}%
+    - Content Quality Score: ${analysis.content_quality_score}%
     
     CONTENT STATISTICS FOR ${analysis.url}:
-    - Total Words: ${analysis.contentStats.wordCount}
-    - Paragraphs: ${analysis.contentStats.paragraphs}
-    - Headings: ${analysis.contentStats.headings}
-    - Images: ${analysis.contentStats.images}
-    - Links: ${analysis.contentStats.links}
+    - Total Words: ${contentStats.wordCount || 0}
+    - Paragraphs: ${contentStats.paragraphs || 0}
+    - Headings: ${contentStats.headings || 0}
+    - Images: ${contentStats.images || 0}
+    - Links: ${contentStats.links || 0}
     
     ACTUAL CONTENT SAMPLES FROM ${analysis.title}:
-    ${analysis.rawData?.paragraphs?.slice(0, 3).join("\n\n") || "No content samples available"}
+    ${rawData.paragraphs?.slice(0, 3).join("\n\n") || "No content samples available"}
     
     ACTUAL HEADINGS FROM ${analysis.title}:
-    ${analysis.rawData?.headings?.slice(0, 5).join("\n") || "No headings available"}
+    ${rawData.headings?.slice(0, 5).join("\n") || "No headings available"}
     
     IMPROVEMENT RECOMMENDATIONS FOR ${analysis.title}:
-    ${analysis.sustainability.improvements.map((imp: string, i: number) => `${i + 1}. ${imp}`).join("\n")}
+    ${improvements.map((imp: string, i: number) => `${i + 1}. ${imp}`).join("\n")}
   `
 
   // Add specific instructions based on content type
@@ -146,6 +156,18 @@ function createAdvancedPrompt(analysis: any, contentType: string, tone: string):
         2. The specific performance issues found on ${analysis.url}
         3. Real recommendations based on the actual analysis data
         4. Specific areas where ${analysis.title} excels or needs improvement
+        5. Technical analysis of the website's structure and performance
+        6. Content quality assessment with examples from the actual site
+        7. SEO and keyword analysis based on the real keywords found
+        
+        Include sections for:
+        - Executive Summary
+        - Website Overview
+        - Performance Analysis
+        - Content Analysis
+        - Technical Assessment
+        - Recommendations
+        - Conclusion
         
         Do NOT use placeholder text or generic examples. This is a real analysis of ${analysis.title}.
       `
@@ -217,37 +239,19 @@ function createAdvancedPrompt(analysis: any, contentType: string, tone: string):
 }
 
 function getFallbackContent(contentType: string, analysis: any, tone: string) {
-  // At the beginning of getFallbackContent function, add validation:
-  if (!analysis || !analysis.title || !analysis.url) {
-    return "# Error: Invalid Analysis Data\n\nThe analysis data is incomplete or missing. Please re-analyze the website."
-  }
+  // Parse JSON fields if they're strings
+  const keyPoints =
+    typeof analysis.key_points === "string" ? JSON.parse(analysis.key_points) : analysis.key_points || []
 
-  // Helper function to get a random item from an array
-  const getRandomItem = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)]
+  const keywords = typeof analysis.keywords === "string" ? JSON.parse(analysis.keywords) : analysis.keywords || []
 
-  // Helper function to format based on tone
-  const formatForTone = (text: string, tone: string) => {
-    switch (tone) {
-      case "professional":
-        return text
-      case "casual":
-        return text.replace(/\. /g, "! ").replace(/We/g, "You").replace(/Our/g, "Your")
-      case "enthusiastic":
-        return text.replace(/\. /g, "! ").replace(/is/g, "is absolutely").replace(/good/g, "amazing")
-      case "technical":
-        return text
-          .replace(/website/g, "web application")
-          .replace(/good/g, "optimal")
-          .replace(/use/g, "utilize")
-      case "friendly":
-        return text
-          .replace(/\. /g, ". 😊 ")
-          .replace(/We/g, "We together")
-          .replace(/recommend/g, "suggest")
-      default:
-        return text
-    }
-  }
+  const improvements =
+    typeof analysis.improvements === "string" ? JSON.parse(analysis.improvements) : analysis.improvements || []
+
+  const contentStats =
+    typeof analysis.content_stats === "string" ? JSON.parse(analysis.content_stats) : analysis.content_stats || {}
+
+  const rawData = typeof analysis.raw_data === "string" ? JSON.parse(analysis.raw_data) : analysis.raw_data || {}
 
   let content = ""
 
@@ -258,165 +262,184 @@ function getFallbackContent(contentType: string, analysis: any, tone: string) {
 ## Executive Summary
 ${analysis.summary}
 
-## Key Findings
-${analysis.keyPoints.map((point: string) => `- ${point}`).join("\n")}
+## Website Overview
+**URL:** ${analysis.url}
+**Title:** ${analysis.title}
 
-## Website Performance Analysis
-The website has a sustainability score of ${analysis.sustainability.score}%, with performance at ${analysis.sustainability.performance}% and script optimization at ${analysis.sustainability.scriptOptimization}%.
+This comprehensive analysis examines the performance, content quality, and technical aspects of ${analysis.title}.
+
+## Key Findings
+${keyPoints.map((point: string) => `- ${point}`).join("\n")}
+
+## Performance Analysis
+The website demonstrates the following performance metrics:
+
+- **Overall Sustainability Score:** ${analysis.sustainability_score}%
+- **Performance Score:** ${analysis.performance_score}%
+- **Script Optimization:** ${analysis.script_optimization_score}%
+- **Content Quality:** ${analysis.content_quality_score}%
 
 ## Content Analysis
-The website contains approximately ${analysis.contentStats.wordCount} words across ${analysis.contentStats.paragraphs} paragraphs. It has ${analysis.contentStats.headings} headings and ${analysis.contentStats.images} images.
+The website contains:
+- **Word Count:** ${contentStats.wordCount || 0} words
+- **Paragraphs:** ${contentStats.paragraphs || 0}
+- **Headings:** ${contentStats.headings || 0}
+- **Images:** ${contentStats.images || 0}
+- **Links:** ${contentStats.links || 0}
 
-## Key Topics and Keywords
-${analysis.keywords.join(", ")}
+## Keywords and Topics
+The primary keywords identified on ${analysis.title} include: ${keywords.join(", ")}
+
+## Sample Content
+${rawData.paragraphs?.slice(0, 2).join("\n\n") || "No content samples available."}
+
+## Technical Assessment
+Based on our analysis, ${analysis.title} shows ${analysis.sustainability_score > 75 ? "strong" : "moderate"} performance in sustainability metrics.
 
 ## Recommendations for Improvement
-${analysis.sustainability.improvements.map((imp: string) => `- ${imp}`).join("\n")}
-
-## Sample Content Excerpts
-${analysis.rawData?.paragraphs?.slice(0, 3).join("\n\n") || "No content excerpts available."}
+${improvements.map((imp: string) => `- ${imp}`).join("\n")}
 
 ## Conclusion
-Based on our analysis, this website ${analysis.sustainability.score > 75 ? "performs well" : "needs improvement"} in terms of sustainability and content structure. The key areas to focus on are ${analysis.sustainability.score < 75 ? analysis.sustainability.improvements[0].toLowerCase() + " and " + analysis.sustainability.improvements[1].toLowerCase() : "maintaining current performance while expanding content reach"}.
+${analysis.title} demonstrates ${analysis.sustainability_score > 75 ? "good overall performance" : "areas for improvement"} with particular strengths in ${analysis.performance_score > 75 ? "performance optimization" : "content structure"}. The key focus areas should be ${improvements[0]?.toLowerCase() || "performance optimization"} and ${improvements[1]?.toLowerCase() || "content enhancement"}.
+
+**Analysis Date:** ${new Date().toLocaleDateString()}
+**Website Analyzed:** ${analysis.url}
 `
       break
 
     case "blog":
-      content = `# What We Learned from Analyzing ${analysis.title}
+      content = `# Analyzing ${analysis.title}: Key Insights and Takeaways
 
-Are you curious about what makes a website effective? We recently analyzed ${analysis.title} and discovered some fascinating insights.
+I recently had the opportunity to analyze ${analysis.title} (${analysis.url}) and discovered some fascinating insights about its performance and content strategy.
 
-## The First Impression
+## What ${analysis.title} Does Well
 
 ${analysis.summary}
 
-When visitors first land on this website, they're greeted with content about ${analysis.keywords.slice(0, 3).join(", ")}. ${analysis.rawData?.paragraphs?.[0] || ""}
+The website demonstrates several strengths:
+${keyPoints
+  .slice(0, 3)
+  .map((point: string) => `- ${point}`)
+  .join("\n")}
 
-## Behind the Numbers
+## Performance Snapshot
 
-Our analysis revealed some interesting statistics:
+Here's what the numbers tell us about ${analysis.title}:
 
-- The website contains approximately ${analysis.contentStats.wordCount} words
-- There are ${analysis.contentStats.images} images throughout the site
-- The content is structured with ${analysis.contentStats.headings} headings
-- Visitors can navigate through ${analysis.contentStats.links} links
+- **Sustainability Score:** ${analysis.sustainability_score}%
+- **Performance:** ${analysis.performance_score}%
+- **Content Quality:** ${analysis.content_quality_score}%
 
-## Performance Insights
+${analysis.sustainability_score > 75 ? "These are impressive numbers that show the website is well-optimized." : "There's definitely room for improvement in these areas."}
 
-With a sustainability score of ${analysis.sustainability.score}%, this website ${analysis.sustainability.score > 75 ? "performs quite well" : "has room for improvement"}. ${getRandomItem(analysis.sustainability.improvements)}.
+## Content Strategy Analysis
 
-## Key Topics Covered
+The website focuses on ${keywords.slice(0, 3).join(", ")}, which suggests a clear understanding of their target audience. With ${contentStats.wordCount || 0} words across ${contentStats.paragraphs || 0} paragraphs, the content is ${contentStats.wordCount > 1000 ? "comprehensive" : "concise"}.
 
-The website focuses primarily on ${analysis.keywords.slice(0, 5).join(", ")}. This suggests that the target audience is interested in these topics and the website is positioned to address their needs.
+## Key Takeaways
 
-## What We Can Learn
+What can we learn from ${analysis.title}?
 
-${analysis.rawData?.paragraphs?.[1] || "The content structure and focus provide valuable lessons for anyone looking to create an effective online presence."}
+1. **Content Focus:** The emphasis on ${keywords[0] || "key topics"} shows the importance of targeted messaging
+2. **Performance Matters:** With a ${analysis.performance_score}% performance score, ${analysis.performance_score > 75 ? "they've prioritized user experience" : "there's opportunity to improve user experience"}
+3. **Room for Growth:** ${improvements[0] || "Optimization opportunities exist"}
 
-## Conclusion
+## Final Thoughts
 
-Analyzing websites like ${analysis.title} helps us understand what works in digital communication. Whether you're building your own website or just curious about digital marketing, these insights can help guide your strategy.
+${analysis.title} provides valuable lessons for anyone building or optimizing a website. The key is to focus on ${keywords[0] || "your core message"} while ensuring ${analysis.performance_score > 75 ? "you maintain" : "you improve"} technical performance.
 
-What website would you like us to analyze next? Let us know in the comments!
+*Analysis conducted on ${new Date().toLocaleDateString()}*
 `
       break
 
     case "marketing":
-      content = `# ${analysis.title}: Website Analysis & Marketing Opportunities
+      content = `# Marketing Analysis: ${analysis.title}
 
-## Website Overview
-${analysis.summary}
+## Executive Summary
+${analysis.title} presents significant marketing opportunities based on our comprehensive analysis of ${analysis.url}.
 
-## Target Audience
-Based on our analysis, this website appears to target individuals interested in ${analysis.keywords.slice(0, 3).join(", ")}. The content structure and terminology suggest a focus on ${analysis.keywords[0]} enthusiasts who value ${analysis.keywords[1] || "quality"}.
+## Target Market Analysis
+Based on the content and keyword analysis, ${analysis.title} targets audiences interested in:
+${keywords
+  .slice(0, 5)
+  .map((keyword: string) => `- ${keyword}`)
+  .join("\n")}
 
-## Competitive Advantages
-- **Content Focus:** Strong emphasis on ${analysis.keywords[0]} and ${analysis.keywords[1] || "related topics"}
-- **Visual Elements:** ${analysis.contentStats.images > 10 ? "Rich visual content with " + analysis.contentStats.images + " images" : "Limited visual content that could be expanded"}
-- **User Experience:** ${analysis.sustainability.performance > 75 ? "Excellent performance metrics" : "Performance improvements needed"} (${analysis.sustainability.performance}% performance score)
+## Competitive Positioning
+**Strengths:**
+- ${analysis.performance_score > 75 ? "Strong technical performance" : "Solid foundation for improvement"}
+- Content focus on ${keywords[0] || "key market segments"}
+- ${contentStats.images > 10 ? "Rich visual content" : "Streamlined content approach"}
 
-## Marketing Opportunities
-
-### Content Marketing
-The website already covers topics like ${analysis.keywords.slice(0, 3).join(", ")}. We recommend expanding content in these areas:
-- ${analysis.keywords[3] || "Industry trends"}
-- ${analysis.keywords[4] || "Case studies"}
-- ${analysis.keywords[5] || "User testimonials"}
-
-### Performance Optimization
-${analysis.sustainability.improvements
-  .slice(0, 2)
+**Opportunities:**
+${improvements
+  .slice(0, 3)
   .map((imp: string) => `- ${imp}`)
   .join("\n")}
 
-### Audience Engagement
-Based on the current content structure, we recommend:
-- Creating interactive elements around ${analysis.keywords[0]}
-- Developing a newsletter focused on ${analysis.keywords[1] || "industry updates"}
-- Building community features for ${analysis.keywords[2] || "enthusiasts"}
+## Performance Metrics
+- **Overall Score:** ${analysis.sustainability_score}%
+- **User Experience:** ${analysis.performance_score}%
+- **Content Quality:** ${analysis.content_quality_score}%
 
-## Implementation Timeline
-1. **Immediate:** ${analysis.sustainability.improvements[0]}
-2. **Short-term (1-3 months):** Expand content on ${analysis.keywords[3] || "key topics"}
-3. **Medium-term (3-6 months):** Implement engagement features
-4. **Long-term (6-12 months):** Full performance optimization
+## Marketing Recommendations
 
-## Expected Outcomes
+### Short-term (1-3 months)
+1. ${improvements[0] || "Optimize current content"}
+2. Enhance focus on ${keywords[0] || "primary keywords"}
+3. Improve ${analysis.performance_score < 75 ? "technical performance" : "content engagement"}
+
+### Medium-term (3-6 months)
+1. Expand content around ${keywords[1] || "secondary keywords"}
+2. Develop ${contentStats.images < 10 ? "visual content strategy" : "interactive elements"}
+3. Build authority in ${keywords[2] || "niche markets"}
+
+### Long-term (6-12 months)
+1. ${improvements[1] || "Comprehensive optimization"}
+2. Market expansion into ${keywords[3] || "related verticals"}
+3. Performance optimization to achieve 90%+ scores
+
+## Expected ROI
 Implementing these recommendations could result in:
-- Improved user engagement
+- Improved search rankings for ${keywords.slice(0, 3).join(", ")}
+- Enhanced user engagement
 - Higher conversion rates
-- Better search engine rankings for terms related to ${analysis.keywords.slice(0, 3).join(", ")}
-- Increased brand authority in the ${analysis.keywords[0]} space
+- Stronger brand authority
 
 ## Next Steps
-We recommend beginning with ${analysis.sustainability.improvements[0]} to establish a solid foundation for future marketing efforts.
+Begin with ${improvements[0] || "performance optimization"} to establish a strong foundation for future marketing efforts.
+
+*Analysis Date: ${new Date().toLocaleDateString()}*
+*Website: ${analysis.url}*
 `
       break
 
     case "social":
-      // LinkedIn post
-      const linkedinPost = `📊 Website Analysis: ${analysis.title} 📊
+      const linkedinPost = `🔍 Just analyzed ${analysis.title} and found some interesting insights!
 
-I just analyzed ${analysis.title} and discovered some interesting insights!
+📊 Key metrics:
+• Sustainability score: ${analysis.sustainability_score}%
+• Performance: ${analysis.performance_score}%
+• Focus areas: ${keywords.slice(0, 2).join(", ")}
 
-Key findings:
-• Focus on ${analysis.keywords.slice(0, 3).join(", ")}
-• ${analysis.sustainability.score}% sustainability score
-• ${analysis.contentStats.wordCount} words of valuable content
+${analysis.sustainability_score > 75 ? "Impressive performance across the board! 🚀" : "Great potential for optimization! 📈"}
 
-${analysis.sustainability.score > 75 ? "The site performs exceptionally well" : "The site has potential for improvement"} in terms of user experience and content delivery.
+Key takeaway: ${improvements[0] || "Focus on performance optimization"}
 
-One thing that stood out: ${analysis.rawData?.paragraphs?.[0]?.substring(0, 100) || analysis.summary.substring(0, 100)}...
+#WebsiteAnalysis #DigitalMarketing #${keywords[0]?.replace(/\s+/g, "") || "WebDev"}
 
-#WebsiteAnalysis #DigitalMarketing #${analysis.keywords[0]?.replace(/\s+/g, "")} #${analysis.keywords[1]?.replace(/\s+/g, "") || "WebDesign"}
+What's your experience with ${analysis.title}?`
 
-What website should I analyze next?`
+      const twitterPost = `Analyzed ${analysis.title} 📊
 
-      // Twitter/X post
-      const twitterPost = `I analyzed ${analysis.title} and found:
+Results:
+• ${analysis.sustainability_score}% sustainability
+• ${analysis.performance_score}% performance  
+• Focus: ${keywords.slice(0, 2).join(" & ")}
 
-• ${analysis.sustainability.score}% sustainability score
-• Focus on ${analysis.keywords.slice(0, 2).join(" & ")}
-• ${analysis.sustainability.score > 75 ? "Great performance" : "Needs optimization"}
+${analysis.sustainability_score > 75 ? "Strong performance! 🚀" : "Room for growth 📈"}
 
-${getRandomItem(analysis.sustainability.improvements)}
-
-#WebAnalysis #${analysis.keywords[0]?.replace(/\s+/g, "")}`
-
-      // Facebook post
-      const facebookPost = `📱 Website Analysis Results 📱
-
-I just completed an in-depth analysis of ${analysis.title} and wanted to share what I found!
-
-This website focuses on ${analysis.keywords.slice(0, 3).join(", ")} and has a sustainability score of ${analysis.sustainability.score}%.
-
-What I loved: ${analysis.sustainability.score > 75 ? "The excellent performance metrics and clean content structure" : "The potential for growth with some simple optimizations"}
-
-What could be improved: ${getRandomItem(analysis.sustainability.improvements)}
-
-Have you visited this website? What was your experience like?
-
-#WebsiteAnalysis #DigitalMarketing`
+#WebAnalysis #${keywords[0]?.replace(/\s+/g, "") || "WebDev"}`
 
       content = `# Social Media Content for ${analysis.title}
 
@@ -432,23 +455,36 @@ ${twitterPost}
 
 ## Facebook Post
 \`\`\`
-${facebookPost}
+📱 Website Analysis Results 📱
+
+Just completed an in-depth analysis of ${analysis.title}!
+
+🎯 What we found:
+• Sustainability score: ${analysis.sustainability_score}%
+• Performance rating: ${analysis.performance_score}%
+• Key focus areas: ${keywords.slice(0, 3).join(", ")}
+
+${analysis.sustainability_score > 75 ? "The site shows excellent optimization!" : "Great opportunities for improvement identified!"}
+
+💡 Main recommendation: ${improvements[0] || "Focus on performance optimization"}
+
+Have you visited ${analysis.title}? What was your experience?
+
+#WebsiteAnalysis #DigitalMarketing #UserExperience
 \`\`\`
 
 ## Instagram Caption
 \`\`\`
-📊 Website Analysis Results 📊
+📊 Website Analysis: ${analysis.title} ✨
 
-Just analyzed ${analysis.title}! 
+Key findings:
+• ${analysis.sustainability_score}% sustainability score
+• ${contentStats.images || 0} images analyzed
+• ${contentStats.wordCount || 0} words of content
 
-Key stats:
-• ${analysis.sustainability.score}% sustainability score
-• ${analysis.contentStats.images} images
-• ${analysis.contentStats.wordCount} words
+Swipe to see the full breakdown! 👉
 
-Swipe to see the full analysis and recommendations!
-
-#WebsiteAnalysis #DigitalMarketing #${analysis.keywords[0]?.replace(/\s+/g, "")} #${analysis.keywords[1]?.replace(/\s+/g, "") || "WebDesign"}
+#WebsiteAnalysis #DigitalMarketing #${keywords[0]?.replace(/\s+/g, "") || "WebDev"} #DataAnalysis
 \`\`\`
 `
       break
@@ -456,21 +492,28 @@ Swipe to see the full analysis and recommendations!
     default:
       content = `# Analysis of ${analysis.title}
 
+**Website:** ${analysis.url}
+
+## Summary
 ${analysis.summary}
 
 ## Key Points
-${analysis.keyPoints.map((point: string) => `- ${point}`).join("\n")}
+${keyPoints.map((point: string) => `- ${point}`).join("\n")}
 
 ## Keywords
-${analysis.keywords.join(", ")}
+${keywords.join(", ")}
 
-## Sustainability Score: ${analysis.sustainability.score}%
+## Performance Scores
+- **Sustainability:** ${analysis.sustainability_score}%
+- **Performance:** ${analysis.performance_score}%
+- **Content Quality:** ${analysis.content_quality_score}%
 
 ## Recommendations
-${analysis.sustainability.improvements.map((imp: string) => `- ${imp}`).join("\n")}
+${improvements.map((imp: string) => `- ${imp}`).join("\n")}
+
+*Analysis completed on ${new Date().toLocaleDateString()}*
 `
   }
 
-  // Apply tone formatting if specified
-  return formatForTone(content, tone)
+  return content
 }

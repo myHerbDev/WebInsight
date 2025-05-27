@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { FileText, FileType, Loader2, MessageSquare, Newspaper, Search } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface ContentTypeGeneratorProps {
   analysisId: string
@@ -47,20 +46,16 @@ export function ContentTypeGenerator({ analysisId, tone, onSignUpClick }: Conten
         throw new Error(data.error || "Failed to generate content")
       }
 
-      if (data.error) {
-        throw new Error(data.error)
-      }
-
       setGeneratedContent(data.content)
       if (data.contentId) {
         setGeneratedContentId(data.contentId)
       }
     } catch (error) {
       console.error("Error generating content:", error)
-      setError(error instanceof Error ? error.message : "Failed to generate content. Please try again.")
+      setError("Failed to generate content. Please try again.")
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate content. Please try again.",
+        description: "Failed to generate content. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -87,24 +82,10 @@ export function ContentTypeGenerator({ analysisId, tone, onSignUpClick }: Conten
 
   const handleExport = async () => {
     try {
-      const response = await fetch("/api/export", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contentId: generatedContentId,
-          format: "markdown",
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to export content")
-      }
-
+      // In a real app, you'd generate a PDF and trigger download
       toast({
         title: "Export",
-        description: "Content exported successfully. Sign up to access more export options.",
+        description: "In a production app, this would export your content to a file.",
       })
 
       // Prompt for sign up to enable full export features
@@ -167,9 +148,9 @@ export function ContentTypeGenerator({ analysisId, tone, onSignUpClick }: Conten
               </div>
 
               {error && currentType === type && !isGenerating && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-2">
+                  <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+                </div>
               )}
 
               <Textarea
