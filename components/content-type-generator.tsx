@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { FileText, FileType, Loader2, MessageSquare, Newspaper, Search } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { FileText, FileType, Loader2, MessageSquare, Newspaper, Search, CheckCircle, AlertCircle } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 
 interface ContentTypeGeneratorProps {
@@ -20,14 +21,51 @@ export function ContentTypeGenerator({ analysisId, tone, onSignUpClick }: Conten
   const [currentType, setCurrentType] = useState("research")
   const [generatedContentId, setGeneratedContentId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+
+  const contentTypes = [
+    {
+      id: "research",
+      label: "Research",
+      icon: Search,
+      description: "Comprehensive research report with analysis and insights",
+    },
+    {
+      id: "document",
+      label: "Document",
+      icon: FileText,
+      description: "Formal document with structured findings",
+    },
+    {
+      id: "blog",
+      label: "Blog",
+      icon: FileType,
+      description: "Engaging blog post about the website analysis",
+    },
+    {
+      id: "marketing",
+      label: "Marketing",
+      icon: Newspaper,
+      description: "Marketing strategy and campaign recommendations",
+    },
+    {
+      id: "social",
+      label: "Social",
+      icon: MessageSquare,
+      description: "Social media content for multiple platforms",
+    },
+  ]
 
   const handleGenerate = async (type: string) => {
     setIsGenerating(true)
     setGeneratedContent("")
     setCurrentType(type)
     setError(null)
+    setSuccess(null)
 
     try {
+      console.log(`Generating ${type} content for analysis ${analysisId}`)
+
       const response = await fetch("/api/generate-content", {
         method: "POST",
         headers: {
@@ -43,19 +81,31 @@ export function ContentTypeGenerator({ analysisId, tone, onSignUpClick }: Conten
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to generate content")
+        throw new Error(data.error || data.message || "Failed to generate content")
       }
 
-      setGeneratedContent(data.content)
-      if (data.contentId) {
-        setGeneratedContentId(data.contentId)
+      if (data.content) {
+        setGeneratedContent(data.content)
+        if (data.contentId) {
+          setGeneratedContentId(data.contentId)
+        }
+        setSuccess(`${type.charAt(0).toUpperCase() + type.slice(1)} content generated successfully!`)
+
+        toast({
+          title: "Content Generated",
+          description: `${type.charAt(0).toUpperCase() + type.slice(1)} content has been created successfully.`,
+        })
+      } else {
+        throw new Error("No content received from the server")
       }
     } catch (error) {
       console.error("Error generating content:", error)
-      setError("Failed to generate content. Please try again.")
+      const errorMessage = error instanceof Error ? error.message : "Failed to generate content. Please try again."
+      setError(errorMessage)
+
       toast({
-        title: "Error",
-        description: "Failed to generate content. Please try again.",
+        title: "Generation Failed",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
@@ -82,14 +132,26 @@ export function ContentTypeGenerator({ analysisId, tone, onSignUpClick }: Conten
 
   const handleExport = async () => {
     try {
-      // In a real app, you'd generate a PDF and trigger download
+      // Create a downloadable file
+      const blob = new Blob([generatedContent], { type: "text/markdown" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `${currentType}_content_${new Date().toISOString().split("T")[0]}.md`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+
       toast({
-        title: "Export",
-        description: "In a production app, this would export your content to a file.",
+        title: "Export Successful",
+        description: "Content has been downloaded as a markdown file.",
       })
 
-      // Prompt for sign up to enable full export features
-      onSignUpClick()
+      // Prompt for sign up to enable more export features
+      setTimeout(() => {
+        onSignUpClick()
+      }, 2000)
     } catch (error) {
       console.error("Error exporting:", error)
       toast({
@@ -100,79 +162,120 @@ export function ContentTypeGenerator({ analysisId, tone, onSignUpClick }: Conten
     }
   }
 
+  const selectedContentType = contentTypes.find((ct) => ct.id === currentType)
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Generate Content</CardTitle>
-        <CardDescription>Create different types of content based on the website analysis</CardDescription>
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          AI Content Generator
+        </CardTitle>
+        <CardDescription>
+          Generate different types of content based on the website analysis using advanced AI
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="research" value={currentType} onValueChange={setCurrentType}>
           <TabsList className="grid grid-cols-5 mb-6">
-            <TabsTrigger value="research">
-              <Search className="h-4 w-4 mr-2" />
-              Research
-            </TabsTrigger>
-            <TabsTrigger value="document">
-              <FileText className="h-4 w-4 mr-2" />
-              Document
-            </TabsTrigger>
-            <TabsTrigger value="blog">
-              <FileType className="h-4 w-4 mr-2" />
-              Blog
-            </TabsTrigger>
-            <TabsTrigger value="marketing">
-              <Newspaper className="h-4 w-4 mr-2" />
-              Marketing
-            </TabsTrigger>
-            <TabsTrigger value="social">
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Social
-            </TabsTrigger>
+            {contentTypes.map((type) => {
+              const Icon = type.icon
+              return (
+                <TabsTrigger key={type.id} value={type.id} className="flex flex-col gap-1 h-auto py-3">
+                  <Icon className="h-4 w-4" />
+                  <span className="text-xs">{type.label}</span>
+                </TabsTrigger>
+              )
+            })}
           </TabsList>
 
-          {["research", "document", "blog", "marketing", "social"].map((type) => (
-            <TabsContent key={type} value={type} className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium capitalize">{type} Content</h3>
-                <Button onClick={() => handleGenerate(type)} disabled={isGenerating}>
-                  {isGenerating && currentType === type ? (
+          {contentTypes.map((type) => (
+            <TabsContent key={type.id} value={type.id} className="space-y-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-medium capitalize">{type.label} Content</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{type.description}</p>
+                </div>
+                <Button onClick={() => handleGenerate(type.id)} disabled={isGenerating} className="ml-4">
+                  {isGenerating && currentType === type.id ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       Generating...
                     </>
                   ) : (
-                    `Generate ${type}`
+                    <>
+                      <type.icon className="h-4 w-4 mr-2" />
+                      Generate {type.label}
+                    </>
                   )}
                 </Button>
               </div>
 
-              {error && currentType === type && !isGenerating && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-2">
-                  <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+              {/* Status Messages */}
+              {error && currentType === type.id && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {success && currentType === type.id && (
+                <Alert>
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription>{success}</AlertDescription>
+                </Alert>
+              )}
+
+              {/* Loading State */}
+              {isGenerating && currentType === type.id && (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-purple-600" />
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Analyzing website data and generating {type.label.toLowerCase()} content...
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">This may take 10-30 seconds</p>
+                  </div>
                 </div>
               )}
 
+              {/* Content Display */}
               <Textarea
                 value={generatedContent}
                 readOnly
-                placeholder={`Your generated ${type} content will appear here...`}
-                className="min-h-[300px] font-mono text-sm"
+                placeholder={`Your generated ${type.label.toLowerCase()} content will appear here...`}
+                className="min-h-[400px] font-mono text-sm"
               />
 
+              {/* Action Buttons */}
               {generatedContent && (
-                <div className="flex justify-end space-x-2">
+                <div className="flex justify-end space-x-2 pt-4 border-t">
                   <Button variant="outline" size="sm" onClick={handleCopyToClipboard}>
                     Copy to Clipboard
                   </Button>
                   <Button variant="outline" size="sm" onClick={handleExport}>
-                    Export
+                    Export as File
+                  </Button>
+                  <Button size="sm" onClick={onSignUpClick} className="bg-purple-600 hover:bg-purple-700">
+                    Save & Get More Features
                   </Button>
                 </div>
               )}
             </TabsContent>
           ))}
         </Tabs>
+
+        {/* Help Section */}
+        <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+          <h4 className="font-medium mb-2">Content Generation Tips:</h4>
+          <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+            <li>• Research reports provide comprehensive analysis with actionable insights</li>
+            <li>• Blog posts are engaging and shareable for content marketing</li>
+            <li>• Marketing content focuses on strategy and campaign recommendations</li>
+            <li>• Social media content is optimized for different platforms</li>
+            <li>• All content is based on real analysis data from your website</li>
+          </ul>
+        </div>
       </CardContent>
     </Card>
   )
