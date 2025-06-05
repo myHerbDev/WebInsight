@@ -1,106 +1,43 @@
-"use client"
+type HeaderProps = {}
 
-import { MoonIcon, SunIcon, Menu, User } from "lucide-react"
-import { useTheme } from "next-themes"
-import { Button } from "@/components/ui/button"
-import { Logo } from "@/components/logo"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import Link from "next/link"
+const Logo = () => {
+  return (
+    <div>
+      {/* Logo Placeholder */}
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="15" stroke="currentColor" strokeWidth="2" />
+        <path
+          d="M10.6667 21.3333L16 16L10.6667 10.6667"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M21.3333 21.3333L16 16L21.3333 10.6667"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </div>
+  )
+}
 
 export function Header() {
-  const { theme, setTheme } = useTheme()
-
   return (
-    <header className="border-b bg-white/80 backdrop-blur-sm dark:bg-gray-950/80 sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center">
-          <Logo size="md" showText={true} />
-        </Link>
-
-        <nav className="hidden md:flex items-center space-x-6">
-          <Link
-            href="/"
-            className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400 transition-colors"
-          >
-            Analyze
-          </Link>
-          <Link
-            href="/compare"
-            className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400 transition-colors"
-          >
-            Compare
-          </Link>
-          <Link
-            href="/hosting"
-            className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400 transition-colors"
-          >
-            Hosting
-          </Link>
-          <Link
-            href="/recommendations"
-            className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400 transition-colors"
-          >
-            Recommendations
-          </Link>
-          <Link
-            href="/saved"
-            className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400 transition-colors"
-          >
-            Saved
-          </Link>
-        </nav>
-
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            aria-label="Toggle theme"
-          >
-            {theme === "dark" ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
-          </Button>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <User className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Link href="/profile">Profile</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link href="/settings">Settings</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>Sign Out</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem>
-                <Link href="/">Analyze</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link href="/compare">Compare</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link href="/hosting">Hosting</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link href="/recommendations">Recommendations</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link href="/saved">Saved</Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+    <header className="bg-white dark:bg-gray-800 shadow">
+      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-3">
+            <Logo />
+            <div className="hidden sm:block">
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">WebInSight</h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Sustainable Web Analytics</p>
+            </div>
+          </div>
+          <div>{/* Navigation Links or User Profile */}</div>
         </div>
       </div>
     </header>

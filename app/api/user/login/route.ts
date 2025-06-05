@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
-import clientPromise from "@/lib/mongodb"
-import { verifyPassword } from "@/lib/auth"
+import { createServerSupabaseClient } from "@/lib/supabase"
 
 export async function POST(request: Request) {
   try {
@@ -10,43 +9,43 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    // For preview mode or when MongoDB is not available, use mock data
-    if (!process.env.MONGODB_URI) {
-      // Mock successful login for preview
+    // Check if Supabase is configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      // Mock successful login for preview mode
       return NextResponse.json({
         success: true,
         userId: "mock-user-id",
         email,
+        message: "Logged in successfully (preview mode)",
       })
     }
 
-    // Real implementation with MongoDB
     try {
-      const client = await clientPromise
-      const db = client.db("website-analyzer")
+      const supabase = createServerSupabaseClient()
 
-      // Find user by email
-      const user = await db.collection("users").findOne({ email })
+      // Sign in with Supabase Auth
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-      if (!user) {
+      if (error) {
         return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
       }
 
-      // Verify password
-      const isValid = await verifyPassword(password, user.password)
-
-      if (!isValid) {
-        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+      if (!data.user) {
+        return NextResponse.json({ error: "Authentication failed" }, { status: 401 })
       }
 
       return NextResponse.json({
         success: true,
-        userId: user._id.toString(),
-        email: user.email,
+        userId: data.user.id,
+        email: data.user.email,
+        accessToken: data.session?.access_token,
       })
-    } catch (dbError) {
-      console.error("Database error:", dbError)
-      // Fall back to mock data if database operations fail
+    } catch (authError) {
+      console.error("Supabase auth error:", authError)
+      // Fall back to mock data if Supabase operations fail
       return NextResponse.json({
         success: true,
         userId: "mock-user-id",

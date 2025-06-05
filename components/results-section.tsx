@@ -7,6 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Analytics } from "@/components/analytics"
+import { SocialShare } from "@/components/social-share"
+import { SustainabilityChart } from "@/components/sustainability-chart"
+import { ContentTypeGenerator } from "@/components/content-type-generator"
+import { toast } from "@/components/ui/use-toast"
 import {
   BarChart,
   Clipboard,
@@ -21,9 +26,6 @@ import {
   Star,
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { SustainabilityChart } from "@/components/sustainability-chart"
-import { ContentTypeGenerator } from "@/components/content-type-generator"
-import { toast } from "@/components/ui/use-toast"
 import {
   shareToTwitter,
   shareToLinkedIn,
@@ -182,9 +184,10 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
             <h2 className="text-2xl font-bold">{data.title}</h2>
             <p className="text-gray-500 dark:text-gray-400">{data.url}</p>
             <div className="flex items-center mt-2 space-x-4 text-sm text-gray-600 dark:text-gray-400">
-              <span>Sustainability: {data.sustainability?.score || 0}%</span>
-              <span>Performance: {data.sustainability?.performance || 0}%</span>
-              <span>Words: {data.contentStats?.wordCount || 0}</span>
+              <span>Sustainability: {data.sustainability_score || 0}%</span>
+              <span>Performance: {data.performance_score || 0}%</span>
+              <span>Security: {data.security_score || 0}%</span>
+              <span>Words: {data.content_stats?.wordCount || 0}</span>
             </div>
           </div>
           <div className="flex space-x-2">
@@ -213,8 +216,9 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
         </div>
 
         <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="grid grid-cols-4 mb-6">
+          <TabsList className="grid grid-cols-5 mb-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="sustainability">Sustainability</TabsTrigger>
             <TabsTrigger value="content">Content</TabsTrigger>
             <TabsTrigger value="generate">Generate</TabsTrigger>
@@ -237,7 +241,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
-                    {data.keyPoints.map((point, index) => (
+                    {data.key_points.map((point, index) => (
                       <li key={index} className="flex items-start">
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-xs font-medium mr-3">
                           {index + 1}
@@ -284,6 +288,10 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
             )}
           </TabsContent>
 
+          <TabsContent value="analytics" className="space-y-6">
+            <Analytics data={data} />
+          </TabsContent>
+
           <TabsContent value="sustainability" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card>
@@ -307,7 +315,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                           className="text-purple-500"
                           strokeWidth="10"
                           strokeDasharray={251.2}
-                          strokeDashoffset={251.2 - (251.2 * (data.sustainability?.score || 0)) / 100}
+                          strokeDashoffset={251.2 - (251.2 * (data.sustainability_score || 0)) / 100}
                           strokeLinecap="round"
                           stroke="currentColor"
                           fill="transparent"
@@ -316,7 +324,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                           cy="50"
                         />
                       </svg>
-                      <div className="absolute text-3xl font-bold">{data.sustainability?.score || 0}</div>
+                      <div className="absolute text-3xl font-bold">{data.sustainability_score || 0}</div>
                     </div>
                   </div>
 
@@ -324,23 +332,23 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                     <div>
                       <div className="flex justify-between mb-1">
                         <span>Performance</span>
-                        <span>{data.sustainability?.performance || 0}%</span>
+                        <span>{data.performance_score || 0}%</span>
                       </div>
-                      <Progress value={data.sustainability?.performance || 0} />
+                      <Progress value={data.performance_score || 0} />
                     </div>
                     <div>
                       <div className="flex justify-between mb-1">
                         <span>Script Optimization</span>
-                        <span>{data.sustainability?.scriptOptimization || 0}%</span>
+                        <span>{data.script_optimization_score || 0}%</span>
                       </div>
-                      <Progress value={data.sustainability?.scriptOptimization || 0} />
+                      <Progress value={data.script_optimization_score || 0} />
                     </div>
                     <div>
                       <div className="flex justify-between mb-1">
                         <span>Content Quality</span>
-                        <span>{data.sustainability?.duplicateContent || 0}%</span>
+                        <span>{data.content_quality_score || 0}%</span>
                       </div>
-                      <Progress value={data.sustainability?.duplicateContent || 0} />
+                      <Progress value={data.content_quality_score || 0} />
                     </div>
                   </div>
                 </CardContent>
@@ -352,7 +360,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
-                    {(data.sustainability?.improvements || []).map((improvement, index) => (
+                    {(data.improvements || []).map((improvement, index) => (
                       <li key={index} className="flex items-start p-3 border rounded-lg">
                         <div className="w-6 h-6 rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200 flex items-center justify-center mr-3 text-xs">
                           {index + 1}
@@ -370,7 +378,12 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                 <CardTitle>Sustainability Metrics</CardTitle>
               </CardHeader>
               <CardContent className="h-80">
-                <SustainabilityChart data={data.sustainability} />
+                <SustainabilityChart
+                  performance={data.performance_score || 0}
+                  scriptOptimization={data.script_optimization_score || 0}
+                  contentQuality={data.content_quality_score || 0}
+                  security={data.security_score || 0}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -382,7 +395,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  {Object.entries(data.contentStats || {}).map(([key, value]) => (
+                  {Object.entries(data.content_stats || {}).map(([key, value]) => (
                     <div key={key} className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg text-center">
                       <div className="text-2xl font-bold">{value}</div>
                       <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">
@@ -496,51 +509,53 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Export Settings</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span>Export with Markdown</span>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant={markdownEnabled ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setMarkdownEnabled(true)}
-                        >
-                          Yes
-                        </Button>
-                        <Button
-                          variant={!markdownEnabled ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setMarkdownEnabled(false)}
-                        >
-                          No
-                        </Button>
-                      </div>
-                    </div>
+              <SocialShare data={data} />
+            </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Content Tone</label>
-                      <Select value={toneVoice} onValueChange={setToneVoice}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select tone" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="professional">Professional</SelectItem>
-                          <SelectItem value="casual">Casual</SelectItem>
-                          <SelectItem value="enthusiastic">Enthusiastic</SelectItem>
-                          <SelectItem value="technical">Technical</SelectItem>
-                          <SelectItem value="friendly">Friendly</SelectItem>
-                        </SelectContent>
-                      </Select>
+            <Card>
+              <CardHeader>
+                <CardTitle>Export Settings</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span>Export with Markdown</span>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant={markdownEnabled ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setMarkdownEnabled(true)}
+                      >
+                        Yes
+                      </Button>
+                      <Button
+                        variant={!markdownEnabled ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setMarkdownEnabled(false)}
+                      >
+                        No
+                      </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Content Tone</label>
+                    <Select value={toneVoice} onValueChange={setToneVoice}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select tone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="professional">Professional</SelectItem>
+                        <SelectItem value="casual">Casual</SelectItem>
+                        <SelectItem value="enthusiastic">Enthusiastic</SelectItem>
+                        <SelectItem value="technical">Technical</SelectItem>
+                        <SelectItem value="friendly">Friendly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="generate" className="space-y-6">
