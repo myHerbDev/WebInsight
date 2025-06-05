@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server"
 import { neon } from "@neondatabase/serverless"
 import * as cheerio from "cheerio"
+import { lookup } from "dns/promises"
 
 const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST(request: Request) {
   try {
-    const { url } = await request.json()
+    const { url, userId } = await request.json()
 
     if (!url) {
       return NextResponse.json({ error: "URL is required" }, { status: 400 })
@@ -25,15 +26,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid URL format" }, { status: 400 })
     }
 
-    console.log(`Starting analysis of: ${formattedUrl}`)
+    console.log(`Starting enhanced analysis of: ${formattedUrl}`)
 
-    // Fetch the website content with proper headers and timeout
+    // Get IP address and hosting information
+    let ipAddress = null
+    let hostingInfo = null
+    try {
+      const hostname = new URL(formattedUrl).hostname
+      const addresses = await lookup(hostname)
+      ipAddress = addresses.address
+
+      // Detect hosting provider based on IP ranges and reverse DNS
+      hostingInfo = await detectHostingProvider(ipAddress, hostname)
+    } catch (error) {
+      console.error("Failed to get hosting info:", error)
+    }
+
+    // Fetch the website content with enhanced headers
     let html = ""
     let response: Response
+    let securityHeaders: Record<string, string> = {}
 
     try {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
 
       response = await fetch(formattedUrl, {
         headers: {
@@ -54,6 +70,9 @@ export async function POST(request: Request) {
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
+
+      // Extract security headers
+      securityHeaders = extractSecurityHeaders(response.headers)
 
       html = await response.text()
       console.log(`Successfully fetched ${html.length} characters from ${formattedUrl}`)
@@ -85,7 +104,7 @@ export async function POST(request: Request) {
       $('meta[name="twitter:description"]').attr("content") ||
       ""
 
-    // Extract text content
+    // Enhanced content extraction
     $("script, style, nav, footer, aside, .advertisement, .ads").remove()
     const bodyText = $("body").text().replace(/\s+/g, " ").trim()
 
@@ -95,14 +114,12 @@ export async function POST(request: Request) {
       .filter((text) => text.length > 20)
       .slice(0, 20)
 
-    // Extract headings
     const headings = $("h1, h2, h3, h4, h5, h6")
       .map((_, el) => $(el).text().trim())
       .get()
       .filter((text) => text.length > 0)
       .slice(0, 20)
 
-    // Extract links
     const links = $("a[href]")
       .map((_, el) => {
         const href = $(el).attr("href") || ""
@@ -121,7 +138,6 @@ export async function POST(request: Request) {
       .filter(Boolean)
       .slice(0, 50)
 
-    // Extract images
     const images = $("img[src]")
       .map((_, el) => {
         const src = $(el).attr("src") || ""
@@ -140,7 +156,7 @@ export async function POST(request: Request) {
       .filter(Boolean)
       .slice(0, 30)
 
-    // Generate keywords from content
+    // Enhanced keyword extraction
     const words = bodyText
       .toLowerCase()
       .split(/\W+/)
@@ -260,7 +276,7 @@ export async function POST(request: Request) {
 
     const subdomains = Array.from(subdomainSet).slice(0, 10)
 
-    // Calculate performance metrics
+    // Enhanced performance calculations
     const scriptCount = $("script").length
     const cssCount = $('link[rel="stylesheet"]').length
     const imageCount = images.length
@@ -271,7 +287,7 @@ export async function POST(request: Request) {
       .get()
       .reduce((a, b) => a + b, 0)
 
-    // Calculate sustainability scores
+    // Calculate enhanced scores
     const performanceScore = Math.min(100, Math.max(30, 100 - (scriptCount * 2 + imageCount / 3)))
     const scriptOptimizationScore = Math.min(100, Math.max(30, 100 - (scriptCount * 3 + totalScriptSize / 10000)))
 
@@ -282,55 +298,24 @@ export async function POST(request: Request) {
       Math.max(40, 100 * (paragraphTexts.size / Math.max(paragraphs.length, 1))),
     )
 
+    // Calculate security score
+    const securityScore = calculateSecurityScore(formattedUrl, securityHeaders, $)
+
     const sustainabilityScore = Math.floor((performanceScore + scriptOptimizationScore + duplicateContentScore) / 3)
 
-    // Generate improvement suggestions based on actual analysis
-    const improvements: string[] = []
-
-    if (scriptCount > 10) {
-      improvements.push("Reduce the number of JavaScript files to improve loading speed")
-    }
-    if (imageCount > 20) {
-      improvements.push("Optimize image sizes and implement lazy loading")
-    }
-    if (cssCount > 5) {
-      improvements.push("Consolidate CSS files to reduce HTTP requests")
-    }
-    if (performanceScore < 70) {
-      improvements.push("Implement browser caching for static assets")
-    }
-    if (scriptOptimizationScore < 70) {
-      improvements.push("Minimize and compress JavaScript files")
-    }
-    if (duplicateContentScore < 70) {
-      improvements.push("Remove duplicate content to improve SEO")
-    }
-    if (!description) {
-      improvements.push("Add a meta description to improve SEO")
-    }
-    if (headings.length < 3) {
-      improvements.push("Add more headings to improve content structure")
-    }
-    if (totalElements > 1000) {
-      improvements.push("Simplify page structure to reduce DOM complexity")
-    }
-
-    // Ensure we have at least 4 improvement suggestions
-    const defaultImprovements = [
-      "Enable GZIP compression to reduce file sizes",
-      "Use a Content Delivery Network (CDN) for faster content delivery",
-      "Implement responsive images for better mobile performance",
-      "Reduce third-party scripts and tracking codes",
-      "Optimize font loading to prevent layout shifts",
-      "Implement proper caching headers for static resources",
-    ]
-
-    while (improvements.length < 4) {
-      const suggestion = defaultImprovements[improvements.length % defaultImprovements.length]
-      if (!improvements.includes(suggestion)) {
-        improvements.push(suggestion)
-      }
-    }
+    // Generate improvement suggestions
+    const improvements = generateImprovements(
+      scriptCount,
+      imageCount,
+      cssCount,
+      performanceScore,
+      scriptOptimizationScore,
+      duplicateContentScore,
+      securityScore,
+      description,
+      headings.length,
+      totalElements,
+    )
 
     // Create summary
     let summary = description
@@ -342,13 +327,14 @@ export async function POST(request: Request) {
       summary = `${title} is a website with ${links.length} links, ${imageCount} images, and ${paragraphs.length} content sections. The site focuses on ${keywords.slice(0, 3).join(", ")}.`
     }
 
-    // Generate key points based on actual analysis
+    // Generate key points
     const keyPoints = [
       `Contains ${imageCount} images and ${links.length} external links`,
       `Has ${headings.length} headings organizing ${paragraphs.length} content sections`,
       `Uses ${scriptCount} JavaScript files and ${cssCount} CSS stylesheets`,
       `Focuses on topics related to ${keywords.slice(0, 3).join(", ")}`,
       `${sustainabilityScore > 75 ? "Demonstrates good" : "Shows potential for improved"} performance optimization`,
+      `Security score of ${securityScore}% with ${Object.keys(securityHeaders).length} security headers`,
     ]
 
     // Create content stats
@@ -371,6 +357,9 @@ export async function POST(request: Request) {
       performance_score: performanceScore,
       script_optimization_score: scriptOptimizationScore,
       content_quality_score: duplicateContentScore,
+      security_score: securityScore,
+      ssl_certificate: formattedUrl.startsWith("https://"),
+      security_headers: securityHeaders,
       improvements,
       subdomains,
       content_stats: contentStats,
@@ -379,6 +368,11 @@ export async function POST(request: Request) {
         headings: headings.slice(0, 15),
         links: links.slice(0, 30),
       },
+      ip_address: ipAddress,
+      hosting_provider_name: hostingInfo?.name || null,
+      hosting_provider_id: hostingInfo?.id || null,
+      server_location: hostingInfo?.location || null,
+      user_id: userId || null,
       created_at: new Date(),
     }
 
@@ -388,19 +382,26 @@ export async function POST(request: Request) {
       const result = await sql`
         INSERT INTO website_analyzer.analyses 
         (url, title, summary, key_points, keywords, sustainability_score, performance_score, 
-         script_optimization_score, content_quality_score, improvements, subdomains, 
-         content_stats, raw_data, created_at)
+         script_optimization_score, content_quality_score, security_score, ssl_certificate,
+         security_headers, improvements, subdomains, content_stats, raw_data, ip_address,
+         hosting_provider_name, hosting_provider_id, server_location, user_id, created_at)
         VALUES (
           ${formattedUrl}, ${title}, ${summary}, ${JSON.stringify(keyPoints)}, 
           ${JSON.stringify(keywords)}, ${sustainabilityScore}, ${performanceScore},
-          ${scriptOptimizationScore}, ${duplicateContentScore}, ${JSON.stringify(improvements)},
-          ${JSON.stringify(subdomains)}, ${JSON.stringify(contentStats)}, 
-          ${JSON.stringify(analysisResult.raw_data)}, NOW()
+          ${scriptOptimizationScore}, ${duplicateContentScore}, ${securityScore},
+          ${formattedUrl.startsWith("https://")}, ${JSON.stringify(securityHeaders)},
+          ${JSON.stringify(improvements)}, ${JSON.stringify(subdomains)}, 
+          ${JSON.stringify(contentStats)}, ${JSON.stringify(analysisResult.raw_data)},
+          ${ipAddress}, ${hostingInfo?.name || null}, ${hostingInfo?.id || null},
+          ${hostingInfo?.location || null}, ${userId || null}, NOW()
         )
         RETURNING id
       `
       analysisId = result[0].id
       console.log(`Analysis saved to database with ID: ${analysisId}`)
+
+      // Generate and save recommendations
+      await generateAndSaveRecommendations(analysisId, analysisResult)
     } catch (dbError) {
       console.error("Database error (non-critical):", dbError)
       analysisId = Date.now() // Fallback ID
@@ -419,6 +420,7 @@ export async function POST(request: Request) {
       },
       keyPoints,
       contentStats,
+      hostingInfo,
     })
   } catch (error) {
     console.error("Error analyzing website:", error)
@@ -430,5 +432,256 @@ export async function POST(request: Request) {
       },
       { status: 500 },
     )
+  }
+}
+
+// Helper functions
+function extractSecurityHeaders(headers: Headers): Record<string, string> {
+  const securityHeaders: Record<string, string> = {}
+
+  const securityHeaderNames = [
+    "strict-transport-security",
+    "content-security-policy",
+    "x-frame-options",
+    "x-content-type-options",
+    "x-xss-protection",
+    "referrer-policy",
+    "permissions-policy",
+    "expect-ct",
+  ]
+
+  securityHeaderNames.forEach((headerName) => {
+    const value = headers.get(headerName)
+    if (value) {
+      securityHeaders[headerName] = value
+    }
+  })
+
+  return securityHeaders
+}
+
+function calculateSecurityScore(url: string, securityHeaders: Record<string, string>, $: cheerio.CheerioAPI): number {
+  let score = 0
+
+  // HTTPS check (30 points)
+  if (url.startsWith("https://")) {
+    score += 30
+  }
+
+  // Security headers (50 points total)
+  const criticalHeaders = [
+    "strict-transport-security", // 10 points
+    "content-security-policy", // 15 points
+    "x-frame-options", // 10 points
+    "x-content-type-options", // 5 points
+    "x-xss-protection", // 5 points
+    "referrer-policy", // 5 points
+  ]
+
+  const headerScores = [10, 15, 10, 5, 5, 5]
+  criticalHeaders.forEach((header, index) => {
+    if (securityHeaders[header]) {
+      score += headerScores[index]
+    }
+  })
+
+  // Additional security checks (20 points)
+  // Check for mixed content
+  const hasHttpResources = $('img[src^="http:"], script[src^="http:"], link[href^="http:"]').length === 0
+  if (hasHttpResources) score += 10
+
+  // Check for inline scripts (security risk)
+  const inlineScripts = $("script:not([src])").length
+  if (inlineScripts < 3) score += 10
+
+  return Math.min(100, score)
+}
+
+async function detectHostingProvider(
+  ipAddress: string,
+  hostname: string,
+): Promise<{ id: number; name: string; location: string } | null> {
+  try {
+    // Simple hosting provider detection based on common patterns
+    const providers = [
+      { pattern: /amazonaws\.com|aws/, name: "Amazon Web Services", id: 4 },
+      { pattern: /googleusercontent\.com|google/, name: "Google Cloud Platform", id: 5 },
+      { pattern: /azure|microsoft/, name: "Microsoft Azure", id: 6 },
+      { pattern: /cloudflare/, name: "Cloudflare", id: 12 },
+      { pattern: /digitalocean/, name: "DigitalOcean", id: 13 },
+      { pattern: /linode/, name: "Linode", id: 14 },
+      { pattern: /vultr/, name: "Vultr", id: 15 },
+      { pattern: /bluehost/, name: "Bluehost", id: 7 },
+      { pattern: /hostgator/, name: "HostGator", id: 8 },
+      { pattern: /godaddy/, name: "GoDaddy", id: 9 },
+      { pattern: /siteground/, name: "SiteGround", id: 3 },
+      { pattern: /wpengine/, name: "WP Engine", id: 10 },
+      { pattern: /kinsta/, name: "Kinsta", id: 11 },
+    ]
+
+    for (const provider of providers) {
+      if (provider.pattern.test(hostname.toLowerCase())) {
+        return {
+          id: provider.id,
+          name: provider.name,
+          location: "Unknown", // Would need IP geolocation service for accurate location
+        }
+      }
+    }
+
+    return null
+  } catch (error) {
+    console.error("Error detecting hosting provider:", error)
+    return null
+  }
+}
+
+function generateImprovements(
+  scriptCount: number,
+  imageCount: number,
+  cssCount: number,
+  performanceScore: number,
+  scriptOptimizationScore: number,
+  duplicateContentScore: number,
+  securityScore: number,
+  description: string,
+  headingCount: number,
+  totalElements: number,
+): string[] {
+  const improvements: string[] = []
+
+  // Performance improvements
+  if (scriptCount > 10) {
+    improvements.push("Reduce the number of JavaScript files to improve loading speed")
+  }
+  if (imageCount > 20) {
+    improvements.push("Optimize image sizes and implement lazy loading")
+  }
+  if (cssCount > 5) {
+    improvements.push("Consolidate CSS files to reduce HTTP requests")
+  }
+  if (performanceScore < 70) {
+    improvements.push("Implement browser caching for static assets")
+  }
+  if (scriptOptimizationScore < 70) {
+    improvements.push("Minimize and compress JavaScript files")
+  }
+
+  // Security improvements
+  if (securityScore < 70) {
+    improvements.push("Implement security headers (CSP, HSTS, X-Frame-Options)")
+  }
+  if (securityScore < 50) {
+    improvements.push("Enable HTTPS and implement proper SSL/TLS configuration")
+  }
+
+  // Content improvements
+  if (duplicateContentScore < 70) {
+    improvements.push("Remove duplicate content to improve SEO")
+  }
+  if (!description) {
+    improvements.push("Add a meta description to improve SEO")
+  }
+  if (headingCount < 3) {
+    improvements.push("Add more headings to improve content structure")
+  }
+
+  // Technical improvements
+  if (totalElements > 1000) {
+    improvements.push("Simplify page structure to reduce DOM complexity")
+  }
+
+  // Sustainability improvements
+  improvements.push("Consider green hosting providers to reduce carbon footprint")
+  improvements.push("Implement efficient caching strategies to reduce server load")
+
+  // Ensure we have at least 6 improvement suggestions
+  const defaultImprovements = [
+    "Enable GZIP compression to reduce file sizes",
+    "Use a Content Delivery Network (CDN) for faster content delivery",
+    "Implement responsive images for better mobile performance",
+    "Reduce third-party scripts and tracking codes",
+    "Optimize font loading to prevent layout shifts",
+    "Implement proper caching headers for static resources",
+  ]
+
+  while (improvements.length < 6) {
+    const suggestion = defaultImprovements[improvements.length % defaultImprovements.length]
+    if (!improvements.includes(suggestion)) {
+      improvements.push(suggestion)
+    }
+  }
+
+  return improvements
+}
+
+async function generateAndSaveRecommendations(analysisId: number, analysis: any) {
+  const recommendations = [
+    {
+      category: "performance",
+      priority: analysis.performance_score < 60 ? "high" : analysis.performance_score < 80 ? "medium" : "low",
+      title: "Optimize Website Performance",
+      description: `Your website has a performance score of ${analysis.performance_score}%. Improving performance will enhance user experience and search engine rankings.`,
+      implementation_steps: [
+        "Minimize HTTP requests by combining CSS and JavaScript files",
+        "Optimize images by compressing and using modern formats (WebP, AVIF)",
+        "Enable browser caching with proper cache headers",
+        "Use a Content Delivery Network (CDN)",
+        "Minimize and compress CSS and JavaScript files",
+      ],
+      estimated_impact: analysis.performance_score < 60 ? "high" : "medium",
+      estimated_effort: "moderate",
+      resources: ["https://web.dev/performance/", "https://developers.google.com/speed/pagespeed/insights/"],
+    },
+    {
+      category: "security",
+      priority: analysis.security_score < 60 ? "high" : analysis.security_score < 80 ? "medium" : "low",
+      title: "Enhance Website Security",
+      description: `Your website has a security score of ${analysis.security_score}%. Implementing security best practices will protect your site and users.`,
+      implementation_steps: [
+        "Implement HTTPS with a valid SSL certificate",
+        "Add security headers (CSP, HSTS, X-Frame-Options)",
+        "Keep software and plugins updated",
+        "Use strong authentication methods",
+        "Regular security audits and monitoring",
+      ],
+      estimated_impact: "high",
+      estimated_effort: analysis.security_score < 60 ? "moderate" : "easy",
+      resources: ["https://owasp.org/www-project-top-ten/", "https://securityheaders.com/"],
+    },
+    {
+      category: "sustainability",
+      priority: analysis.sustainability_score < 70 ? "high" : "medium",
+      title: "Improve Environmental Impact",
+      description: `Your website has a sustainability score of ${analysis.sustainability_score}%. Reducing environmental impact helps the planet and can improve performance.`,
+      implementation_steps: [
+        "Choose a green hosting provider with renewable energy",
+        "Optimize images and reduce file sizes",
+        "Implement efficient caching strategies",
+        "Minimize third-party scripts and trackers",
+        "Use efficient coding practices",
+      ],
+      estimated_impact: "medium",
+      estimated_effort: "moderate",
+      resources: ["https://www.websitecarbon.com/", "https://sustainablewebdesign.org/"],
+    },
+  ]
+
+  try {
+    for (const rec of recommendations) {
+      await sql`
+        INSERT INTO website_analyzer.recommendations 
+        (analysis_id, category, priority, title, description, implementation_steps, 
+         estimated_impact, estimated_effort, resources, created_at)
+        VALUES (
+          ${analysisId}, ${rec.category}, ${rec.priority}, ${rec.title}, 
+          ${rec.description}, ${JSON.stringify(rec.implementation_steps)},
+          ${rec.estimated_impact}, ${rec.estimated_effort}, 
+          ${JSON.stringify(rec.resources)}, NOW()
+        )
+      `
+    }
+  } catch (error) {
+    console.error("Error saving recommendations:", error)
   }
 }
