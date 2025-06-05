@@ -7,11 +7,12 @@ import { LoadingAnimation } from "@/components/loading-animation"
 import { ResultsSection } from "@/components/results-section"
 import { SignUpModal } from "@/components/sign-up-modal"
 import { MagicalWebsiteInput } from "@/components/magical-website-input"
+import { EnhancedErrorMessage } from "@/components/enhanced-error-message"
 import { toast } from "@/components/ui/use-toast"
 import type { WebsiteData } from "@/types/website-data"
 import { motion } from "framer-motion"
 import { AnalyticsGraphic } from "@/components/analytics-graphic"
-import { Sparkles, TrendingUp, Shield, Leaf, Zap, Globe, Users } from "lucide-react"
+import { Sparkles, TrendingUp, Shield, Leaf, Globe, Users } from "lucide-react"
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
@@ -19,13 +20,49 @@ export default function Home() {
   const [showSignUpModal, setShowSignUpModal] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [errorType, setErrorType] = useState<"url" | "access" | "timeout" | "server" | "unknown">("unknown")
+  const [lastAnalyzedUrl, setLastAnalyzedUrl] = useState<string>("")
+
+  const determineErrorType = (
+    error: Error | string,
+    statusCode?: number,
+  ): "url" | "access" | "timeout" | "server" | "unknown" => {
+    const errorMessage = typeof error === "string" ? error : error.message
+
+    if (errorMessage.includes("Invalid URL") || errorMessage.includes("URL format")) {
+      return "url"
+    }
+
+    if (errorMessage.includes("access denied") || errorMessage.includes("403") || statusCode === 403) {
+      return "access"
+    }
+
+    if (errorMessage.includes("timeout") || errorMessage.includes("timed out") || statusCode === 408) {
+      return "timeout"
+    }
+
+    if (errorMessage.includes("server error") || statusCode === 500) {
+      return "server"
+    }
+
+    return "unknown"
+  }
 
   const handleAnalyzeWebsite = async (url: string) => {
     setIsLoading(true)
     setWebsiteData(null)
     setError(null)
+    setLastAnalyzedUrl(url)
 
     try {
+      // Validate URL format first
+      try {
+        new URL(url)
+      } catch (e) {
+        setErrorType("url")
+        throw new Error(`Invalid URL format: ${url}. Please enter a valid website address.`)
+      }
+
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: {
@@ -37,16 +74,26 @@ export default function Home() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to analyze website")
+        // Determine error type based on status code and message
+        const errorType = determineErrorType(data.error || "Failed to analyze website", response.status)
+        setErrorType(errorType)
+
+        throw new Error(data.error || `Failed to analyze website: ${url}`)
       }
 
       setWebsiteData(data)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error analyzing website:", error)
-      setError("Failed to analyze the website. Please try again.")
+
+      // If error type wasn't set during the try block
+      if (errorType === "unknown") {
+        setErrorType(determineErrorType(error))
+      }
+
+      setError(error.message || "Failed to analyze the website. Please try again.")
       toast({
-        title: "Error",
-        description: "Failed to analyze the website. Please try again.",
+        title: "Analysis Failed",
+        description: error.message || "Failed to analyze the website. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -84,7 +131,7 @@ export default function Home() {
         title: "Success",
         description: data.message || `${type === "favorite" ? "Added to favorites" : "Analysis saved"}`,
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error ${type}ing analysis:`, error)
       toast({
         title: "Error",
@@ -99,13 +146,25 @@ export default function Home() {
     setShowSignUpModal(true)
   }
 
+  const handleRetryAnalysis = () => {
+    if (lastAnalyzedUrl) {
+      handleAnalyzeWebsite(lastAnalyzedUrl)
+    }
+  }
+
+  const handleResetAnalysis = () => {
+    setError(null)
+    setWebsiteData(null)
+    setLastAnalyzedUrl("")
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
       <Header />
 
       <main className="relative">
         {/* Hero Section with Magical Input */}
-        {!websiteData && !isLoading && (
+        {!websiteData && !isLoading && !error && (
           <section className="relative">
             <MagicalWebsiteInput onAnalyze={handleAnalyzeWebsite} isLoading={isLoading} />
           </section>
@@ -113,41 +172,24 @@ export default function Home() {
 
         {/* Loading Animation */}
         {isLoading && (
-          <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+          <div className="min-h-[600px] flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
             <LoadingAnimation />
           </div>
         )}
 
-        {/* Error State */}
+        {/* Enhanced Error State */}
         {error && !isLoading && (
-          <div className="min-h-screen flex items-center justify-center px-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-8 max-w-md text-center"
-            >
-              <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Zap className="w-8 h-8 text-red-600 dark:text-red-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-2">Analysis Failed</h3>
-              <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
-              <p className="text-sm text-red-500 dark:text-red-400 mb-6">
-                Please check your URL and try again. If the problem persists, try a different website.
-              </p>
-              <button
-                onClick={() => {
-                  setError(null)
-                  setWebsiteData(null)
-                }}
-                className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors"
-              >
-                Try Again
-              </button>
-            </motion.div>
+          <div className="min-h-[600px] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+            <EnhancedErrorMessage
+              error={error}
+              errorType={errorType}
+              onRetry={handleRetryAnalysis}
+              onReset={handleResetAnalysis}
+            />
           </div>
         )}
 
-        {/* Results Section */}
+        {/* Results Section with Improved Visual Separation */}
         {websiteData && (
           <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
             <div className="container mx-auto px-4 py-8">
@@ -155,10 +197,7 @@ export default function Home() {
                 {/* Back to Search Button */}
                 <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
                   <button
-                    onClick={() => {
-                      setWebsiteData(null)
-                      setError(null)
-                    }}
+                    onClick={handleResetAnalysis}
                     className="flex items-center space-x-2 text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
                   >
                     <span>←</span>
