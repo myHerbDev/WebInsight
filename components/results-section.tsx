@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
 import { BarChart3, TrendingUp, Download, Heart, Bookmark, Globe, Shield, Zap, Users, AlertCircle } from "lucide-react"
 import type { WebsiteData } from "@/types/website-data"
+import { SustainabilityRankBox } from "@/components/sustainability-rank-box"
 
 interface ResultsSectionProps {
   data: WebsiteData
@@ -214,18 +215,8 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
 
         <TabsContent value="overview" className="space-y-6">
           {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <Globe className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                <div className={`text-2xl font-bold ${getScoreColor(safeData.sustainability_score || 0)}`}>
-                  {typeof safeData.sustainability_score === "number" && !isNaN(safeData.sustainability_score)
-                    ? `${safeData.sustainability_score}%`
-                    : "N/A"}
-                </div>
-                <div className="text-sm text-gray-500">Sustainability</div>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <SustainabilityRankBox score={safeData.sustainability_score || 0} className="md:col-span-2" />
 
             <Card>
               <CardContent className="p-4 text-center">

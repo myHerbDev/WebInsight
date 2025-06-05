@@ -87,14 +87,28 @@ Create a professional email with subject line and body content.`
             prompt = `Generate content about the website analysis for ${websiteData?.url || "the analyzed website"}.`
         }
 
-        const result = await generateText({
-          model: xai("grok-beta"),
-          prompt,
-          maxTokens: 1500,
-          temperature: 0.3,
+        // Add a timeout to prevent hanging requests
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error("Content generation timed out")), 30000)
         })
 
-        return result.text
+        try {
+          // Race the content generation against the timeout
+          const result = await Promise.race([
+            generateText({
+              model: xai("grok-beta"),
+              prompt,
+              maxTokens: 1500,
+              temperature: 0.3,
+            }),
+            timeoutPromise,
+          ])
+
+          return result.text
+        } catch (error) {
+          console.error("Generation error:", error)
+          throw new Error(`Content generation failed: ${error.message || "Unknown error"}`)
+        }
       },
       null,
       "Failed to generate content",
@@ -111,7 +125,7 @@ Create a professional email with subject line and body content.`
       success: true,
       content: {
         id: contentId,
-        title: `Generated ${contentType} Content`,
+        title: structuredContent.sections?.[0]?.title || `Generated ${contentType} Content`,
         content: structuredContent.content,
         markdown: structuredContent.markdown,
         summary: structuredContent.summary,
@@ -122,6 +136,7 @@ Create a professional email with subject line and body content.`
         websiteUrl: websiteData?.url || null,
         wordCount: structuredContent.wordCount,
         readingTime: structuredContent.readingTime,
+        sections: structuredContent.sections || [],
       },
     }
 

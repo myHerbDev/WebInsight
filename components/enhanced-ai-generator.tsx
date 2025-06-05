@@ -323,7 +323,23 @@ export function EnhancedAIGenerator({ websiteData, onSignUpClick }: EnhancedAIGe
     }
 
     setIsGenerating(true)
+    // Switch to result tab immediately
     setActiveTab("result")
+
+    // Set a placeholder content while generating
+    setGeneratedContent({
+      id: `temp-${Date.now()}`,
+      type: selectedType,
+      title: "Generating content...",
+      content: "Your content is being generated. Please wait a moment...",
+      markdown: "Your content is being generated. Please wait a moment...",
+      createdAt: new Date().toISOString(),
+      websiteUrl: websiteData?.url,
+      isFavorite: false,
+      sections: [],
+      wordCount: 0,
+      readingTime: 0,
+    })
 
     try {
       console.log("Starting content generation with:", {
@@ -624,7 +640,7 @@ Generated with Website Analytics AI
             <Brain className="w-4 h-4 mr-2" />
             Generate
           </TabsTrigger>
-          <TabsTrigger value="result" disabled={!generatedContent && !isGenerating} className="rounded-lg">
+          <TabsTrigger value="result" className="rounded-lg">
             <FileText className="w-4 h-4 mr-2" />
             Generated Content
           </TabsTrigger>
@@ -775,34 +791,36 @@ Generated with Website Analytics AI
 
         {/* Result Tab */}
         <TabsContent value="result" className="space-y-6">
-          <AnimatePresence>
-            {isGenerating && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center py-12"
-              >
-                <Loader2 className="w-12 h-12 text-purple-600 mx-auto mb-4 animate-spin" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Generating Your Content</h3>
-                <p className="text-gray-600">
-                  Creating {getCurrentTypeInfo()?.label.toLowerCase()} with {selectedTone} tone...
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {isGenerating && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-12"
+            >
+              <Loader2 className="w-12 h-12 text-purple-600 mx-auto mb-4 animate-spin" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Generating Your Content</h3>
+              <p className="text-gray-600">
+                Creating {getCurrentTypeInfo()?.label.toLowerCase()} with {selectedTone} tone...
+              </p>
+            </motion.div>
+          )}
 
-          <AnimatePresence>
-            {generatedContent && !isGenerating && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-                <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
-                  <CardContent className="p-6">
-                    <ContentDisplay content={generatedContent} />
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {generatedContent && (
+            <motion.div
+              key={generatedContent.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className={isGenerating ? "opacity-50" : ""}
+            >
+              <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
+                <CardContent className="p-6">
+                  <ContentDisplay content={generatedContent} />
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
 
           {!generatedContent && !isGenerating && (
             <div className="text-center py-12">
