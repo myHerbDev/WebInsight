@@ -5,10 +5,14 @@ import { sql, safeDbOperation, isNeonAvailable } from "@/lib/neon-db"
 import { redis, safeRedisOperation, CACHE_KEYS, CACHE_TTL } from "@/lib/upstash-redis"
 import { safeJsonParse } from "@/lib/safe-json"
 import { safeAsyncOperation, validateRequired } from "@/lib/error-boundary"
+import { scrapeWebsiteData } from "@/lib/website-scraper"
+import { analyzeSEO } from "@/lib/seo-analyzer"
+import { analyzePerformance } from "@/lib/performance-analyzer"
+import { analyzeSecurity } from "@/lib/security-analyzer"
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("Starting website analysis request")
+    console.log("Starting enhanced website analysis request")
 
     let requestData
     try {
@@ -46,6 +50,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid URL format" }, { status: 400 })
     }
 
+    // Check cache first
     const cachedAnalysis = await safeRedisOperation(
       async () => {
         const cached = await redis!.get(CACHE_KEYS.ANALYSIS(normalizedUrl))
@@ -60,6 +65,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(cachedAnalysis)
     }
 
+    // Check if analysis already exists in database
     let existingAnalysis = null
     if (isNeonAvailable()) {
       existingAnalysis = await safeDbOperation(
@@ -107,120 +113,149 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (!process.env.GROQ_API_KEY) {
-      console.error("GROQ_API_KEY not configured")
-      return NextResponse.json({ error: "AI service not configured" }, { status: 500 })
-    }
-
-    const analysisResult = await safeAsyncOperation(
+    // Scrape website data using the new engine
+    console.log("Scraping website data...")
+    const scrapedData = await safeAsyncOperation(
       async () => {
-        const prompt = `Analyze the website: ${normalizedUrl}
-
-Please provide a comprehensive analysis including:
-1. Website title and summary
-2. Key points about the website
-3. Relevant keywords
-4. Sustainability metrics (performance, optimization, etc.)
-5. Security assessment
-6. SEO evaluation
-
-Return the analysis in this exact JSON format:
-{
-  "title": "Website Title",
-  "summary": "Brief summary of the website",
-  "keyPoints": ["point1", "point2", "point3"],
-  "keywords": ["keyword1", "keyword2", "keyword3"],
-  "sustainability": {
-    "score": 85,
-    "performance": 90,
-    "scriptOptimization": 80,
-    "duplicateContent": 75,
-    "improvements": ["improvement1", "improvement2"]
-  },
-  "sustainability_score": 85,
-  "performance_score": 90,
-  "script_optimization_score": 80,
-  "content_quality_score": 85,
-  "security_score": 90,
-  "improvements": ["improvement1", "improvement2"],
-  "hosting_provider_name": "Provider Name",
-  "ssl_certificate": true,
-  "server_location": "Location",
-  "ip_address": "IP Address"
-}`
-
-        const result = await generateText({
-          model: groq("llama-3.1-70b-versatile"),
-          prompt,
-          maxTokens: 2000,
-        })
-
-        return result.text
+        return await scrapeWebsiteData(normalizedUrl)
       },
       null,
-      "Failed to generate AI analysis",
+      "Failed to scrape website data",
     )
 
-    if (!analysisResult) {
-      return NextResponse.json({ error: "Failed to generate analysis" }, { status: 500 })
+    if (!scrapedData) {
+      return NextResponse.json({ error: "Failed to scrape website data" }, { status: 500 })
     }
 
-    const analysisData = safeJsonParse(analysisResult, {
-      title: "Website Analysis",
-      summary: "Analysis completed",
-      keyPoints: [],
-      keywords: [],
-      sustainability: {
-        score: 0,
-        performance: 0,
-        scriptOptimization: 0,
-        duplicateContent: 0,
-        improvements: [],
-      },
-      sustainability_score: 0,
-      performance_score: 0,
-      script_optimization_score: 0,
-      content_quality_score: 0,
-      security_score: 0,
-      improvements: [],
-      hosting_provider_name: "Unknown",
-      ssl_certificate: false,
-      server_location: "Unknown",
-      ip_address: "Unknown",
-    })
+    console.log("Website scraped successfully:", scrapedData.title)
 
+    // Perform various analyses
+    const seoAnalysis = analyzeSEO(scrapedData)
+    const performanceAnalysis = analyzePerformance(scrapedData)
+    const securityAnalysis = analyzeSecurity(scrapedData)
+
+    // Generate AI-powered insights if Groq is available
+    let aiInsights = null
+    if (process.env.GROQ_API_KEY) {
+      aiInsights = await safeAsyncOperation(
+        async () => {
+          const prompt = `Analyze this website data and provide insights:
+
+Website: ${scrapedData.title}
+URL: ${normalizedUrl}
+Description: ${scrapedData.description}
+Content: ${scrapedData.content.textContent.substring(0, 1000)}...
+
+SEO Score: ${seoAnalysis.score}
+Performance Score: ${performanceAnalysis.score}
+Security Score: ${securityAnalysis.score}
+
+Provide a JSON response with:
+- summary: Brief overview of the website
+- keyPoints: Array of 3-5 key insights
+- improvements: Array of specific improvement suggestions
+- sustainability_insights: Environmental impact assessment
+
+Format as valid JSON only.`
+
+          const result = await generateText({
+            model: groq("llama-3.1-70b-versatile"),
+            prompt,
+            maxTokens: 1500,
+          })
+
+          return safeJsonParse(result.text, {
+            summary: "Analysis completed",
+            keyPoints: [],
+            improvements: [],
+            sustainability_insights: "No specific insights available",
+          })
+        },
+        {
+          summary: "Analysis completed using advanced website scraping",
+          keyPoints: [
+            `Website title: ${scrapedData.title}`,
+            `SEO score: ${seoAnalysis.score}/100`,
+            `Performance score: ${performanceAnalysis.score}/100`,
+            `Security score: ${securityAnalysis.score}/100`,
+          ],
+          improvements: [
+            ...seoAnalysis.recommendations,
+            ...performanceAnalysis.recommendations,
+            ...securityAnalysis.recommendations,
+          ].slice(0, 5),
+          sustainability_insights: "Website analysis completed with focus on performance optimization",
+        },
+        "Failed to generate AI insights",
+      )
+    }
+
+    // Calculate overall sustainability score
+    const sustainabilityScore = Math.round((seoAnalysis.score + performanceAnalysis.score + securityAnalysis.score) / 3)
+
+    // Prepare response data
     const responseData = {
       _id: `analysis_${Date.now()}`,
       url: normalizedUrl,
-      title: analysisData.title || "Website Analysis",
-      summary: analysisData.summary || "Analysis completed",
-      keyPoints: Array.isArray(analysisData.keyPoints) ? analysisData.keyPoints : [],
-      keywords: Array.isArray(analysisData.keywords) ? analysisData.keywords : [],
-      sustainability: analysisData.sustainability || {
-        score: 0,
-        performance: 0,
-        scriptOptimization: 0,
-        duplicateContent: 0,
-        improvements: [],
+      title: scrapedData.title,
+      summary: aiInsights?.summary || `Comprehensive analysis of ${scrapedData.title}`,
+      keyPoints: aiInsights?.keyPoints || [
+        `Website successfully analyzed: ${scrapedData.title}`,
+        `Found ${scrapedData.content.wordCount} words of content`,
+        `SEO optimization score: ${seoAnalysis.score}/100`,
+        `Performance score: ${performanceAnalysis.score}/100`,
+        `Security assessment: ${securityAnalysis.score}/100`,
+      ],
+      keywords: scrapedData.keywords,
+      sustainability: {
+        score: sustainabilityScore,
+        performance: performanceAnalysis.score,
+        scriptOptimization: Math.max(0, 100 - scrapedData.scripts.length * 5),
+        duplicateContent: 85, // Placeholder - would need content analysis
+        improvements:
+          aiInsights?.improvements ||
+          [...seoAnalysis.recommendations, ...performanceAnalysis.recommendations].slice(0, 5),
       },
-      subdomains: [],
-      contentStats: {},
-      rawData: {},
-      sustainability_score: analysisData.sustainability_score || 0,
-      performance_score: analysisData.performance_score || 0,
-      script_optimization_score: analysisData.script_optimization_score || 0,
-      content_quality_score: analysisData.content_quality_score || 0,
-      security_score: analysisData.security_score || 0,
-      improvements: Array.isArray(analysisData.improvements) ? analysisData.improvements : [],
-      hosting_provider_name: analysisData.hosting_provider_name || "Unknown",
-      ssl_certificate: analysisData.ssl_certificate || false,
-      server_location: analysisData.server_location || "Unknown",
-      ip_address: analysisData.ip_address || "Unknown",
+      subdomains: [], // Would need additional analysis
+      contentStats: {
+        wordCount: scrapedData.content.wordCount,
+        paragraphs: scrapedData.content.paragraphs.length,
+        headings: scrapedData.headings.h1.length + scrapedData.headings.h2.length + scrapedData.headings.h3.length,
+        images: scrapedData.images.length,
+        links: scrapedData.links.internal.length + scrapedData.links.external.length,
+        scripts: scrapedData.scripts.length,
+        styles: scrapedData.styles.length,
+      },
+      rawData: {
+        paragraphs: scrapedData.content.paragraphs,
+        headings: [...scrapedData.headings.h1, ...scrapedData.headings.h2, ...scrapedData.headings.h3],
+        links: [...scrapedData.links.internal, ...scrapedData.links.external],
+        images: scrapedData.images.map((img) => img.src),
+        metaTags: scrapedData.metaTags,
+        technicalInfo: scrapedData.technicalInfo,
+      },
+      // Backward compatibility fields
+      sustainability_score: sustainabilityScore,
+      performance_score: performanceAnalysis.score,
+      script_optimization_score: Math.max(0, 100 - scrapedData.scripts.length * 5),
+      content_quality_score: seoAnalysis.score,
+      security_score: securityAnalysis.score,
+      improvements:
+        aiInsights?.improvements ||
+        [
+          ...seoAnalysis.recommendations,
+          ...performanceAnalysis.recommendations,
+          ...securityAnalysis.recommendations,
+        ].slice(0, 8),
+      hosting_provider_name: extractHostingProvider(scrapedData.technicalInfo.serverHeaders),
+      ssl_certificate: scrapedData.technicalInfo.hasSSL,
+      server_location: "Unknown", // Would need IP geolocation
+      ip_address: "Unknown", // Would need DNS lookup
     }
 
-    let savedAnalysis = responseData
+    // Save to Neon database
     if (isNeonAvailable()) {
-      savedAnalysis = await safeDbOperation(
+      await safeDbOperation(
         async () => {
           await sql`
             INSERT INTO website_analyses (
@@ -247,10 +282,39 @@ Return the analysis in this exact JSON format:
       )
     }
 
-    console.log("Analysis completed successfully")
+    // Cache the result
+    await safeRedisOperation(
+      async () => {
+        await redis!.setex(CACHE_KEYS.ANALYSIS(normalizedUrl), CACHE_TTL.ANALYSIS, JSON.stringify(responseData))
+      },
+      undefined,
+      "Error caching analysis",
+    )
+
+    console.log("Enhanced analysis completed successfully")
     return NextResponse.json(responseData)
   } catch (error: any) {
     console.error("Analysis error:", error)
-    return NextResponse.json({ error: "Internal server error during analysis" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: "Internal server error during analysis",
+        details: error.message,
+      },
+      { status: 500 },
+    )
   }
+}
+
+function extractHostingProvider(headers: Record<string, string>): string {
+  const server = headers.server?.toLowerCase() || ""
+  const xPoweredBy = headers["x-powered-by"]?.toLowerCase() || ""
+
+  if (server.includes("cloudflare")) return "Cloudflare"
+  if (server.includes("nginx")) return "Nginx"
+  if (server.includes("apache")) return "Apache"
+  if (server.includes("iis")) return "Microsoft IIS"
+  if (xPoweredBy.includes("vercel")) return "Vercel"
+  if (xPoweredBy.includes("netlify")) return "Netlify"
+
+  return "Unknown"
 }
