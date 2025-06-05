@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
-import { safeDbOperation, isSupabaseAvailable, getSupabaseClient } from "@/lib/supabase-db"
+import { sql, safeDbOperation, isNeonAvailable } from "@/lib/neon-db"
+import { randomBytes } from "crypto"
 
 export async function GET(request: Request) {
   try {
@@ -13,13 +14,13 @@ export async function GET(request: Request) {
     // Try to get comparison data from database
     const comparisons = await safeDbOperation(
       async () => {
-        const supabase = getSupabaseClient()
-        if (!supabase) throw new Error("Supabase not available")
+        if (!isNeonAvailable()) throw new Error("Neon not available")
 
-        const { data, error } = await supabase.from("website_analyses").select("*").in("url", urls)
-
-        if (error) throw error
-        return data || []
+        const result = await sql`
+          SELECT * FROM website_analyses 
+          WHERE url = ANY(${urls})
+        `
+        return result || []
       },
       [],
       "Error fetching comparison data",
@@ -54,7 +55,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       data: comparisons,
-      source: isSupabaseAvailable() ? "database" : "fallback",
+      source: isNeonAvailable() ? "database" : "fallback",
     })
   } catch (error) {
     console.error("Comparisons API error:", error)
@@ -70,7 +71,18 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { websites, comparisonName } = await request.json()
+    let requestBody
+    try {
+      const bodyText = await request.text()
+      if (!bodyText.trim()) {
+        return NextResponse.json({ error: "Empty request body" }, { status: 400 })
+      }
+      requestBody = JSON.parse(bodyText)
+    } catch (error) {
+      return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 })
+    }
+
+    const { websites, comparisonName } = requestBody
 
     if (!websites || websites.length < 2) {
       return NextResponse.json({ error: "At least 2 websites required for comparison" }, { status: 400 })
@@ -79,23 +91,26 @@ export async function POST(request: Request) {
     // Save comparison to database if available
     const savedComparison = await safeDbOperation(
       async () => {
-        const supabase = getSupabaseClient()
-        if (!supabase) throw new Error("Supabase not available")
+        if (!isNeonAvailable()) throw new Error("Neon not available")
 
-        const { data, error } = await supabase
-          .from("comparisons")
-          .insert([
-            {
-              name: comparisonName || "Website Comparison",
-              websites: websites,
-              created_at: new Date().toISOString(),
-            },
-          ])
-          .select()
-          .single()
+        const comparisonId = randomBytes(16).toString("hex")
+        await sql`
+          INSERT INTO comparisons (id, name, analysis_ids, created_at, updated_at)
+          VALUES (
+            ${comparisonId}, 
+            ${comparisonName || "Website Comparison"}, 
+            ${JSON.stringify(websites)}, 
+            NOW(), 
+            NOW()
+          )
+        `
 
-        if (error) throw error
-        return data
+        return {
+          id: comparisonId,
+          name: comparisonName || "Website Comparison",
+          websites: websites,
+          created_at: new Date().toISOString(),
+        }
       },
       {
         id: Date.now().toString(),
@@ -109,7 +124,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       data: savedComparison,
-      source: isSupabaseAvailable() ? "database" : "local",
+      source: isNeonAvailable() ? "database" : "local",
     })
   } catch (error) {
     console.error("Save comparison error:", error)

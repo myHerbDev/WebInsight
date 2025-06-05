@@ -1,59 +1,54 @@
 import { NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase"
+import { authenticateUser, createSession } from "@/lib/auth"
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json()
+    let requestBody
+    try {
+      const bodyText = await request.text()
+      if (!bodyText.trim()) {
+        return NextResponse.json({ error: "Empty request body" }, { status: 400 })
+      }
+      requestBody = JSON.parse(bodyText)
+    } catch (error) {
+      return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 })
+    }
+
+    const { email, password } = requestBody
 
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    // Check if Supabase is configured
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      // Mock successful login for preview mode
-      return NextResponse.json({
-        success: true,
-        userId: "mock-user-id",
-        email,
-        message: "Logged in successfully (preview mode)",
-      })
+    // Authenticate user
+    const user = await authenticateUser(email, password)
+    if (!user) {
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
-    try {
-      const supabase = createServerSupabaseClient()
-
-      // Sign in with Supabase Auth
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) {
-        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
-      }
-
-      if (!data.user) {
-        return NextResponse.json({ error: "Authentication failed" }, { status: 401 })
-      }
-
-      return NextResponse.json({
-        success: true,
-        userId: data.user.id,
-        email: data.user.email,
-        accessToken: data.session?.access_token,
-      })
-    } catch (authError) {
-      console.error("Supabase auth error:", authError)
-      // Fall back to mock data if Supabase operations fail
-      return NextResponse.json({
-        success: true,
-        userId: "mock-user-id",
-        email,
-        message: "Logged in successfully (fallback)",
-      })
+    // Create session
+    const sessionId = await createSession(user)
+    if (!sessionId) {
+      return NextResponse.json({ error: "Failed to create session" }, { status: 500 })
     }
-  } catch (error) {
+
+    // Set session cookie
+    const response = NextResponse.json({
+      success: true,
+      userId: user.id,
+      email: user.email,
+      message: "Logged in successfully",
+    })
+
+    response.cookies.set("session", sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+    })
+
+    return response
+  } catch (error: any) {
     console.error("Error logging in:", error)
     return NextResponse.json({ error: "Failed to log in" }, { status: 500 })
   }

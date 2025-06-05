@@ -1,16 +1,40 @@
 import { NextResponse } from "next/server"
 import { generateText } from "ai"
 import { groq } from "@ai-sdk/groq"
-import { supabaseAdmin, safeDbOperation, isSupabaseAvailable } from "@/lib/supabase-db"
+import { sql, safeDbOperation, isNeonAvailable } from "@/lib/neon-db"
+import { redis, safeRedisOperation, CACHE_KEYS, CACHE_TTL } from "@/lib/upstash-redis"
+import { randomBytes } from "crypto"
 
 export async function POST(request: Request) {
   try {
+    // Safe request body parsing
     let requestBody
     try {
-      requestBody = await request.json()
-    } catch (error) {
-      console.error("Invalid JSON in request body:", error)
-      return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 })
+      const bodyText = await request.text()
+      console.log("Raw request body:", bodyText.substring(0, 200))
+
+      if (!bodyText || !bodyText.trim()) {
+        console.error("Empty request body received")
+        return NextResponse.json({ error: "Request body is required" }, { status: 400 })
+      }
+
+      // Validate JSON before parsing
+      if (!bodyText.trim().startsWith("{") || !bodyText.trim().endsWith("}")) {
+        console.error("Invalid JSON format in request body")
+        return NextResponse.json({ error: "Invalid JSON format" }, { status: 400 })
+      }
+
+      requestBody = JSON.parse(bodyText)
+      console.log("Parsed request body successfully")
+    } catch (parseError: any) {
+      console.error("JSON parsing error:", parseError.message)
+      return NextResponse.json(
+        {
+          error: "Invalid JSON in request body",
+          details: parseError.message,
+        },
+        { status: 400 },
+      )
     }
 
     const {
@@ -45,27 +69,41 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid URL format" }, { status: 400 })
     }
 
-    // Check if analysis already exists in Supabase (only if available)
+    // Check cache first
+    const cachedAnalysis = await safeRedisOperation(
+      async () => {
+        const cached = await redis!.get(CACHE_KEYS.ANALYSIS(normalizedUrl))
+        return cached ? JSON.parse(cached as string) : null
+      },
+      null,
+      "Error checking cache",
+    )
+
+    if (cachedAnalysis) {
+      console.log("Returning cached analysis")
+      return NextResponse.json(cachedAnalysis)
+    }
+
+    // Check if analysis already exists in database
     let existingAnalysis = null
-    if (isSupabaseAvailable()) {
+    if (isNeonAvailable()) {
       existingAnalysis = await safeDbOperation(
         async () => {
-          const { data } = await supabaseAdmin
-            .from("website_analyses")
-            .select("*")
-            .eq("url", normalizedUrl)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .single()
-          return data
+          const result = await sql`
+            SELECT * FROM website_analyses 
+            WHERE url = ${normalizedUrl} 
+            ORDER BY created_at DESC 
+            LIMIT 1
+          `
+          return result[0] || null
         },
         null,
         "Error checking existing analysis",
       )
 
       if (existingAnalysis && new Date(existingAnalysis.created_at) > new Date(Date.now() - 24 * 60 * 60 * 1000)) {
-        console.log("Returning cached analysis")
-        return NextResponse.json({
+        console.log("Returning database analysis")
+        const formattedAnalysis = {
           ...existingAnalysis,
           _id: existingAnalysis.id,
           keyPoints: existingAnalysis.key_points || [],
@@ -76,7 +114,22 @@ export async function POST(request: Request) {
             duplicateContent: 0,
             improvements: existingAnalysis.improvements || [],
           },
-        })
+        }
+
+        // Cache the result
+        await safeRedisOperation(
+          async () => {
+            await redis!.setex(
+              CACHE_KEYS.ANALYSIS(normalizedUrl),
+              CACHE_TTL.ANALYSIS,
+              JSON.stringify(formattedAnalysis),
+            )
+          },
+          undefined,
+          "Error caching analysis",
+        )
+
+        return NextResponse.json(formattedAnalysis)
       }
     }
 
@@ -153,11 +206,13 @@ export async function POST(request: Request) {
     }
 
     // Combine analysis results
+    const analysisId = randomBytes(16).toString("hex")
     const finalAnalysis = {
+      id: analysisId,
       url: normalizedUrl,
       title: aiAnalysis?.title || analysisResult.title || extractDomain(normalizedUrl),
       summary: aiAnalysis?.summary || analysisResult.summary || `Analysis of ${normalizedUrl}`,
-      keyPoints: aiAnalysis?.keyPoints || analysisResult.keyPoints || [],
+      key_points: aiAnalysis?.keyPoints || analysisResult.keyPoints || [],
       keywords: aiAnalysis?.keywords || analysisResult.keywords || [],
       sustainability_score: analysisResult.sustainabilityScore || 0,
       performance_score: analysisResult.performanceScore || 0,
@@ -169,48 +224,93 @@ export async function POST(request: Request) {
       raw_data: analysisResult.rawData || {},
       hosting_provider_name: analysisResult.hostingProvider || "Unknown",
       ssl_certificate: analysisResult.hasSSL || false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     }
 
-    // Save to Supabase (only if available)
-    let savedAnalysis = { id: Date.now().toString(), ...finalAnalysis }
-    if (isSupabaseAvailable()) {
+    // Save to Neon database
+    let savedAnalysis = finalAnalysis
+    if (isNeonAvailable()) {
       savedAnalysis = await safeDbOperation(
         async () => {
-          const { data, error } = await supabaseAdmin
-            .from("website_analyses")
-            .insert([
-              {
-                ...finalAnalysis,
-                key_points: finalAnalysis.keyPoints,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              },
-            ])
-            .select()
-            .single()
-
-          if (error) throw error
-          return data
+          await sql`
+            INSERT INTO website_analyses (
+              id, url, title, summary, key_points, keywords,
+              sustainability_score, performance_score, script_optimization_score,
+              content_quality_score, security_score, improvements,
+              content_stats, raw_data, hosting_provider_name, ssl_certificate,
+              created_at, updated_at
+            ) VALUES (
+              ${finalAnalysis.id}, ${finalAnalysis.url}, ${finalAnalysis.title}, 
+              ${finalAnalysis.summary}, ${JSON.stringify(finalAnalysis.key_points)}, 
+              ${JSON.stringify(finalAnalysis.keywords)}, ${finalAnalysis.sustainability_score},
+              ${finalAnalysis.performance_score}, ${finalAnalysis.script_optimization_score},
+              ${finalAnalysis.content_quality_score}, ${finalAnalysis.security_score},
+              ${JSON.stringify(finalAnalysis.improvements)}, ${JSON.stringify(finalAnalysis.content_stats)},
+              ${JSON.stringify(finalAnalysis.raw_data)}, ${finalAnalysis.hosting_provider_name},
+              ${finalAnalysis.ssl_certificate}, ${finalAnalysis.created_at}, ${finalAnalysis.updated_at}
+            )
+          `
+          return finalAnalysis
         },
-        { id: Date.now().toString(), ...finalAnalysis },
+        finalAnalysis,
         "Error saving analysis to database",
       )
-    } else {
-      console.log("Supabase not available - analysis not saved to database")
     }
 
-    // Return formatted response
-    return NextResponse.json({
+    // Format response
+    const responseData = {
       _id: savedAnalysis.id,
-      ...finalAnalysis,
+      url: savedAnalysis.url,
+      title: savedAnalysis.title,
+      summary: savedAnalysis.summary,
+      keyPoints: savedAnalysis.key_points,
+      keywords: savedAnalysis.keywords,
       sustainability: {
-        score: finalAnalysis.sustainability_score,
-        performance: finalAnalysis.performance_score,
-        scriptOptimization: finalAnalysis.script_optimization_score,
+        score: savedAnalysis.sustainability_score,
+        performance: savedAnalysis.performance_score,
+        scriptOptimization: savedAnalysis.script_optimization_score,
         duplicateContent: 0,
-        improvements: finalAnalysis.improvements,
+        improvements: savedAnalysis.improvements,
       },
-    })
+      subdomains: [],
+      contentStats: savedAnalysis.content_stats,
+      rawData: savedAnalysis.raw_data,
+    }
+
+    // Validate response data before sending
+    if (!responseData || typeof responseData !== "object") {
+      console.error("Invalid response data generated")
+      return NextResponse.json(
+        {
+          error: "Failed to generate valid response data",
+        },
+        { status: 500 },
+      )
+    }
+
+    // Ensure all required fields are present
+    const validatedResponse = {
+      _id: responseData._id || "unknown",
+      url: responseData.url || normalizedUrl,
+      title: responseData.title || "Website Analysis",
+      summary: responseData.summary || "Analysis completed",
+      keyPoints: Array.isArray(responseData.keyPoints) ? responseData.keyPoints : [],
+      keywords: Array.isArray(responseData.keywords) ? responseData.keywords : [],
+      sustainability: responseData.sustainability || {
+        score: 0,
+        performance: 0,
+        scriptOptimization: 0,
+        duplicateContent: 0,
+        improvements: [],
+      },
+      subdomains: responseData.subdomains || [],
+      contentStats: responseData.contentStats || {},
+      rawData: responseData.rawData || {},
+    }
+
+    console.log("Sending validated response")
+    return NextResponse.json(validatedResponse)
   } catch (error: any) {
     console.error("Analysis error:", error)
     return NextResponse.json(
@@ -224,11 +324,10 @@ export async function POST(request: Request) {
   }
 }
 
+// Helper functions (same as before but without Supabase dependencies)
 function analyzeWebsiteContent(html: string, url: string, options: any) {
-  // Enhanced content analysis with all the new parameters
   const doc = html || ""
 
-  // Extract basic content
   const title = extractTitle(doc) || extractDomain(url)
   const headings = extractHeadings(doc)
   const paragraphs = extractParagraphs(doc)
@@ -237,23 +336,15 @@ function analyzeWebsiteContent(html: string, url: string, options: any) {
   const scripts = extractScripts(doc)
   const styles = extractStyles(doc)
 
-  // Enhanced metrics calculation
   const performanceScore = calculatePerformanceScore(doc, options)
   const securityScore = calculateSecurityScore(doc, url, options)
   const sustainabilityScore = calculateSustainabilityScore(doc, options)
   const contentQualityScore = calculateContentQualityScore(doc, options)
   const scriptOptimizationScore = calculateScriptOptimizationScore(scripts, options)
 
-  // SEO Analysis
   const seoMetrics = options.analyzeSEO ? analyzeSEO(doc) : {}
-
-  // Accessibility Analysis
   const accessibilityMetrics = options.checkAccessibility ? analyzeAccessibility(doc) : {}
-
-  // Mobile Optimization
   const mobileMetrics = options.checkMobileOptimization ? analyzeMobileOptimization(doc) : {}
-
-  // Social Media Analysis
   const socialMetrics = options.checkSocialMedia ? analyzeSocialMedia(doc) : {}
 
   return {
@@ -291,116 +382,79 @@ function analyzeWebsiteContent(html: string, url: string, options: any) {
   }
 }
 
-// Enhanced analysis functions
 function calculatePerformanceScore(html: string, options: any): number {
-  let score = 85 // Base score
-
+  let score = 85
   if (options.analyzeLoadingSpeed) {
     const scriptCount = (html.match(/<script/g) || []).length
     const imageCount = (html.match(/<img/g) || []).length
     const cssCount = (html.match(/<link.*stylesheet/g) || []).length
-
-    // Penalize excessive resources
     if (scriptCount > 10) score -= 10
     if (imageCount > 20) score -= 5
     if (cssCount > 5) score -= 5
   }
-
-  // Check for performance optimizations
   if (html.includes('loading="lazy"')) score += 5
   if (html.includes("async") || html.includes("defer")) score += 5
   if (html.includes("preload")) score += 3
-
   return Math.max(0, Math.min(100, score))
 }
 
 function calculateSecurityScore(html: string, url: string, options: any): number {
-  let score = 70 // Base score
-
+  let score = 70
   if (options.checkSecurity) {
-    // SSL check
     if (url.startsWith("https://")) score += 15
-
-    // Security headers (simulated)
     if (html.includes("Content-Security-Policy")) score += 5
     if (html.includes("X-Frame-Options")) score += 3
     if (html.includes("X-Content-Type-Options")) score += 2
-
-    // Check for potential vulnerabilities
     if (html.includes("eval(") || html.includes("innerHTML")) score -= 10
     if (html.includes("document.write")) score -= 5
   }
-
   return Math.max(0, Math.min(100, score))
 }
 
 function calculateSustainabilityScore(html: string, options: any): number {
-  let score = 75 // Base score
-
+  let score = 75
   if (options.analyzeSustainability) {
     const htmlSize = html.length
     const imageCount = (html.match(/<img/g) || []).length
     const scriptCount = (html.match(/<script/g) || []).length
-
-    // Penalize large page size
     if (htmlSize > 100000) score -= 10
     if (htmlSize > 500000) score -= 15
-
-    // Reward optimization
     if (html.includes("webp")) score += 5
     if (html.includes('loading="lazy"')) score += 5
     if (html.includes("preload")) score += 3
-
-    // Penalize excessive resources
     if (imageCount > 30) score -= 10
     if (scriptCount > 15) score -= 8
   }
-
   return Math.max(0, Math.min(100, score))
 }
 
 function calculateContentQualityScore(html: string, options: any): number {
-  let score = 80 // Base score
-
+  let score = 80
   if (options.includeContentAnalysis) {
     const headings = extractHeadings(html)
     const paragraphs = extractParagraphs(html)
     const wordCount = countWords(paragraphs.join(" "))
-
-    // Content structure
     if (headings.length > 0) score += 5
     if (headings.length > 3) score += 5
-
-    // Content volume
     if (wordCount > 300) score += 5
     if (wordCount > 1000) score += 5
-
-    // Meta tags
     if (html.includes('<meta name="description"')) score += 5
     if (html.includes('<meta name="keywords"')) score += 3
   }
-
   return Math.max(0, Math.min(100, score))
 }
 
 function calculateScriptOptimizationScore(scripts: string[], options: any): number {
-  let score = 85 // Base score
-
+  let score = 85
   if (options.analyzePerformance) {
     const scriptCount = scripts.length
-
-    // Penalize too many scripts
     if (scriptCount > 10) score -= 15
     if (scriptCount > 20) score -= 25
-
-    // Check for optimization
     const hasAsync = scripts.some((script) => script.includes("async"))
     const hasDefer = scripts.some((script) => script.includes("defer"))
-
     if (hasAsync) score += 5
     if (hasDefer) score += 5
   }
-
   return Math.max(0, Math.min(100, score))
 }
 
@@ -448,7 +502,6 @@ function analyzeSocialMedia(html: string) {
   }
 }
 
-// Helper functions
 function extractTitle(html: string): string {
   const match = html.match(/<title[^>]*>([^<]+)<\/title>/i)
   return match ? match[1].trim() : ""
@@ -505,11 +558,9 @@ function extractKeywords(html: string): string[] {
   const text = html.replace(/<[^>]+>/g, " ").toLowerCase()
   const words = text.match(/\b\w{4,}\b/g) || []
   const frequency: { [key: string]: number } = {}
-
   words.forEach((word) => {
     frequency[word] = (frequency[word] || 0) + 1
   })
-
   return Object.entries(frequency)
     .sort(([, a], [, b]) => b - a)
     .slice(0, 20)
@@ -518,60 +569,48 @@ function extractKeywords(html: string): string[] {
 
 function generateKeyPoints(html: string, options: any): string[] {
   const points = []
-
   if (options.analyzePerformance) {
     const scriptCount = (html.match(/<script/g) || []).length
     if (scriptCount > 10) {
       points.push(`High script count (${scriptCount}) may impact loading speed`)
     }
   }
-
   if (options.checkSecurity) {
     if (!html.includes("https://")) {
       points.push("Website should implement HTTPS for better security")
     }
   }
-
   if (options.analyzeSEO) {
     if (!html.includes('<meta name="description"')) {
       points.push("Missing meta description for SEO optimization")
     }
   }
-
   if (options.checkAccessibility) {
     if (!html.includes("alt=")) {
       points.push("Images missing alt attributes for accessibility")
     }
   }
-
   return points.length > 0 ? points : ["Website analysis completed successfully"]
 }
 
 function generateImprovements(html: string, options: any): string[] {
   const improvements = []
-
   if (options.analyzePerformance) {
     improvements.push("Optimize images and enable lazy loading")
     improvements.push("Minimize and compress CSS and JavaScript files")
   }
-
   if (options.checkSecurity) {
     improvements.push("Implement security headers (CSP, HSTS)")
     improvements.push("Regular security audits and updates")
   }
-
   if (options.analyzeSustainability) {
     improvements.push("Use modern image formats (WebP, AVIF)")
     improvements.push("Implement efficient caching strategies")
   }
-
   return improvements
 }
 
 function detectHostingProvider(html: string, url: string): string {
-  const domain = extractDomain(url)
-
-  // Common hosting provider detection
   if (html.includes("cloudflare") || html.includes("cf-ray")) return "Cloudflare"
   if (html.includes("amazonaws") || html.includes("aws")) return "Amazon Web Services"
   if (html.includes("googleusercontent") || html.includes("gcp")) return "Google Cloud Platform"
@@ -579,7 +618,6 @@ function detectHostingProvider(html: string, url: string): string {
   if (html.includes("netlify")) return "Netlify"
   if (html.includes("vercel")) return "Vercel"
   if (html.includes("github.io")) return "GitHub Pages"
-
   return "Unknown"
 }
 
@@ -634,24 +672,38 @@ Format your response as JSON:
 
 function parseAIResponse(text: string): any {
   try {
-    // Try to extract JSON from the response
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    const cleanText = text.trim()
+    if (!cleanText) {
+      throw new Error("Empty AI response")
+    }
+
+    const jsonMatch = cleanText.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
       const jsonText = jsonMatch[0]
-      // Validate JSON before parsing
-      JSON.parse(jsonText) // This will throw if invalid
-      return JSON.parse(jsonText)
+      const parsed = JSON.parse(jsonText)
+
+      if (typeof parsed === "object" && parsed !== null) {
+        return {
+          title: parsed.title || "Website Analysis",
+          summary: parsed.summary || "Comprehensive website analysis completed",
+          keyPoints: Array.isArray(parsed.keyPoints) ? parsed.keyPoints : ["Analysis completed successfully"],
+          keywords: Array.isArray(parsed.keywords) ? parsed.keywords : ["website", "analysis", "performance"],
+          improvements: Array.isArray(parsed.improvements)
+            ? parsed.improvements
+            : ["Optimize performance", "Improve security", "Enhance user experience"],
+        }
+      }
     }
+
+    throw new Error("No valid JSON found in response")
   } catch (error) {
     console.error("Error parsing AI response:", error)
-  }
-
-  // Fallback parsing
-  return {
-    title: "Website Analysis",
-    summary: "Comprehensive website analysis completed",
-    keyPoints: ["Analysis completed successfully"],
-    keywords: ["website", "analysis", "performance"],
-    improvements: ["Optimize performance", "Improve security", "Enhance user experience"],
+    return {
+      title: "Website Analysis",
+      summary: "Comprehensive website analysis completed",
+      keyPoints: ["Analysis completed successfully"],
+      keywords: ["website", "analysis", "performance"],
+      improvements: ["Optimize performance", "Improve security", "Enhance user experience"],
+    }
   }
 }

@@ -1,23 +1,36 @@
 import { NextResponse } from "next/server"
-import { supabaseAdmin, safeDbOperation, isSupabaseAvailable } from "@/lib/supabase-db"
+import { sql, safeDbOperation, isNeonAvailable } from "@/lib/neon-db"
+import { randomBytes } from "crypto"
 
 export async function POST(request: Request) {
   try {
-    const { analysisId, format, includeRawData = false } = await request.json()
+    let requestBody
+    try {
+      const bodyText = await request.text()
+      if (!bodyText.trim()) {
+        return NextResponse.json({ error: "Empty request body" }, { status: 400 })
+      }
+      requestBody = JSON.parse(bodyText)
+    } catch (error) {
+      return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 })
+    }
+
+    const { analysisId, format, includeRawData = false } = requestBody
 
     if (!analysisId) {
       return NextResponse.json({ error: "Analysis ID is required" }, { status: 400 })
     }
 
-    // Get analysis data from Supabase (only if available)
+    // Get analysis data from Neon database (only if available)
     let analysisData = null
-    if (isSupabaseAvailable()) {
+    if (isNeonAvailable()) {
       analysisData = await safeDbOperation(
         async () => {
-          const { data, error } = await supabaseAdmin.from("website_analyses").select("*").eq("id", analysisId).single()
-
-          if (error) throw error
-          return data
+          const result = await sql`
+            SELECT * FROM website_analyses 
+            WHERE id = ${analysisId}
+          `
+          return result[0] || null
         },
         null,
         "Error fetching analysis data",
@@ -65,20 +78,17 @@ export async function POST(request: Request) {
         filename += ".txt"
     }
 
-    // Log export activity (only if Supabase is available)
-    if (isSupabaseAvailable()) {
+    // Log export activity (only if Neon is available)
+    if (isNeonAvailable()) {
       await safeDbOperation(
         async () => {
-          await supabaseAdmin.from("exports").insert([
-            {
-              analysis_id: analysisId,
-              format,
-              include_raw_data: includeRawData,
-              created_at: new Date().toISOString(),
-            },
-          ])
+          const exportId = randomBytes(16).toString("hex")
+          await sql`
+            INSERT INTO exports (id, analysis_id, export_format, created_at)
+            VALUES (${exportId}, ${analysisId}, ${format}, NOW())
+          `
         },
-        null,
+        undefined,
         "Error logging export activity",
       )
     }

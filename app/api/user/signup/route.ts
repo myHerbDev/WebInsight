@@ -1,86 +1,83 @@
 import { NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase"
+import { createUser, userExists, createSession } from "@/lib/auth"
+import { sql, safeDbOperation, isNeonAvailable } from "@/lib/neon-db"
 
 export async function POST(request: Request) {
   try {
-    const { email, password, tempUserId } = await request.json()
+    let requestBody
+    try {
+      const bodyText = await request.text()
+      if (!bodyText.trim()) {
+        return NextResponse.json({ error: "Empty request body" }, { status: 400 })
+      }
+      requestBody = JSON.parse(bodyText)
+    } catch (error) {
+      return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 })
+    }
+
+    const { email, password, tempUserId } = requestBody
 
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    // Check if Supabase is configured
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      // Generate a mock user ID for preview mode
-      const mockUserId = "user-" + Math.random().toString(36).substring(2, 10)
-
-      return NextResponse.json({
-        success: true,
-        userId: mockUserId,
-        message: "User created successfully (preview mode)",
-      })
+    // Check if user already exists
+    const exists = await userExists(email)
+    if (exists) {
+      return NextResponse.json({ error: "User already exists" }, { status: 400 })
     }
 
-    try {
-      const supabase = createServerSupabaseClient()
+    // Create new user
+    const user = await createUser(email, password)
+    if (!user) {
+      return NextResponse.json({ error: "Failed to create user" }, { status: 500 })
+    }
 
-      // Check if user already exists
-      const { data: existingUser } = await supabase.from("auth.users").select("id").eq("email", email).single()
-
-      if (existingUser) {
-        return NextResponse.json({ error: "User already exists" }, { status: 400 })
-      }
-
-      // Create new user with Supabase Auth
-      const { data, error } = await supabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true, // Auto-confirm for simplicity
-      })
-
-      if (error) {
-        return NextResponse.json({ error: error.message }, { status: 400 })
-      }
-
-      if (!data.user) {
-        return NextResponse.json({ error: "Failed to create user" }, { status: 500 })
-      }
-
-      const userId = data.user.id
-
-      // If tempUserId exists, transfer saved analyses and favorites
-      if (tempUserId) {
-        try {
+    // Transfer data from temp user if provided
+    if (tempUserId && isNeonAvailable()) {
+      await safeDbOperation(
+        async () => {
           // Transfer saved analyses
-          await supabase.from("saved_analyses").update({ user_id: userId }).eq("user_id", tempUserId)
+          await sql`
+            UPDATE saved_analyses 
+            SET user_id = ${user.id} 
+            WHERE user_id = ${tempUserId}
+          `
 
           // Transfer favorites
-          await supabase.from("favorites").update({ user_id: userId }).eq("user_id", tempUserId)
-
-          // Note: We don't delete the temp user as it might not exist in auth.users
-        } catch (transferError) {
-          console.error("Error transferring data:", transferError)
-          // Continue even if transfer fails
-        }
-      }
-
-      return NextResponse.json({
-        success: true,
-        userId,
-        message: "User created successfully",
-      })
-    } catch (supabaseError) {
-      console.error("Supabase error:", supabaseError)
-      // Fall back to mock data if Supabase operations fail
-      const mockUserId = "user-" + Math.random().toString(36).substring(2, 10)
-
-      return NextResponse.json({
-        success: true,
-        userId: mockUserId,
-        message: "User created successfully (fallback)",
-      })
+          await sql`
+            UPDATE favorites 
+            SET user_id = ${user.id} 
+            WHERE user_id = ${tempUserId}
+          `
+        },
+        undefined,
+        "Error transferring user data",
+      )
     }
-  } catch (error) {
+
+    // Create session
+    const sessionId = await createSession(user)
+    if (!sessionId) {
+      return NextResponse.json({ error: "Failed to create session" }, { status: 500 })
+    }
+
+    // Set session cookie
+    const response = NextResponse.json({
+      success: true,
+      userId: user.id,
+      message: "User created successfully",
+    })
+
+    response.cookies.set("session", sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+    })
+
+    return response
+  } catch (error: any) {
     console.error("Error creating user:", error)
     return NextResponse.json({ error: "Failed to create user" }, { status: 500 })
   }

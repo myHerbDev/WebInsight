@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
-import { safeDbOperation, isSupabaseAvailable, getSupabaseClient } from "@/lib/supabase-db"
+import { sql, safeDbOperation, isNeonAvailable } from "@/lib/neon-db"
+import { redis, safeRedisOperation, CACHE_KEYS, CACHE_TTL } from "@/lib/upstash-redis"
 
 // Fallback hosting providers data
 const fallbackHostingProviders = [
@@ -52,28 +53,52 @@ const fallbackHostingProviders = [
 
 export async function GET() {
   try {
-    // Try to get data from Supabase if available
+    // Check cache first
+    const cachedProviders = await safeRedisOperation(
+      async () => {
+        const cached = await redis!.get(CACHE_KEYS.HOSTING_PROVIDERS)
+        return cached ? JSON.parse(cached as string) : null
+      },
+      null,
+      "Error checking hosting providers cache",
+    )
+
+    if (cachedProviders) {
+      return NextResponse.json({
+        success: true,
+        data: cachedProviders,
+        source: "cache",
+      })
+    }
+
+    // Try to get data from Neon database if available
     const hostingProviders = await safeDbOperation(
       async () => {
-        const supabase = getSupabaseClient()
-        if (!supabase) throw new Error("Supabase not available")
+        if (!isNeonAvailable()) throw new Error("Neon not available")
 
-        const { data, error } = await supabase
-          .from("hosting_providers")
-          .select("*")
-          .order("sustainability_score", { ascending: false })
-
-        if (error) throw error
-        return data || []
+        const result = await sql`
+          SELECT * FROM hosting_providers 
+          ORDER BY sustainability_score DESC
+        `
+        return result || []
       },
       fallbackHostingProviders,
       "Error fetching hosting providers from database",
     )
 
+    // Cache the result
+    await safeRedisOperation(
+      async () => {
+        await redis!.setex(CACHE_KEYS.HOSTING_PROVIDERS, CACHE_TTL.HOSTING_PROVIDERS, JSON.stringify(hostingProviders))
+      },
+      undefined,
+      "Error caching hosting providers",
+    )
+
     return NextResponse.json({
       success: true,
       data: hostingProviders,
-      source: isSupabaseAvailable() ? "database" : "fallback",
+      source: isNeonAvailable() ? "database" : "fallback",
     })
   } catch (error) {
     console.error("Hosting providers API error:", error)

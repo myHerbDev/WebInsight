@@ -1,80 +1,94 @@
 import { NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase"
+import { sql, safeDbOperation, isNeonAvailable } from "@/lib/neon-db"
+import { getSession } from "@/lib/auth"
+import { randomBytes } from "crypto"
 
 export async function POST(request: Request) {
   try {
-    const { userId, analysisId, type } = await request.json()
+    let requestBody
+    try {
+      const bodyText = await request.text()
+      if (!bodyText.trim()) {
+        return NextResponse.json({ error: "Empty request body" }, { status: 400 })
+      }
+      requestBody = JSON.parse(bodyText)
+    } catch (error) {
+      return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 })
+    }
+
+    const { userId, analysisId, type } = requestBody
 
     if (!analysisId || !type) {
       return NextResponse.json({ error: "Analysis ID and type are required" }, { status: 400 })
     }
 
-    // Check if Supabase is configured
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      const mockUserId = userId || "temp-user-123"
-      return NextResponse.json({
-        success: true,
-        message: type === "favorite" ? "Added to favorites" : "Analysis saved",
-        userId: mockUserId,
-      })
+    // Get user from session if no userId provided
+    let userIdToUse = userId
+    if (!userIdToUse) {
+      const sessionId = request.headers.get("cookie")?.split("session=")[1]?.split(";")[0]
+      if (sessionId) {
+        const session = await getSession(sessionId)
+        if (session) {
+          userIdToUse = session.userId
+        }
+      }
     }
 
-    try {
-      const supabase = createServerSupabaseClient()
+    // If still no user, create a temporary user ID
+    if (!userIdToUse) {
+      userIdToUse = "temp-user-" + randomBytes(8).toString("hex")
+    }
 
-      // If no userId, create a temporary user entry
-      let userIdToUse = userId
-
-      if (!userIdToUse) {
-        // Generate a temporary user ID
-        userIdToUse = "temp-user-" + Math.random().toString(36).substring(2, 10)
-      }
-
-      // Determine the table based on type
-      const tableName = type === "favorite" ? "favorites" : "saved_analyses"
-
-      // Check if already exists
-      const { data: existing } = await supabase
-        .from(tableName)
-        .select("id")
-        .eq("user_id", userIdToUse)
-        .eq("analysis_id", analysisId)
-        .single()
-
-      if (existing) {
-        return NextResponse.json({
-          success: true,
-          message: "Already saved",
-          userId: userIdToUse,
-        })
-      }
-
-      // Save new entry
-      const { error } = await supabase.from(tableName).insert({
-        user_id: userIdToUse,
-        analysis_id: analysisId,
-      })
-
-      if (error) {
-        throw error
-      }
-
+    if (!isNeonAvailable()) {
       return NextResponse.json({
         success: true,
         message: type === "favorite" ? "Added to favorites" : "Analysis saved",
         userId: userIdToUse,
       })
-    } catch (supabaseError) {
-      console.error("Supabase error:", supabaseError)
-      // Fall back to mock data if Supabase operations fail
-      const mockUserId = userId || "temp-user-123"
-      return NextResponse.json({
+    }
+
+    // Determine the table based on type
+    const tableName = type === "favorite" ? "favorites" : "saved_analyses"
+
+    const result = await safeDbOperation(
+      async () => {
+        // Check if already exists
+        const existing = await sql`
+          SELECT id FROM ${sql(tableName)} 
+          WHERE user_id = ${userIdToUse} AND analysis_id = ${analysisId}
+        `
+
+        if (existing.length > 0) {
+          return {
+            success: true,
+            message: "Already saved",
+            userId: userIdToUse,
+          }
+        }
+
+        // Save new entry
+        const entryId = randomBytes(16).toString("hex")
+        await sql`
+          INSERT INTO ${sql(tableName)} (id, user_id, analysis_id, created_at)
+          VALUES (${entryId}, ${userIdToUse}, ${analysisId}, NOW())
+        `
+
+        return {
+          success: true,
+          message: type === "favorite" ? "Added to favorites" : "Analysis saved",
+          userId: userIdToUse,
+        }
+      },
+      {
         success: true,
         message: type === "favorite" ? "Added to favorites (fallback)" : "Analysis saved (fallback)",
-        userId: mockUserId,
-      })
-    }
-  } catch (error) {
+        userId: userIdToUse,
+      },
+      "Error saving analysis",
+    )
+
+    return NextResponse.json(result)
+  } catch (error: any) {
     console.error("Error saving analysis:", error)
     return NextResponse.json({ error: "Failed to save analysis" }, { status: 500 })
   }

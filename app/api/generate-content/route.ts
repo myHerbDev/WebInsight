@@ -1,72 +1,147 @@
 import { NextResponse } from "next/server"
-import { supabaseAdmin, safeDbOperation, isSupabaseAvailable } from "@/lib/supabase-db"
+import { sql, safeDbOperation, isNeonAvailable } from "@/lib/neon-db"
+import { redis, safeRedisOperation, CACHE_KEYS, CACHE_TTL } from "@/lib/upstash-redis"
 import { generateText } from "ai"
 import { groq } from "@ai-sdk/groq"
+import { randomBytes } from "crypto"
 
 export async function POST(request: Request) {
   try {
-    const { analysisId, contentType, tone, customPrompt, websiteData } = await request.json()
+    // Enhanced request body parsing
+    let requestBody
+    try {
+      const bodyText = await request.text()
+      console.log("Content generation request body length:", bodyText.length)
 
-    if (!contentType || !tone) {
-      return NextResponse.json({ error: "Content type and tone are required" }, { status: 400 })
+      if (!bodyText || !bodyText.trim()) {
+        return NextResponse.json({ error: "Request body is required" }, { status: 400 })
+      }
+
+      // Validate JSON structure
+      if (!bodyText.trim().startsWith("{")) {
+        return NextResponse.json({ error: "Invalid JSON format" }, { status: 400 })
+      }
+
+      requestBody = JSON.parse(bodyText)
+
+      // Validate required fields
+      if (!requestBody.contentType || !requestBody.tone) {
+        return NextResponse.json(
+          {
+            error: "Missing required fields: contentType and tone",
+          },
+          { status: 400 },
+        )
+      }
+    } catch (parseError: any) {
+      console.error("JSON parsing error in content generation:", parseError)
+      return NextResponse.json(
+        {
+          error: "Invalid JSON in request body",
+          details: parseError.message,
+        },
+        { status: 400 },
+      )
     }
+
+    const { analysisId, contentType, tone, customPrompt, websiteData } = requestBody
 
     if (!process.env.GROQ_API_KEY) {
       return NextResponse.json({ error: "AI service not configured" }, { status: 503 })
     }
 
-    console.log(`Generating ${contentType} content with ${tone} tone`)
+    // Check cache first
+    const cacheKey = CACHE_KEYS.GENERATED_CONTENT(`${analysisId}-${contentType}-${tone}`)
+    const cachedContent = await safeRedisOperation(
+      async () => {
+        const cached = await redis!.get(cacheKey)
+        return cached ? JSON.parse(cached as string) : null
+      },
+      null,
+      "Error checking content cache",
+    )
 
-    // Create content generation prompt
-    const prompt = createContentPrompt(contentType, tone, customPrompt, websiteData)
+    if (cachedContent) {
+      return NextResponse.json({
+        success: true,
+        content: cachedContent,
+      })
+    }
 
-    // Generate content using Groq
-    const { text } = await generateText({
-      model: groq("llama3-70b-8192"),
-      prompt,
-      maxTokens: 2000,
-      temperature: 0.7,
-    })
+    // Enhanced AI content generation with validation
+    let aiResponse
+    try {
+      console.log(`Generating ${contentType} content with ${tone} tone`)
+
+      const prompt = createContentPrompt(contentType, tone, customPrompt, websiteData)
+
+      const result = await generateText({
+        model: groq("llama3-70b-8192"),
+        prompt,
+        maxTokens: 2000,
+        temperature: 0.7,
+      })
+
+      aiResponse = result.text
+
+      // Validate AI response
+      if (!aiResponse || typeof aiResponse !== "string" || aiResponse.trim().length === 0) {
+        throw new Error("Empty or invalid AI response")
+      }
+
+      console.log("AI content generated successfully, length:", aiResponse.length)
+    } catch (aiError: any) {
+      console.error("AI generation error:", aiError)
+      return NextResponse.json(
+        {
+          error: "Failed to generate content",
+          message: "AI service temporarily unavailable",
+        },
+        { status: 503 },
+      )
+    }
 
     // Parse and format the generated content
+    const contentId = randomBytes(16).toString("hex")
     const generatedContent = {
-      content: text.trim(),
-      markdown: formatAsMarkdown(text.trim(), contentType),
+      id: contentId,
+      content: aiResponse.trim(),
+      markdown: formatAsMarkdown(aiResponse.trim(), contentType),
       contentType,
       tone,
       analysisId: analysisId || null,
       createdAt: new Date().toISOString(),
     }
 
-    // Save to Supabase (only if available)
-    let savedContent = { id: Date.now().toString(), ...generatedContent }
-    if (isSupabaseAvailable() && analysisId) {
+    // Save to Neon database (only if available and analysisId exists)
+    let savedContent = generatedContent
+    if (isNeonAvailable() && analysisId) {
       savedContent = await safeDbOperation(
         async () => {
-          const { data, error } = await supabaseAdmin
-            .from("generated_content")
-            .insert([
-              {
-                analysis_id: analysisId,
-                content_type: contentType,
-                tone,
-                content: generatedContent.content,
-                markdown: generatedContent.markdown,
-                created_at: generatedContent.createdAt,
-              },
-            ])
-            .select()
-            .single()
-
-          if (error) throw error
-          return data
+          await sql`
+            INSERT INTO generated_content (
+              id, analysis_id, content_type, tone, content, markdown, created_at
+            ) VALUES (
+              ${contentId}, ${analysisId}, ${contentType}, ${tone}, 
+              ${generatedContent.content}, ${generatedContent.markdown}, 
+              ${generatedContent.createdAt}
+            )
+          `
+          return generatedContent
         },
-        { id: Date.now().toString(), ...generatedContent },
+        generatedContent,
         "Error saving generated content to database",
       )
-    } else {
-      console.log("Supabase not available or no analysis ID - content not saved to database")
     }
+
+    // Cache the result
+    await safeRedisOperation(
+      async () => {
+        await redis!.setex(cacheKey, CACHE_TTL.GENERATED_CONTENT, JSON.stringify(savedContent))
+      },
+      undefined,
+      "Error caching generated content",
+    )
 
     return NextResponse.json({
       success: true,
@@ -124,7 +199,6 @@ Please provide well-structured, high-quality content that is engaging and valuab
 }
 
 function formatAsMarkdown(content: string, contentType: string): string {
-  // Add markdown formatting based on content type
   const lines = content.split("\n")
   let markdown = ""
 
@@ -135,17 +209,13 @@ function formatAsMarkdown(content: string, contentType: string): string {
       continue
     }
 
-    // Detect and format headings
     if (line.match(/^(Introduction|Conclusion|Summary|Overview|Key Features|Benefits|Analysis)/i)) {
       markdown += `## ${line}\n\n`
     } else if (line.match(/^\d+\./)) {
-      // Numbered lists
       markdown += `${line}\n`
     } else if (line.match(/^[-•]/)) {
-      // Bullet points
       markdown += `- ${line.replace(/^[-•]\s*/, "")}\n`
     } else {
-      // Regular paragraphs
       markdown += `${line}\n\n`
     }
   }

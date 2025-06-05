@@ -72,53 +72,113 @@ export default function Home() {
     try {
       // Validate URL format first
       try {
-        new URL(url)
+        new URL(url.startsWith("http") ? url : `https://${url}`)
       } catch (e) {
         setErrorType("url")
         throw new Error(`Invalid URL format: ${url}. Please enter a valid website address.`)
       }
+
+      console.log("Starting website analysis for:", url)
+
+      // Prepare request data
+      const requestData = {
+        url,
+        includeAdvancedMetrics: true,
+        analyzeSEO: true,
+        checkAccessibility: true,
+        analyzePerformance: true,
+        checkSecurity: true,
+        analyzeSustainability: true,
+        includeContentAnalysis: true,
+        checkMobileOptimization: true,
+        analyzeLoadingSpeed: true,
+        checkSocialMedia: true,
+      }
+
+      console.log("Sending analysis request...")
 
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          url,
-          // Enhanced parameters
-          includeAdvancedMetrics: true,
-          analyzeSEO: true,
-          checkAccessibility: true,
-          analyzePerformance: true,
-          checkSecurity: true,
-          analyzeSustainability: true,
-          includeContentAnalysis: true,
-          checkMobileOptimization: true,
-          analyzeLoadingSpeed: true,
-          checkSocialMedia: true,
-        }),
+        body: JSON.stringify(requestData),
       })
 
+      console.log("Response status:", response.status)
+
+      // Handle non-OK responses
       if (!response.ok) {
-        let errorData
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+
         try {
-          errorData = await response.json()
-        } catch (e) {
-          // If JSON parsing fails, use text
-          const text = await response.text()
-          errorData = { error: text || "Failed to analyze website" }
+          const responseText = await response.text()
+          console.log("Error response text:", responseText)
+
+          if (responseText && responseText.trim()) {
+            try {
+              const errorData = JSON.parse(responseText)
+              errorMessage = errorData.error || errorMessage
+            } catch (parseError) {
+              // If JSON parsing fails, use the raw text
+              errorMessage = responseText.substring(0, 200)
+            }
+          }
+        } catch (textError) {
+          console.error("Failed to read error response:", textError)
         }
 
-        const errorType = determineErrorType(errorData.error || "Failed to analyze website", response.status)
+        const errorType = determineErrorType(errorMessage, response.status)
         setErrorType(errorType)
-        throw new Error(errorData.error || `Failed to analyze website: ${url}`)
+        throw new Error(errorMessage)
       }
 
+      // Parse successful response
       let data
       try {
-        data = await response.json()
-      } catch (e) {
-        throw new Error("Invalid response format from server")
+        const responseText = await response.text()
+        console.log("Success response length:", responseText.length)
+
+        if (!responseText || !responseText.trim()) {
+          throw new Error("Empty response from server")
+        }
+
+        // Validate JSON structure
+        const trimmed = responseText.trim()
+        if (!trimmed.startsWith("{")) {
+          throw new Error("Invalid response format from server")
+        }
+
+        data = JSON.parse(responseText)
+        console.log("Successfully parsed response data")
+
+        // Validate required fields
+        if (!data || typeof data !== "object") {
+          throw new Error("Invalid data format received from server")
+        }
+
+        // Ensure required fields exist
+        data = {
+          _id: data._id || "unknown",
+          url: data.url || url,
+          title: data.title || "Website Analysis",
+          summary: data.summary || "Analysis completed",
+          keyPoints: Array.isArray(data.keyPoints) ? data.keyPoints : [],
+          keywords: Array.isArray(data.keywords) ? data.keywords : [],
+          sustainability: data.sustainability || {
+            score: 0,
+            performance: 0,
+            scriptOptimization: 0,
+            duplicateContent: 0,
+            improvements: [],
+          },
+          subdomains: data.subdomains || [],
+          contentStats: data.contentStats || {},
+          rawData: data.rawData || {},
+        }
+      } catch (parseError: any) {
+        console.error("Response parsing error:", parseError)
+        throw new Error(`Failed to parse server response: ${parseError.message}`)
       }
 
       setWebsiteData(data)
@@ -126,6 +186,8 @@ export default function Home() {
 
       // Auto-switch to results tab
       setTimeout(() => setActiveTab("results"), 500)
+
+      console.log("Analysis completed successfully")
     } catch (error: any) {
       console.error("Error analyzing website:", error)
 
@@ -133,10 +195,12 @@ export default function Home() {
         setErrorType(determineErrorType(error))
       }
 
-      setError(error.message || "Failed to analyze the website. Please try again.")
+      const errorMessage = error.message || "Failed to analyze the website. Please try again."
+      setError(errorMessage)
+
       toast({
         title: "Analysis Failed",
-        description: error.message || "Failed to analyze the website. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
@@ -162,7 +226,12 @@ export default function Home() {
 
       let data
       try {
-        data = await response.json()
+        const responseText = await response.text()
+        if (responseText.trim()) {
+          data = JSON.parse(responseText)
+        } else {
+          throw new Error("Empty response from server")
+        }
       } catch (e) {
         throw new Error(`Failed to ${type} analysis: Invalid response format`)
       }
