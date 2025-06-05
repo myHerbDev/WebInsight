@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
@@ -62,6 +61,8 @@ interface AIContent {
   }>
   wordCount?: number
   readingTime?: number
+  summary?: string
+  keyPoints?: string[]
 }
 
 interface EnhancedAIGeneratorProps {
@@ -396,6 +397,8 @@ export function EnhancedAIGenerator({ websiteData, onSignUpClick }: EnhancedAIGe
         sections: data.content.sections || [],
         wordCount: data.content.wordCount || 0,
         readingTime: data.content.readingTime || 1,
+        summary: data.content.summary || "",
+        keyPoints: data.content.keyPoints || [],
       }
 
       console.log("✅ Content created:", {
@@ -507,8 +510,8 @@ Generated with Website Analytics AI
   }
 
   const ContentDisplay = ({ content }: { content: AIContent }) => (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-      {/* Content Header */}
+    <div className="space-y-6">
+      {/* Enhanced Content Header */}
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center space-x-3 mb-3">
@@ -521,16 +524,43 @@ Generated with Website Analytics AI
             <Badge variant="outline" className="text-xs">
               {content.wordCount} words • {content.readingTime} min read
             </Badge>
+            <Badge variant="outline" className="text-xs">
+              {content.sections?.length || 0} sections
+            </Badge>
             <span className="text-xs text-gray-500">{new Date(content.createdAt).toLocaleDateString()}</span>
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">{content.title}</h2>
-          {content.websiteUrl && (
-            <p className="text-sm text-gray-600 flex items-center">
+          {(websiteData?.title || content.websiteUrl) && (
+            <p className="text-sm text-gray-600 flex items-center mb-4">
               <ExternalLink className="w-4 h-4 mr-1" />
-              Based on analysis of: {content.websiteUrl}
+              Based on analysis of: {websiteData?.title || content.websiteUrl}
             </p>
           )}
+
+          {/* Content Summary */}
+          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+            <h4 className="font-semibold text-blue-900 mb-2">Executive Summary</h4>
+            <p className="text-blue-800 text-sm leading-relaxed">
+              {content.summary || "Professional analysis completed with comprehensive insights."}
+            </p>
+          </div>
+
+          {/* Key Points */}
+          {content.keyPoints && content.keyPoints.length > 0 && (
+            <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
+              <h4 className="font-semibold text-green-900 mb-2">Key Insights</h4>
+              <ul className="text-green-800 text-sm space-y-1">
+                {content.keyPoints.slice(0, 6).map((point, index) => (
+                  <li key={`point-${index}`} className="flex items-start">
+                    <span className="text-green-600 mr-2">•</span>
+                    <span>{point}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
+
         <div className="flex items-center space-x-2">
           <Button
             variant="ghost"
@@ -553,52 +583,64 @@ Generated with Website Analytics AI
 
       <Separator />
 
-      {/* Content Body */}
-      <AnimatePresence>
-        {showPreview && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="space-y-6"
-          >
+      {/* Enhanced Content Body - Fixed Scroll Container */}
+      {showPreview && (
+        <div className="space-y-6">
+          {/* Table of Contents for longer documents */}
+          {content.sections && content.sections.length > 3 && (
+            <div className="bg-gray-50 rounded-lg p-4">
+              <h4 className="font-semibold text-gray-900 mb-3">Table of Contents</h4>
+              <ul className="space-y-1">
+                {content.sections.map((section, index) => (
+                  <li key={`toc-${index}`} className="flex items-center text-sm">
+                    <span className="text-gray-400 mr-2">{"  ".repeat(section.level - 1)}•</span>
+                    <span className="text-gray-700 hover:text-blue-600 cursor-pointer">{section.title}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Fixed Scroll Container for Content */}
+          <div className="max-h-none overflow-visible">
             {/* Structured Content Display */}
             {content.sections && content.sections.length > 0 ? (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {content.sections.map((section, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="space-y-3"
-                  >
-                    <h3
-                      className={`font-semibold text-gray-900 ${
-                        section.level === 1 ? "text-xl" : section.level === 2 ? "text-lg" : "text-base"
-                      }`}
-                    >
-                      {section.title}
-                    </h3>
-                    <div className="prose prose-gray max-w-none">
-                      <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">{section.content}</div>
+                  <div key={`section-${index}`} className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                      <h3
+                        className={`font-semibold text-gray-900 ${
+                          section.level === 1 ? "text-2xl" : section.level === 2 ? "text-xl" : "text-lg"
+                        }`}
+                      >
+                        {section.title}
+                      </h3>
+                      <Badge variant="outline" className="text-xs">
+                        Level {section.level}
+                      </Badge>
                     </div>
-                  </motion.div>
+                    <div className="prose prose-gray max-w-none">
+                      <div className="whitespace-pre-wrap text-gray-700 leading-relaxed bg-white border border-gray-200 rounded-lg p-6">
+                        {section.content}
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
               <div className="prose prose-gray max-w-none">
-                <div className="whitespace-pre-wrap text-gray-700 leading-relaxed bg-gray-50 rounded-lg p-6">
+                <div className="whitespace-pre-wrap text-gray-700 leading-relaxed bg-gray-50 rounded-lg p-6 border border-gray-200">
                   {content.content}
                 </div>
               </div>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
 
-      {/* Action Buttons */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-gray-100">
+      {/* Enhanced Action Buttons */}
+      <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-gray-100">
         <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
@@ -626,6 +668,15 @@ Generated with Website Analytics AI
             )}
             Copy Markdown
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => copyToClipboard(JSON.stringify(content.sections, null, 2), "plain", content.id)}
+            className="text-sm"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Copy Structure
+          </Button>
         </div>
         <div className="flex gap-2">
           <Button variant="ghost" size="sm" onClick={() => shareViaEmail(content)} className="text-sm">
@@ -634,11 +685,15 @@ Generated with Website Analytics AI
           </Button>
           <Button variant="ghost" size="sm" onClick={() => downloadContent(content, "txt")} className="text-sm">
             <Download className="w-4 h-4 mr-2" />
-            Download
+            Download TXT
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => downloadContent(content, "md")} className="text-sm">
+            <Download className="w-4 h-4 mr-2" />
+            Download MD
           </Button>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 
   return (
@@ -668,9 +723,9 @@ Generated with Website Analytics AI
               {contentCategories.map((category) => {
                 const Icon = category.icon
                 return (
-                  <motion.div key={category.id} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <div key={category.id}>
                     <Card
-                      className={`cursor-pointer transition-all duration-200 ${
+                      className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
                         selectedCategory === category.id
                           ? "border-purple-500 bg-purple-50 shadow-md"
                           : "border-gray-200 hover:border-gray-300 hover:shadow-sm"
@@ -687,7 +742,7 @@ Generated with Website Analytics AI
                         <p className="text-xs text-gray-500">{category.types.length} types</p>
                       </CardContent>
                     </Card>
-                  </motion.div>
+                  </div>
                 )
               })}
             </div>
@@ -704,7 +759,7 @@ Generated with Website Analytics AI
                 ?.types.map((type) => {
                   const Icon = type.icon
                   return (
-                    <motion.div key={type.value} whileHover={{ scale: 1.01 }}>
+                    <div key={type.value}>
                       <Card
                         className={`cursor-pointer transition-all duration-200 ${
                           selectedType === type.value
@@ -728,7 +783,7 @@ Generated with Website Analytics AI
                           </div>
                         </CardContent>
                       </Card>
-                    </motion.div>
+                    </div>
                   )
                 })}
             </div>
@@ -802,23 +857,18 @@ Generated with Website Analytics AI
         <TabsContent value="result" className="space-y-6">
           {/* Loading State */}
           {isGenerating && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-center py-12"
-            >
+            <div className="text-center py-12">
               <Loader2 className="w-12 h-12 text-purple-600 mx-auto mb-4 animate-spin" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Generating Your Content</h3>
               <p className="text-gray-600">
                 Creating {getCurrentTypeInfo()?.label.toLowerCase()} with {selectedTone} tone...
               </p>
-            </motion.div>
+            </div>
           )}
 
           {/* Error State */}
           {generationError && !isGenerating && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-12">
+            <div className="text-center py-12">
               <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Generation Failed</h3>
               <p className="text-gray-600 mb-4">{generationError}</p>
@@ -831,18 +881,18 @@ Generated with Website Analytics AI
                   Back to Generator
                 </Button>
               </div>
-            </motion.div>
+            </div>
           )}
 
           {/* Generated Content */}
           {generatedContent && !isGenerating && !generationError && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <div>
               <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
                 <CardContent className="p-6">
                   <ContentDisplay content={generatedContent} />
                 </CardContent>
               </Card>
-            </motion.div>
+            </div>
           )}
 
           {/* Empty State */}

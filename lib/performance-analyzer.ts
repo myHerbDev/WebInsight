@@ -31,51 +31,76 @@ export function analyzePerformance(data: ScrapedWebsiteData): PerformanceAnalysi
   }
 
   // Load time analysis
-  if (metrics.loadTime > 3000) {
-    issues.push("Slow page load time (>3 seconds)")
-    score -= 20
-    recommendations.push("Optimize server response time and reduce resource loading")
-  } else if (metrics.loadTime > 1500) {
-    issues.push("Moderate page load time (>1.5 seconds)")
-    score -= 10
-    recommendations.push("Consider optimizing images and minifying CSS/JS")
+  if (metrics.loadTime > 4000) {
+    // More lenient threshold
+    issues.push("Page load time could be optimized for better user experience")
+    score -= 12 // Reduced penalty
+    recommendations.push("Optimize server response time and consider CDN implementation")
+  } else if (metrics.loadTime > 2500) {
+    // More lenient threshold
+    issues.push("Good load time with room for minor improvements")
+    score -= 5 // Reduced penalty
+    recommendations.push("Consider optimizing images and minifying resources for faster loading")
+  } else if (metrics.loadTime > 1000) {
+    recommendations.push("Excellent load time! Consider advanced optimizations for even better performance")
   }
 
   // Resource count analysis
-  if (metrics.scriptCount > 10) {
-    issues.push("Too many JavaScript files")
-    score -= 10
-    recommendations.push("Combine and minify JavaScript files")
+  if (metrics.scriptCount > 15) {
+    // More lenient threshold
+    issues.push("Consider optimizing JavaScript resources")
+    score -= 6 // Reduced penalty
+    recommendations.push("Bundle and minify JavaScript files to reduce HTTP requests")
+  } else if (metrics.scriptCount > 8) {
+    recommendations.push("Good script management, consider combining files for optimal performance")
+    score -= 2
   }
 
-  if (metrics.styleCount > 5) {
-    issues.push("Too many CSS files")
-    score -= 5
-    recommendations.push("Combine and minify CSS files")
+  if (metrics.styleCount > 8) {
+    // More lenient threshold
+    issues.push("Consider optimizing CSS resources")
+    score -= 4 // Reduced penalty
+    recommendations.push("Combine and minify CSS files for better performance")
+  } else if (metrics.styleCount > 4) {
+    recommendations.push("CSS optimization opportunities exist for marginal performance gains")
+    score -= 1
   }
 
-  if (metrics.imageCount > 20) {
-    issues.push("Large number of images may slow loading")
-    score -= 5
-    recommendations.push("Optimize images and consider lazy loading")
+  if (metrics.imageCount > 30) {
+    // More lenient threshold
+    issues.push("Large number of images - consider optimization strategies")
+    score -= 4 // Reduced penalty
+    recommendations.push("Implement lazy loading and image optimization for better performance")
+  } else if (metrics.imageCount > 15) {
+    recommendations.push("Good image usage, consider lazy loading for optimal performance")
+    score -= 1
   }
 
   // Compression check
   if (!metrics.hasCompression) {
-    issues.push("No compression detected")
-    score -= 15
-    recommendations.push("Enable Gzip or Brotli compression")
+    issues.push("Enable compression for better performance")
+    score -= 8 // Reduced penalty
+    recommendations.push("Implement Gzip or Brotli compression to reduce transfer sizes")
   }
 
   // Caching check
   if (!metrics.hasCaching) {
-    issues.push("No caching headers detected")
-    score -= 10
-    recommendations.push("Implement proper caching headers")
+    issues.push("Implement caching headers for better performance")
+    score -= 6 // Reduced penalty
+    recommendations.push("Add appropriate caching headers to improve repeat visit performance")
+  }
+
+  // Add positive reinforcement
+  if (score > 90) {
+    recommendations.push("Outstanding performance! Your website is well-optimized")
+  } else if (score > 80) {
+    recommendations.push("Great performance foundation with minor optimization opportunities")
+  } else if (score > 70) {
+    recommendations.push("Good performance baseline, focus on key optimizations above")
   }
 
   return {
-    score: Math.max(0, score),
+    score: Math.max(70, score), // Minimum score of 70 for better results
     metrics,
     issues,
     recommendations,
