@@ -1,21 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Footer } from "@/components/footer"
 import { Header } from "@/components/header"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { ResultsSection } from "@/components/results-section"
 import { SignUpModal } from "@/components/sign-up-modal"
-import { MagicalWebsiteInput } from "@/components/magical-website-input"
-import { EnhancedErrorMessage } from "@/components/enhanced-error-message"
-import { EnhancedAIGenerator } from "@/components/enhanced-ai-generator"
-import { GoogleStyleCard } from "@/components/google-style-card"
+import { WebsiteForm } from "@/components/website-form"
 import { toast } from "@/components/ui/use-toast"
 import type { WebsiteData } from "@/types/website-data"
-import { motion, AnimatePresence } from "framer-motion"
-import { Sparkles, TrendingUp, Shield, Leaf, Globe, Users, ArrowUp, Brain } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
@@ -23,106 +16,34 @@ export default function Home() {
   const [showSignUpModal, setShowSignUpModal] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [errorType, setErrorType] = useState<"url" | "access" | "timeout" | "server" | "unknown">("unknown")
-  const [lastAnalyzedUrl, setLastAnalyzedUrl] = useState<string>("")
-  const [showScrollToTop, setShowScrollToTop] = useState(false)
-  const [activeTab, setActiveTab] = useState("analyze")
-
-  // Enhanced scroll detection
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollToTop(window.scrollY > 300)
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
-
-  const determineErrorType = (
-    error: Error | string,
-    statusCode?: number,
-  ): "url" | "access" | "timeout" | "server" | "unknown" => {
-    const errorMessage = typeof error === "string" ? error : error.message
-
-    if (errorMessage.includes("Invalid URL") || errorMessage.includes("URL format")) {
-      return "url"
-    }
-
-    if (errorMessage.includes("access denied") || errorMessage.includes("403") || statusCode === 403) {
-      return "access"
-    }
-
-    if (errorMessage.includes("timeout") || errorMessage.includes("timed out") || statusCode === 408) {
-      return "timeout"
-    }
-
-    if (errorMessage.includes("server error") || statusCode === 500) {
-      return "server"
-    }
-
-    return "unknown"
-  }
 
   const handleAnalyzeWebsite = async (url: string) => {
     setIsLoading(true)
     setWebsiteData(null)
     setError(null)
-    setLastAnalyzedUrl(url)
-    setActiveTab("analyze")
 
     try {
-      // Validate URL format first
-      try {
-        new URL(url)
-      } catch (e) {
-        setErrorType("url")
-        throw new Error(`Invalid URL format: ${url}. Please enter a valid website address.`)
-      }
-
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          url,
-          // Enhanced parameters
-          includeAdvancedMetrics: true,
-          analyzeSEO: true,
-          checkAccessibility: true,
-          analyzePerformance: true,
-          checkSecurity: true,
-          analyzeSustainability: true,
-          includeContentAnalysis: true,
-          checkMobileOptimization: true,
-          analyzeLoadingSpeed: true,
-          checkSocialMedia: true,
-        }),
+        body: JSON.stringify({ url }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        const errorType = determineErrorType(data.error || "Failed to analyze website", response.status)
-        setErrorType(errorType)
-        throw new Error(data.error || `Failed to analyze website: ${url}`)
+        throw new Error(data.error || "Failed to analyze website")
       }
 
       setWebsiteData(data)
-      setShowScrollToTop(true)
-
-      // Auto-switch to results tab
-      setTimeout(() => setActiveTab("results"), 500)
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error analyzing website:", error)
-
-      if (errorType === "unknown") {
-        setErrorType(determineErrorType(error))
-      }
-
-      setError(error.message || "Failed to analyze the website. Please try again.")
+      setError("Failed to analyze the website. Please try again.")
       toast({
-        title: "Analysis Failed",
-        description: error.message || "Failed to analyze the website. Please try again.",
+        title: "Error",
+        description: "Failed to analyze the website. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -152,6 +73,7 @@ export default function Home() {
         throw new Error(data.error || `Failed to ${type} analysis`)
       }
 
+      // If we got a userId back and don't have one yet, save it
       if (data.userId && !userId) {
         setUserId(data.userId)
       }
@@ -160,7 +82,7 @@ export default function Home() {
         title: "Success",
         description: data.message || `${type === "favorite" ? "Added to favorites" : "Analysis saved"}`,
       })
-    } catch (error: any) {
+    } catch (error) {
       console.error(`Error ${type}ing analysis:`, error)
       toast({
         title: "Error",
@@ -171,275 +93,40 @@ export default function Home() {
   }
 
   const handleSignUp = (tempUserId: string) => {
+    // If we have a userId from a temporary save, pass it to the modal
     setUserId(tempUserId || userId)
     setShowSignUpModal(true)
   }
 
-  const handleRetryAnalysis = () => {
-    if (lastAnalyzedUrl) {
-      handleAnalyzeWebsite(lastAnalyzedUrl)
-    }
-  }
-
-  const handleResetAnalysis = () => {
-    setError(null)
-    setWebsiteData(null)
-    setLastAnalyzedUrl("")
-    setShowScrollToTop(false)
-    setActiveTab("analyze")
-  }
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
-      {/* Google-style floating elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20"
-            initial={{
-              x: Math.random() * (typeof window !== "undefined" ? window.innerWidth : 1200),
-              y: Math.random() * (typeof window !== "undefined" ? window.innerHeight : 800),
-            }}
-            animate={{
-              y: [null, -50],
-              opacity: [0.2, 0.5, 0.2],
-              scale: [1, 1.5, 1],
-            }}
-            transition={{
-              duration: Math.random() * 4 + 3,
-              repeat: Number.POSITIVE_INFINITY,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
-
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <Header />
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <WebsiteForm onSubmit={handleAnalyzeWebsite} />
 
-      <main className="relative z-10">
-        {/* Main Content Container */}
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
-          {/* Core App Tabs */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="flex justify-center mb-8">
-                <TabsList className="grid grid-cols-3 w-full max-w-md bg-white shadow-lg border border-gray-200 rounded-full p-1">
-                  <TabsTrigger
-                    value="analyze"
-                    className="rounded-full data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-300"
-                  >
-                    <Globe className="w-4 h-4 mr-2" />
-                    Analyze
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="results"
-                    className="rounded-full data-[state=active]:bg-green-500 data-[state=active]:text-white transition-all duration-300"
-                    disabled={!websiteData && !error}
-                  >
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    Results
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="ai-content"
-                    className="rounded-full data-[state=active]:bg-purple-500 data-[state=active]:text-white transition-all duration-300"
-                  >
-                    <Brain className="w-4 h-4 mr-2" />
-                    AI Content
-                  </TabsTrigger>
-                </TabsList>
-              </div>
+          {isLoading && <LoadingAnimation />}
 
-              {/* Analyze Tab */}
-              <TabsContent value="analyze" className="space-y-8">
-                <GoogleStyleCard className="p-0 overflow-hidden">
-                  <MagicalWebsiteInput onAnalyze={handleAnalyzeWebsite} isLoading={isLoading} />
-                </GoogleStyleCard>
+          {error && !isLoading && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mt-6">
+              <p className="text-red-800 dark:text-red-300">{error}</p>
+              <p className="text-sm text-red-600 dark:text-red-400 mt-2">
+                Please check your URL and try again. If the problem persists, try a different website.
+              </p>
+            </div>
+          )}
 
-                {/* Loading Animation */}
-                <AnimatePresence>
-                  {isLoading && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                      <GoogleStyleCard>
-                        <LoadingAnimation />
-                      </GoogleStyleCard>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Enhanced Error State */}
-                <AnimatePresence>
-                  {error && !isLoading && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                    >
-                      <GoogleStyleCard>
-                        <EnhancedErrorMessage
-                          error={error}
-                          errorType={errorType}
-                          onRetry={handleRetryAnalysis}
-                          onReset={handleResetAnalysis}
-                        />
-                      </GoogleStyleCard>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Features Section */}
-                {!isLoading && !error && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                  >
-                    {[
-                      {
-                        icon: TrendingUp,
-                        title: "Performance Analysis",
-                        description: "Deep dive into loading speeds, Core Web Vitals, and optimization opportunities",
-                        color: "from-green-500 to-emerald-500",
-                      },
-                      {
-                        icon: Shield,
-                        title: "Security Assessment",
-                        description:
-                          "Comprehensive security analysis including SSL, headers, and vulnerability detection",
-                        color: "from-blue-500 to-cyan-500",
-                      },
-                      {
-                        icon: Leaf,
-                        title: "Sustainability Metrics",
-                        description: "Environmental impact analysis and carbon footprint optimization suggestions",
-                        color: "from-emerald-500 to-teal-500",
-                      },
-                      {
-                        icon: Brain,
-                        title: "AI Content Generation",
-                        description: "Generate blog posts, social media content, and marketing copy from your analysis",
-                        color: "from-purple-500 to-pink-500",
-                      },
-                      {
-                        icon: Globe,
-                        title: "SEO & Accessibility",
-                        description: "Complete SEO audit and accessibility compliance checking",
-                        color: "from-orange-500 to-red-500",
-                      },
-                      {
-                        icon: Users,
-                        title: "Mobile & Social",
-                        description: "Mobile optimization analysis and social media integration assessment",
-                        color: "from-indigo-500 to-purple-500",
-                      },
-                    ].map((feature, index) => (
-                      <motion.div
-                        key={feature.title}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 * index }}
-                        whileHover={{ y: -5 }}
-                      >
-                        <GoogleStyleCard className="h-full hover:shadow-xl transition-all duration-300">
-                          <div
-                            className={`w-12 h-12 rounded-xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-4`}
-                          >
-                            <feature.icon className="w-6 h-6 text-white" />
-                          </div>
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                          <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
-                        </GoogleStyleCard>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                )}
-              </TabsContent>
-
-              {/* Results Tab */}
-              <TabsContent value="results" className="space-y-8">
-                <AnimatePresence>
-                  {websiteData && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                    >
-                      <GoogleStyleCard>
-                        <div className="text-center mb-6">
-                          <h2 className="text-2xl font-bold text-gray-900 mb-2">Analysis Complete</h2>
-                          <p className="text-gray-600">
-                            Comprehensive analysis results for{" "}
-                            <span className="font-semibold text-blue-600">{websiteData.url}</span>
-                          </p>
-                        </div>
-
-                        <ResultsSection
-                          data={websiteData}
-                          onSignUpClick={handleSignUp}
-                          onSave={() => handleSaveAnalysis("save")}
-                          onFavorite={() => handleSaveAnalysis("favorite")}
-                          userId={userId}
-                        />
-
-                        <div className="text-center mt-8">
-                          <Button
-                            onClick={() => setActiveTab("ai-content")}
-                            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                          >
-                            <Brain className="mr-2 h-5 w-5" />
-                            Generate AI Content
-                          </Button>
-                        </div>
-                      </GoogleStyleCard>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </TabsContent>
-
-              {/* AI Content Tab */}
-              <TabsContent value="ai-content" className="space-y-8">
-                <GoogleStyleCard>
-                  <div className="text-center mb-6">
-                    <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-100 to-pink-100 border border-purple-200 mb-4">
-                      <Brain className="w-5 h-5 text-purple-600" />
-                      <span className="text-sm font-medium text-purple-700">AI-Powered Content Generation</span>
-                      <Sparkles className="w-5 h-5 text-pink-600" />
-                    </div>
-                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Create Amazing Content</h2>
-                    <p className="text-gray-600 max-w-2xl mx-auto">
-                      Transform your website analysis into engaging content for blogs, social media, marketing
-                      campaigns, and more.
-                    </p>
-                  </div>
-
-                  <EnhancedAIGenerator websiteData={websiteData} onSignUpClick={() => handleSignUp("")} />
-                </GoogleStyleCard>
-              </TabsContent>
-            </Tabs>
-          </motion.div>
+          {websiteData && (
+            <ResultsSection
+              data={websiteData}
+              onSignUpClick={handleSignUp}
+              onSave={() => handleSaveAnalysis("save")}
+              onFavorite={() => handleSaveAnalysis("favorite")}
+              userId={userId}
+            />
+          )}
         </div>
       </main>
-
-      {/* Scroll to Top Button */}
-      <AnimatePresence>
-        {showScrollToTop && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0 }}
-            onClick={scrollToTop}
-            className="fixed bottom-8 right-8 z-50 bg-white text-gray-700 p-3 rounded-full shadow-lg hover:shadow-xl border border-gray-200 transition-all duration-300 hover:scale-110"
-          >
-            <ArrowUp className="h-5 w-5" />
-          </motion.button>
-        )}
-      </AnimatePresence>
-
       <Footer />
 
       {showSignUpModal && (

@@ -1,63 +1,90 @@
-import { createServerSupabaseClient, isSupabaseConfigured } from "./supabase"
+import { getSupabaseClient, createServerSupabaseClient } from "./supabase"
 
-export async function getCurrentUser() {
-  if (!isSupabaseConfigured()) {
-    return null
+// Client-side auth functions
+export async function signUpWithEmail(email: string, password: string) {
+  const supabase = getSupabaseClient()
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  })
+
+  if (error) {
+    throw new Error(error.message)
   }
 
-  const supabase = createServerSupabaseClient()
-  if (!supabase) {
-    return null
+  return data
+}
+
+export async function signInWithEmail(email: string, password: string) {
+  const supabase = getSupabaseClient()
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+
+  if (error) {
+    throw new Error(error.message)
   }
 
-  try {
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser()
+  return data
+}
 
-    if (error || !user) {
-      return null
-    }
+export async function signOut() {
+  const supabase = getSupabaseClient()
 
-    return {
-      id: user.id,
-      email: user.email || "",
-      created_at: user.created_at || new Date().toISOString(),
-    }
-  } catch (error) {
-    console.error("Error getting current user:", error)
-    return null
+  const { error } = await supabase.auth.signOut()
+
+  if (error) {
+    throw new Error(error.message)
   }
 }
 
-export async function verifyToken(token: string) {
-  if (!isSupabaseConfigured()) {
-    return null
+export async function getCurrentUser() {
+  const supabase = getSupabaseClient()
+
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
+
+  if (error) {
+    throw new Error(error.message)
   }
 
+  return user
+}
+
+// Server-side auth functions
+export async function getServerUser(accessToken?: string) {
   const supabase = createServerSupabaseClient()
-  if (!supabase) {
-    return null
-  }
 
-  try {
+  if (accessToken) {
     const {
       data: { user },
       error,
-    } = await supabase.auth.getUser(token)
+    } = await supabase.auth.getUser(accessToken)
 
-    if (error || !user) {
+    if (error) {
       return null
     }
 
-    return {
-      id: user.id,
-      email: user.email || "",
-      created_at: user.created_at || new Date().toISOString(),
-    }
-  } catch (error) {
-    console.error("Error verifying token:", error)
-    return null
+    return user
   }
+
+  return null
+}
+
+// Legacy password hashing functions (kept for compatibility)
+export async function hashPassword(password: string): Promise<string> {
+  // Supabase handles password hashing automatically
+  // This function is kept for API compatibility but not used
+  return password
+}
+
+export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+  // Supabase handles password verification automatically
+  // This function is kept for API compatibility but not used
+  return password === hashedPassword
 }

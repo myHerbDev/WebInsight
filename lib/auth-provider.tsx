@@ -1,117 +1,82 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useEffect, useState } from "react"
-import { getSupabaseClient, isSupabaseConfigured, type User } from "./supabase"
 
-interface AuthContextType {
+import { createContext, useContext, useEffect, useState } from "react"
+import { getSupabaseClient } from "@/lib/supabase"
+import type { Session, User } from "@supabase/supabase-js"
+
+type AuthContextType = {
   user: User | null
-  loading: boolean
-  signIn: (email: string, password: string) => Promise<{ error?: string }>
-  signUp: (email: string, password: string) => Promise<{ error?: string }>
+  session: Session | null
+  isLoading: boolean
+  signIn: (email: string, password: string) => Promise<{ error: any | null }>
+  signUp: (email: string, password: string) => Promise<{ error: any | null }>
   signOut: () => Promise<void>
-  isConfigured: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [session, setSession] = useState<Session | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const supabase = getSupabaseClient()
-  const isConfigured = isSupabaseConfigured()
 
   useEffect(() => {
-    if (!supabase || !isConfigured) {
-      setLoading(false)
-      return
+    // Get initial session
+    const getInitialSession = async () => {
+      setIsLoading(true)
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      setSession(session)
+      setUser(session?.user ?? null)
+
+      setIsLoading(false)
     }
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email || "",
-          created_at: session.user.created_at || new Date().toISOString(),
-        })
-      }
-      setLoading(false)
-    })
+    getInitialSession()
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email || "",
-          created_at: session.user.created_at || new Date().toISOString(),
-        })
-      } else {
-        setUser(null)
-      }
-      setLoading(false)
+      setSession(session)
+      setUser(session?.user ?? null)
+      setIsLoading(false)
     })
 
-    return () => subscription.unsubscribe()
-  }, [supabase, isConfigured])
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [supabase])
 
   const signIn = async (email: string, password: string) => {
-    if (!supabase) {
-      return { error: "Authentication service not configured" }
-    }
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      return { error: error.message }
-    }
-
-    return {}
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    return { error }
   }
 
   const signUp = async (email: string, password: string) => {
-    if (!supabase) {
-      return { error: "Authentication service not configured" }
-    }
-
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
-
-    if (error) {
-      return { error: error.message }
-    }
-
-    return {}
+    const { error } = await supabase.auth.signUp({ email, password })
+    return { error }
   }
 
   const signOut = async () => {
-    if (!supabase) return
-
     await supabase.auth.signOut()
   }
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        signIn,
-        signUp,
-        signOut,
-        isConfigured,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  )
+  const value = {
+    user,
+    session,
+    isLoading,
+    signIn,
+    signUp,
+    signOut,
+  }
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

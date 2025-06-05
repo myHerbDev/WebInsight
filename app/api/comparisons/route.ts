@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
-import { supabaseAdmin, safeDbOperation } from "@/lib/supabase-db"
+import { neon } from "@neondatabase/serverless"
+
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST(request: Request) {
   try {
@@ -9,33 +11,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Name and at least 2 analysis IDs are required" }, { status: 400 })
     }
 
-    const comparisonId = await safeDbOperation(
-      async () => {
-        const { data, error } = await supabaseAdmin
-          .from("comparisons")
-          .insert([
-            {
-              user_id: user_id || null,
-              name,
-              analysis_ids,
-              comparison_data,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            },
-          ])
-          .select("id")
-          .single()
-
-        if (error) throw error
-        return data.id
-      },
-      Date.now().toString(),
-      "Failed to save comparison",
-    )
+    const result = await sql`
+      INSERT INTO website_analyzer.comparisons 
+      (user_id, name, analysis_ids, comparison_data, created_at, updated_at)
+      VALUES (
+        ${user_id || null}, ${name}, ${JSON.stringify(analysis_ids)}, 
+        ${JSON.stringify(comparison_data)}, NOW(), NOW()
+      )
+      RETURNING id
+    `
 
     return NextResponse.json({
       success: true,
-      comparison_id: comparisonId,
+      comparison_id: result[0].id,
       message: "Comparison saved successfully",
     })
   } catch (error) {
@@ -49,23 +37,20 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get("user_id")
 
-    const comparisons = await safeDbOperation(
-      async () => {
-        let query = supabaseAdmin.from("comparisons").select("*").order("created_at", { ascending: false })
-
-        if (userId) {
-          query = query.eq("user_id", userId)
-        } else {
-          query = query.limit(50)
-        }
-
-        const { data, error } = await query
-        if (error) throw error
-        return data
-      },
-      [],
-      "Failed to fetch comparisons",
-    )
+    let comparisons
+    if (userId) {
+      comparisons = await sql`
+        SELECT * FROM website_analyzer.comparisons 
+        WHERE user_id = ${userId}
+        ORDER BY created_at DESC
+      `
+    } else {
+      comparisons = await sql`
+        SELECT * FROM website_analyzer.comparisons 
+        ORDER BY created_at DESC
+        LIMIT 50
+      `
+    }
 
     return NextResponse.json(comparisons)
   } catch (error) {
