@@ -3,6 +3,7 @@ import { generateText } from "ai"
 import { xai } from "@ai-sdk/xai"
 import { randomBytes } from "crypto"
 import { saveGeneratedContent } from "@/lib/supabase-db"
+import { structureProfessionalContent } from "@/lib/content-structure"
 
 // Simple content structuring function
 function structureContent(content: string, contentType: string, websiteData?: any) {
@@ -436,6 +437,68 @@ Structure the content with clear headings, subheadings, and logical flow. Includ
   return comprehensivePrompts[contentType as keyof typeof comprehensivePrompts] || comprehensivePrompts.default
 }
 
+// Enhanced prompt generation for better SEO content
+function generateSEOPrompt(contentType: string, websiteData: any, customPrompt: string, tone: string) {
+  // If custom prompt is provided, use it
+  if (customPrompt && customPrompt.trim()) {
+    return customPrompt
+  }
+
+  const websiteUrl = websiteData?.url || "the analyzed website"
+  const websiteTitle = websiteData?.title || "Website"
+  const websiteSummary = websiteData?.description || websiteData?.summary || "Analysis completed"
+  const performanceScore = websiteData?.performance_score || websiteData?.sustainability?.performance || 0
+  const sustainabilityScore = websiteData?.sustainability_score || websiteData?.sustainability?.score || 0
+  const category = websiteData?.category || "business"
+
+  // Extract potential keywords
+  const keywords = []
+  if (websiteData?.meta_keywords) {
+    keywords.push(...websiteData.meta_keywords.split(/,\s*/))
+  }
+  if (websiteData?.title) {
+    const titleWords = websiteData.title.split(/\s+/).filter((word: string) => word.length > 3)
+    keywords.push(...titleWords)
+  }
+
+  // Get unique keywords
+  const uniqueKeywords = [...new Set(keywords)].slice(0, 5).join(", ")
+
+  // Default SEO content prompt
+  return `
+Create comprehensive, SEO-optimized content for ${websiteTitle} (${websiteUrl}).
+
+WEBSITE INFORMATION:
+- Website Name: ${websiteTitle}
+- URL: ${websiteUrl}
+- Description: ${websiteSummary}
+- Industry/Category: ${category}
+- Performance Score: ${performanceScore}/100
+- Sustainability Score: ${sustainabilityScore}/100
+- Target Keywords: ${uniqueKeywords}
+
+CONTENT REQUIREMENTS:
+- Content Type: ${contentType.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+- Target Length: 1500+ words
+- SEO Optimization: High priority
+- Tone: ${tone}
+
+CONTENT GUIDELINES:
+1. Create highly detailed, comprehensive content optimized for search engines
+2. Use the website's SEO name "${websiteTitle}" consistently throughout
+3. Incorporate target keywords naturally: ${uniqueKeywords}
+4. Structure with clear H2 and H3 headings for each major section
+5. Include relevant statistics, examples, and specific details
+6. Write in a ${tone} tone
+7. Add meta description and SEO title suggestions at the end
+8. Format with proper paragraph breaks, bullet points, and numbered lists where appropriate
+9. Include a strong call-to-action
+10. Ensure content is original, valuable, and engaging for readers
+
+The content should be significantly longer and more detailed than typical web content, with comprehensive coverage of each section.
+`
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log("🚀 Starting content generation request")
@@ -475,12 +538,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate required fields
-    if (!requestData.contentType) {
-      console.error("❌ Missing contentType")
+    if (!requestData.contentType && !requestData.customPrompt) {
+      console.error("❌ Missing contentType or customPrompt")
       return NextResponse.json(
         {
           success: false,
-          error: "Content type is required",
+          error: "Either content type or custom prompt is required",
         },
         { status: 400 },
       )
@@ -503,7 +566,14 @@ export async function POST(request: NextRequest) {
     console.log("🤖 Generating content...")
 
     // Build prompt based on content type
-    const prompt = generateComprehensivePrompt(contentType, websiteData, customPrompt, tone)
+    let prompt
+    if (contentType === "seo-optimized-content") {
+      // Use the custom prompt directly for SEO content
+      prompt = customPrompt
+    } else {
+      // Generate prompt based on content type
+      prompt = generateComprehensivePrompt(contentType, websiteData, customPrompt, tone)
+    }
 
     console.log("📝 Generated prompt length:", prompt.length)
 
@@ -515,7 +585,7 @@ export async function POST(request: NextRequest) {
         const result = await generateText({
           model: xai("grok-beta"),
           prompt,
-          maxTokens: 2000,
+          maxTokens: contentType === "seo-optimized-content" ? 4000 : 2000,
           temperature: 0.7,
         })
         generatedText = result.text
@@ -527,38 +597,48 @@ export async function POST(request: NextRequest) {
       console.error("❌ AI generation error:", aiError)
 
       // Fallback content
-      generatedText = `# ${contentType.replace("-", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+      generatedText = `# ${contentType === "seo-optimized-content" ? "SEO-Optimized Content" : contentType.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
 
-## Overview
-This is a comprehensive analysis of the website.
+## Introduction
+This is a comprehensive analysis of ${websiteData?.title || websiteData?.url || "the website"}.
 
-## Key Findings
+## Key Points
+- Website: ${websiteData?.title || websiteData?.url || "Not specified"}
+- Industry: ${websiteData?.category || "Not specified"}
 - Performance Score: ${websiteData?.performance_score || 0}/100
 - Sustainability Score: ${websiteData?.sustainability_score || 0}/100
-- Analysis Summary: ${websiteData?.summary || "Analysis completed"}
+
+## Analysis
+The website shows potential for improvement in several key areas. By implementing the recommended changes, the website can achieve better performance, sustainability, and user experience.
 
 ## Recommendations
-Based on our analysis, here are the key recommendations for improvement:
-
 1. **Performance Optimization**: Focus on improving loading speeds and Core Web Vitals
 2. **Sustainability Enhancement**: Implement green hosting and optimize resource usage
 3. **User Experience**: Enhance accessibility and mobile responsiveness
 4. **Security**: Strengthen security headers and SSL configuration
 
 ## Conclusion
-The website shows potential for improvement in several key areas. By implementing the recommended changes, the website can achieve better performance, sustainability, and user experience.
+With targeted improvements, the website can significantly enhance its online presence and user experience.
 
 ---
-*Generated by Website Analytics AI*`
+SEO Title: Comprehensive Analysis and Optimization Guide for ${websiteData?.title || "Your Website"}
+Meta Description: Discover key insights and actionable recommendations to improve performance, sustainability, and user experience for ${websiteData?.title || "your website"}.`
       console.log("🔄 Using fallback content")
     }
 
     // Structure the content
     const contentId = randomBytes(8).toString("hex")
-    const structuredContent = structureContent(generatedText, contentType, websiteData)
+    let structuredContent
+
+    if (contentType === "seo-optimized-content") {
+      structuredContent = structureContent(generatedText, contentType, websiteData)
+    } else {
+      structuredContent = structureProfessionalContent(generatedText, contentType, websiteData)
+    }
 
     // Get content type label
     const contentTypeLabels: { [key: string]: string } = {
+      "seo-optimized-content": "SEO-Optimized Content",
       "sustainability-research": "Sustainability Research Report",
       "scholar-document": "Academic Research Paper",
       "technical-audit": "Technical Audit Report",
@@ -568,7 +648,7 @@ The website shows potential for improvement in several key areas. By implementin
       "market-analysis": "Market Analysis Report",
       "roi-report": "ROI Analysis Report",
       "blog-post": "Blog Post",
-      newsletter: "Newsletter Content",
+      newsletter: "Newsletter Content Pack",
       "press-release": "Press Release",
       "white-paper": "White Paper",
       "social-media-posts": "Social Media Content Pack",
@@ -587,7 +667,11 @@ The website shows potential for improvement in several key areas. By implementin
 
     const contentData = {
       id: contentId,
-      title: structuredContent.sections?.[0]?.title || contentTypeLabels[contentType] || "Generated Content",
+      title:
+        structuredContent.metaTitle ||
+        structuredContent.sections?.[0]?.title ||
+        contentTypeLabels[contentType] ||
+        "Generated Content",
       content: structuredContent.content,
       markdown: structuredContent.markdown,
       summary: structuredContent.summary,
@@ -599,6 +683,8 @@ The website shows potential for improvement in several key areas. By implementin
       wordCount: structuredContent.wordCount,
       readingTime: structuredContent.readingTime,
       sections: structuredContent.sections,
+      metaTitle: structuredContent.metaTitle,
+      metaDescription: structuredContent.metaDescription,
     }
 
     // Save to database (optional, won't fail if Supabase is not configured)
@@ -615,6 +701,8 @@ The website shows potential for improvement in several key areas. By implementin
       readingTime: contentData.readingTime,
       sections: contentData.sections,
       websiteUrl: websiteData?.url,
+      metaTitle: contentData.metaTitle,
+      metaDescription: contentData.metaDescription,
     })
 
     if (savedId) {
