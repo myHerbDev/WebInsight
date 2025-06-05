@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Globe, Sparkles, Zap, TrendingUp, Shield, Leaf } from "lucide-react"
 import { motion, useAnimation } from "framer-motion"
+import { ClientOnly } from "./client-only"
 
 interface MagicalWebsiteInputProps {
   onAnalyze: (url: string) => void
@@ -16,10 +17,12 @@ interface MagicalWebsiteInputProps {
 export function MagicalWebsiteInput({ onAnalyze, isLoading = false }: MagicalWebsiteInputProps) {
   const [url, setUrl] = useState("")
   const [isFocused, setIsFocused] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const controls = useAnimation()
 
   useEffect(() => {
+    setIsMounted(true)
     controls.start({
       rotate: [0, 360],
       transition: { duration: 20, repeat: Number.POSITIVE_INFINITY, ease: "linear" },
@@ -55,28 +58,32 @@ export function MagicalWebsiteInput({ onAnalyze, isLoading = false }: MagicalWeb
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(20,184,166,0.1),transparent_50%)]" />
       </div>
 
-      {/* Floating Particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {Array.from({ length: 50 }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-white/20 rounded-full"
-            initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
-            }}
-            animate={{
-              y: [null, -100],
-              opacity: [0, 1, 0],
-            }}
-            transition={{
-              duration: Math.random() * 3 + 2,
-              repeat: Number.POSITIVE_INFINITY,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
+      {/* Floating Particles - Client Only */}
+      <ClientOnly>
+        {isMounted && (
+          <div className="absolute inset-0 overflow-hidden">
+            {Array.from({ length: 50 }).map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-1 h-1 bg-white/20 rounded-full"
+                initial={{
+                  x: Math.random() * (typeof window !== "undefined" ? window.innerWidth : 1200),
+                  y: Math.random() * (typeof window !== "undefined" ? window.innerHeight : 800),
+                }}
+                animate={{
+                  y: [null, -100],
+                  opacity: [0, 1, 0],
+                }}
+                transition={{
+                  duration: Math.random() * 3 + 2,
+                  repeat: Number.POSITIVE_INFINITY,
+                  delay: Math.random() * 2,
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </ClientOnly>
 
       {/* Floating Icons */}
       {floatingIcons.map(({ Icon, delay, color }, index) => (
@@ -164,17 +171,19 @@ export function MagicalWebsiteInput({ onAnalyze, isLoading = false }: MagicalWeb
 
             {/* Form Container */}
             <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-8 shadow-2xl">
-              {/* Rotating Border Effect */}
-              <motion.div
-                animate={controls}
-                className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500 via-blue-500 to-teal-500 opacity-20"
-                style={{
-                  background: "conic-gradient(from 0deg, #8B5CF6, #3B82F6, #14B8A6, #8B5CF6)",
-                  mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-                  maskComposite: "xor",
-                  padding: "2px",
-                }}
-              />
+              {/* Rotating Border Effect - Client Only */}
+              <ClientOnly>
+                <motion.div
+                  animate={controls}
+                  className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-500 via-blue-500 to-teal-500 opacity-20"
+                  style={{
+                    background: "conic-gradient(from 0deg, #8B5CF6, #3B82F6, #14B8A6, #8B5CF6)",
+                    mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                    maskComposite: "xor",
+                    padding: "2px",
+                  }}
+                />
+              </ClientOnly>
 
               <form onSubmit={handleSubmit} className="relative space-y-6">
                 <div className="space-y-2">
