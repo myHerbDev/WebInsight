@@ -1,13 +1,13 @@
 "use client"
 
 import type React from "react"
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2, X } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 interface SignUpModalProps {
   onClose: () => void
@@ -19,47 +19,35 @@ export function SignUpModal({ onClose, tempUserId, onSignUpSuccess }: SignUpModa
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const supabase = createClientComponentClient()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${location.origin}/auth/callback`,
+      const response = await fetch("/api/user/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          email,
+          password,
+          tempUserId,
+        }),
       })
 
-      if (error) {
-        throw error
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || "Failed to create account")
       }
 
-      if (data.user) {
-        // If there's a temp user ID, we could migrate data here
-        if (tempUserId) {
-          // Call API to migrate temporary data to the new user
-          await fetch("/api/user/migrate", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              tempUserId,
-              newUserId: data.user.id,
-            }),
-          })
-        }
+      const data = await response.json()
 
-        onSignUpSuccess(data.user.id)
-        toast({
-          title: "Success!",
-          description: "Account created successfully. Please check your email to verify your account.",
-        })
-        onClose()
+      if (data.success && data.userId) {
+        onSignUpSuccess(data.userId)
+      } else {
+        throw new Error("Failed to create account")
       }
     } catch (error) {
       console.error("Sign up error:", error)
@@ -110,7 +98,6 @@ export function SignUpModal({ onClose, tempUserId, onSignUpSuccess }: SignUpModa
               onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
-              minLength={6}
             />
           </div>
 
@@ -134,6 +121,3 @@ export function SignUpModal({ onClose, tempUserId, onSignUpSuccess }: SignUpModa
     </div>
   )
 }
-
-// Also export as default for compatibility
-export default SignUpModal

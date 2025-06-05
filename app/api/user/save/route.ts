@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/supabase"
+import clientPromise from "@/lib/mongodb"
 
 export async function POST(request: Request) {
   try {
@@ -9,8 +9,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Analysis ID and type are required" }, { status: 400 })
     }
 
-    // Check if Supabase is configured
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    // For preview mode or when MongoDB is not available, use mock data
+    if (!process.env.MONGODB_URI) {
       const mockUserId = userId || "temp-user-123"
       return NextResponse.json({
         success: true,
@@ -19,29 +19,34 @@ export async function POST(request: Request) {
       })
     }
 
+    // Real implementation with MongoDB
     try {
-      const supabase = createServerSupabaseClient()
+      const client = await clientPromise
+      const db = client.db("website-analyzer")
 
-      // If no userId, create a temporary user entry
+      // If no userId, create a temporary user
       let userIdToUse = userId
 
       if (!userIdToUse) {
-        // Generate a temporary user ID
-        userIdToUse = "temp-user-" + Math.random().toString(36).substring(2, 10)
+        const tempUser = await db.collection("users").insertOne({
+          email: null,
+          isTemporary: true,
+          createdAt: new Date(),
+        })
+        userIdToUse = tempUser.insertedId.toString()
       }
 
-      // Determine the table based on type
-      const tableName = type === "favorite" ? "favorites" : "saved_analyses"
+      // Save the analysis based on type (save or favorite)
+      const collection = type === "favorite" ? "favorites" : "saved-analyses"
 
-      // Check if already exists
-      const { data: existing } = await supabase
-        .from(tableName)
-        .select("id")
-        .eq("user_id", userIdToUse)
-        .eq("analysis_id", analysisId)
-        .single()
+      // Check if already exists - use string comparison instead of ObjectId
+      const existing = await db.collection(collection).findOne({
+        userId: userIdToUse,
+        analysisId: analysisId,
+      })
 
       if (existing) {
+        // If already exists, return success
         return NextResponse.json({
           success: true,
           message: "Already saved",
@@ -50,23 +55,20 @@ export async function POST(request: Request) {
       }
 
       // Save new entry
-      const { error } = await supabase.from(tableName).insert({
-        user_id: userIdToUse,
-        analysis_id: analysisId,
+      await db.collection(collection).insertOne({
+        userId: userIdToUse,
+        analysisId: analysisId,
+        createdAt: new Date(),
       })
-
-      if (error) {
-        throw error
-      }
 
       return NextResponse.json({
         success: true,
         message: type === "favorite" ? "Added to favorites" : "Analysis saved",
         userId: userIdToUse,
       })
-    } catch (supabaseError) {
-      console.error("Supabase error:", supabaseError)
-      // Fall back to mock data if Supabase operations fail
+    } catch (dbError) {
+      console.error("Database error:", dbError)
+      // Fall back to mock data if database operations fail
       const mockUserId = userId || "temp-user-123"
       return NextResponse.json({
         success: true,
