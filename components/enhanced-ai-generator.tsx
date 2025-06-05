@@ -41,6 +41,8 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react"
 import type { WebsiteData } from "@/types/website-data"
 
@@ -284,6 +286,7 @@ export function EnhancedAIGenerator({ websiteData, onSignUpClick }: EnhancedAIGe
   const [activeTab, setActiveTab] = useState("generate")
   const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({})
   const [showPreview, setShowPreview] = useState(true)
+  const [generationError, setGenerationError] = useState<string | null>(null)
 
   // Load content history on mount
   useEffect(() => {
@@ -322,27 +325,22 @@ export function EnhancedAIGenerator({ websiteData, onSignUpClick }: EnhancedAIGe
       return
     }
 
+    console.log("🚀 Starting content generation...")
     setIsGenerating(true)
-    // Switch to result tab immediately
+    setGenerationError(null)
+    setGeneratedContent(null)
     setActiveTab("result")
 
-    // Set a placeholder content while generating
-    setGeneratedContent({
-      id: `temp-${Date.now()}`,
-      type: selectedType,
-      title: "Generating content...",
-      content: "Your content is being generated. Please wait a moment...",
-      markdown: "Your content is being generated. Please wait a moment...",
-      createdAt: new Date().toISOString(),
-      websiteUrl: websiteData?.url,
-      isFavorite: false,
-      sections: [],
-      wordCount: 0,
-      readingTime: 0,
-    })
-
     try {
-      console.log("Starting content generation with:", {
+      const requestData = {
+        websiteData,
+        contentType: selectedType,
+        tone: selectedTone,
+        customPrompt: customPrompt.trim(),
+        analysisId: websiteData?._id,
+      }
+
+      console.log("📤 Sending request:", {
         contentType: selectedType,
         tone: selectedTone,
         hasWebsiteData: !!websiteData,
@@ -354,36 +352,34 @@ export function EnhancedAIGenerator({ websiteData, onSignUpClick }: EnhancedAIGe
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          websiteData,
-          contentType: selectedType,
-          tone: selectedTone,
-          customPrompt: customPrompt.trim(),
-          analysisId: websiteData?._id,
-        }),
+        body: JSON.stringify(requestData),
       })
 
-      console.log("API response status:", response.status)
+      console.log("📥 Response status:", response.status)
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error("API error response:", errorText)
+      const responseText = await response.text()
+      console.log("📄 Response text length:", responseText.length)
 
-        let errorData
-        try {
-          errorData = JSON.parse(errorText)
-        } catch {
-          errorData = { error: "Failed to generate content", message: errorText }
-        }
-
-        throw new Error(errorData.error || errorData.message || "Failed to generate content")
+      let data
+      try {
+        data = JSON.parse(responseText)
+      } catch (parseError) {
+        console.error("❌ Failed to parse response:", parseError)
+        throw new Error("Invalid response format from server")
       }
 
-      const data = await response.json()
-      console.log("API response data:", data)
+      console.log("📊 Parsed response:", {
+        success: data.success,
+        hasContent: !!data.content,
+        error: data.error,
+      })
+
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`)
+      }
 
       if (!data.success || !data.content) {
-        throw new Error("Invalid response format from API")
+        throw new Error(data.error || "Invalid response format from API")
       }
 
       const selectedTypeInfo = contentCategories.flatMap((cat) => cat.types).find((type) => type.value === selectedType)
@@ -392,8 +388,8 @@ export function EnhancedAIGenerator({ websiteData, onSignUpClick }: EnhancedAIGe
         id: data.content.id || Date.now().toString(),
         type: selectedType,
         title: data.content.title || selectedTypeInfo?.label || "Generated Content",
-        content: data.content.content,
-        markdown: data.content.markdown || data.content.content,
+        content: data.content.content || "Content generation completed",
+        markdown: data.content.markdown || data.content.content || "Content generation completed",
         createdAt: data.content.createdAt || new Date().toISOString(),
         websiteUrl: websiteData?.url,
         isFavorite: false,
@@ -402,24 +398,37 @@ export function EnhancedAIGenerator({ websiteData, onSignUpClick }: EnhancedAIGe
         readingTime: data.content.readingTime || 1,
       }
 
+      console.log("✅ Content created:", {
+        id: newContent.id,
+        title: newContent.title,
+        contentLength: newContent.content.length,
+        sectionsCount: newContent.sections?.length || 0,
+      })
+
       setGeneratedContent(newContent)
       saveToHistory(newContent)
 
       toast({
         title: "Content Generated!",
-        description: "Your AI-powered content is ready to use.",
+        description: `Your ${selectedTypeInfo?.label.toLowerCase() || "content"} is ready to use.`,
       })
     } catch (error: any) {
-      console.error("Error generating content:", error)
+      console.error("💥 Content generation error:", error)
+      setGenerationError(error.message || "Failed to generate content")
+
       toast({
         title: "Generation Failed",
         description: error.message || "Failed to generate content. Please try again.",
         variant: "destructive",
       })
-      setActiveTab("generate")
     } finally {
       setIsGenerating(false)
     }
+  }
+
+  const retryGeneration = () => {
+    setGenerationError(null)
+    generateContent()
   }
 
   const copyToClipboard = async (text: string, format: "markdown" | "plain", contentId?: string) => {
@@ -791,6 +800,7 @@ Generated with Website Analytics AI
 
         {/* Result Tab */}
         <TabsContent value="result" className="space-y-6">
+          {/* Loading State */}
           {isGenerating && (
             <motion.div
               initial={{ opacity: 0 }}
@@ -806,14 +816,27 @@ Generated with Website Analytics AI
             </motion.div>
           )}
 
-          {generatedContent && (
-            <motion.div
-              key={generatedContent.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className={isGenerating ? "opacity-50" : ""}
-            >
+          {/* Error State */}
+          {generationError && !isGenerating && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-12">
+              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Generation Failed</h3>
+              <p className="text-gray-600 mb-4">{generationError}</p>
+              <div className="flex gap-3 justify-center">
+                <Button onClick={retryGeneration} variant="outline">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Try Again
+                </Button>
+                <Button onClick={() => setActiveTab("generate")} variant="default">
+                  Back to Generator
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Generated Content */}
+          {generatedContent && !isGenerating && !generationError && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
               <Card className="border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
                 <CardContent className="p-6">
                   <ContentDisplay content={generatedContent} />
@@ -822,7 +845,8 @@ Generated with Website Analytics AI
             </motion.div>
           )}
 
-          {!generatedContent && !isGenerating && (
+          {/* Empty State */}
+          {!generatedContent && !isGenerating && !generationError && (
             <div className="text-center py-12">
               <Brain className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No Content Generated Yet</h3>
