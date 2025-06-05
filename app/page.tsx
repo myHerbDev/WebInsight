@@ -29,12 +29,10 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("analyze")
   const [isClient, setIsClient] = useState(false)
 
-  // Client-side hydration
   useEffect(() => {
     setIsClient(true)
   }, [])
 
-  // Enhanced scroll detection
   useEffect(() => {
     if (!isClient) return
 
@@ -80,19 +78,30 @@ export default function Home() {
     setActiveTab("analyze")
 
     try {
-      // Validate URL format first
+      let normalizedUrl = ""
       try {
-        new URL(url.startsWith("http") ? url : `https://${url}`)
-      } catch (e) {
+        normalizedUrl = url.trim()
+        if (!normalizedUrl) {
+          throw new Error("URL cannot be empty")
+        }
+
+        if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
+          normalizedUrl = "https://" + normalizedUrl
+        }
+
+        const urlObj = new URL(normalizedUrl)
+        if (!urlObj.hostname || urlObj.hostname.length < 3) {
+          throw new Error("Invalid hostname")
+        }
+      } catch (urlError: any) {
         setErrorType("url")
         throw new Error(`Invalid URL format: ${url}. Please enter a valid website address.`)
       }
 
-      console.log("Starting website analysis for:", url)
+      console.log("Starting website analysis for:", normalizedUrl)
 
-      // Prepare request data
       const requestData = {
-        url,
+        url: normalizedUrl,
         includeAdvancedMetrics: true,
         analyzeSEO: true,
         checkAccessibility: true,
@@ -105,37 +114,53 @@ export default function Home() {
         checkSocialMedia: true,
       }
 
+      if (!requestData.url) {
+        throw new Error("Request data validation failed")
+      }
+
       console.log("Sending analysis request...")
 
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+      const timeoutId = setTimeout(() => {
+        console.log("Request timeout triggered")
+        controller.abort()
+      }, 30000)
 
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
-        signal: controller.signal,
-      })
+      let response: Response
+      try {
+        response = await fetch("/api/analyze", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
+          signal: controller.signal,
+        })
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId)
+        if (fetchError.name === "AbortError") {
+          setErrorType("timeout")
+          throw new Error("Request timeout - analysis took too long")
+        }
+        throw new Error(`Network error: ${fetchError.message}`)
+      }
 
       clearTimeout(timeoutId)
-      console.log("Response status:", response.status)
+      console.log("Response received with status:", response.status)
 
-      // Handle non-OK responses
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`
 
         try {
           const responseText = await response.text()
-          console.log("Error response text:", responseText.substring(0, 500))
+          console.log("Error response text length:", responseText?.length || 0)
 
           if (responseText && responseText.trim()) {
             try {
               const errorData = JSON.parse(responseText)
-              errorMessage = errorData.error || errorMessage
+              errorMessage = errorData.error || errorData.message || errorMessage
             } catch (parseError) {
-              // If JSON parsing fails, use the raw text
+              console.warn("Could not parse error response as JSON")
               errorMessage = responseText.substring(0, 200)
             }
           }
@@ -148,17 +173,15 @@ export default function Home() {
         throw new Error(errorMessage)
       }
 
-      // Parse successful response
       let data
       try {
         const responseText = await response.text()
-        console.log("Success response length:", responseText.length)
+        console.log("Success response length:", responseText?.length || 0)
 
         if (!responseText || !responseText.trim()) {
           throw new Error("Empty response from server")
         }
 
-        // Validate JSON structure
         const trimmed = responseText.trim()
         if (!trimmed.startsWith("{")) {
           throw new Error("Invalid response format from server")
@@ -167,17 +190,15 @@ export default function Home() {
         data = JSON.parse(responseText)
         console.log("Successfully parsed response data")
 
-        // Validate required fields
         if (!data || typeof data !== "object") {
           throw new Error("Invalid data format received from server")
         }
 
-        // Ensure required fields exist with safe defaults
         data = {
           _id: data._id || "unknown",
-          url: data.url || url,
+          url: data.url || normalizedUrl,
           title: data.title || "Website Analysis",
-          summary: data.summary || "Analysis completed",
+          summary: data.summary || "Analysis completed successfully",
           keyPoints: Array.isArray(data.keyPoints) ? data.keyPoints : [],
           keywords: Array.isArray(data.keywords) ? data.keywords : [],
           sustainability: data.sustainability || {
@@ -187,10 +208,9 @@ export default function Home() {
             duplicateContent: 0,
             improvements: [],
           },
-          subdomains: data.subdomains || [],
+          subdomains: Array.isArray(data.subdomains) ? data.subdomains : [],
           contentStats: data.contentStats || {},
           rawData: data.rawData || {},
-          // Backward compatibility
           sustainability_score: data.sustainability_score || data.sustainability?.score || 0,
           performance_score: data.performance_score || data.sustainability?.performance || 0,
           script_optimization_score: data.script_optimization_score || data.sustainability?.scriptOptimization || 0,
@@ -203,14 +223,17 @@ export default function Home() {
           ip_address: data.ip_address || "Unknown",
         }
       } catch (parseError: any) {
-        console.error("Response parsing error:", parseError)
+        console.error("Response parsing error:", parseError.message)
         throw new Error(`Failed to parse server response: ${parseError.message}`)
+      }
+
+      if (!data._id || !data.url) {
+        throw new Error("Response missing required fields")
       }
 
       setWebsiteData(data)
       setShowScrollToTop(true)
 
-      // Auto-switch to results tab
       setTimeout(() => setActiveTab("results"), 500)
 
       console.log("Analysis completed successfully")
@@ -314,7 +337,6 @@ export default function Home() {
     }
   }
 
-  // Don't render until client-side to avoid hydration issues
   if (!isClient) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -336,15 +358,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
-      {/* Google-style floating elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {Array.from({ length: 20 }).map((_, i) => (
           <motion.div
             key={i}
             className="absolute w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20"
             initial={{
-              x: Math.random() * window.innerWidth,
-              y: Math.random() * window.innerHeight,
+              x: Math.random() * (typeof window !== "undefined" ? window.innerWidth : 1000),
+              y: Math.random() * (typeof window !== "undefined" ? window.innerHeight : 1000),
             }}
             animate={{
               y: [null, -50],
@@ -363,9 +384,7 @@ export default function Home() {
       <Header />
 
       <main className="relative z-10">
-        {/* Main Content Container */}
         <div className="container mx-auto px-4 py-8 max-w-7xl">
-          {/* Core App Tabs */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <div className="flex justify-center mb-8">
@@ -395,13 +414,11 @@ export default function Home() {
                 </TabsList>
               </div>
 
-              {/* Analyze Tab */}
               <TabsContent value="analyze" className="space-y-8">
                 <GoogleStyleCard className="p-0 overflow-hidden">
                   <MagicalWebsiteInput onAnalyze={handleAnalyzeWebsite} isLoading={isLoading} />
                 </GoogleStyleCard>
 
-                {/* Loading Animation */}
                 <AnimatePresence>
                   {isLoading && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -412,7 +429,6 @@ export default function Home() {
                   )}
                 </AnimatePresence>
 
-                {/* Enhanced Error State */}
                 <AnimatePresence>
                   {error && !isLoading && (
                     <motion.div
@@ -432,7 +448,6 @@ export default function Home() {
                   )}
                 </AnimatePresence>
 
-                {/* Features Section */}
                 {!isLoading && !error && (
                   <motion.div
                     initial={{ opacity: 0, y: 30 }}
@@ -501,7 +516,6 @@ export default function Home() {
                 )}
               </TabsContent>
 
-              {/* Results Tab */}
               <TabsContent value="results" className="space-y-8">
                 <AnimatePresence>
                   {websiteData && (
@@ -542,7 +556,6 @@ export default function Home() {
                 </AnimatePresence>
               </TabsContent>
 
-              {/* AI Content Tab */}
               <TabsContent value="ai-content" className="space-y-8">
                 <GoogleStyleCard>
                   <div className="text-center mb-6">
@@ -566,7 +579,6 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Scroll to Top Button */}
       <AnimatePresence>
         {showScrollToTop && (
           <motion.button
