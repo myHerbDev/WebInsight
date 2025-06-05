@@ -111,7 +111,7 @@ function parseHTMLContent(
   const content = extractContent(html)
 
   // Determine the best title from multiple sources
-  const title = determineBestTitle(metaTags, headings, content.textContent)
+  const title = determineBestTitle(metaTags, headings, content.textContent, url)
 
   return {
     title,
@@ -320,31 +320,108 @@ function determineBestTitle(
   metaTags: ScrapedWebsiteData["metaTags"],
   headings: ScrapedWebsiteData["headings"],
   content: string,
+  url: string,
 ): string {
-  // Priority order for title selection:
-  // 1. Open Graph title (most likely to match Google search results)
-  // 2. Twitter title
-  // 3. HTML title tag
-  // 4. First H1 tag
-  // 5. Fallback to domain name
+  // Enhanced Google-like title selection algorithm
+  // Google typically uses a combination of title tag, headings, and content
+  // with preference for shorter, more descriptive titles
 
-  if (metaTags.ogTitle && metaTags.ogTitle.trim()) {
-    return metaTags.ogTitle.trim()
+  // Collect all potential titles
+  const potentialTitles: { title: string; priority: number; length: number }[] = []
+
+  // 1. Title tag (highest priority for Google)
+  if (metaTags.title) {
+    potentialTitles.push({
+      title: metaTags.title,
+      priority: 10,
+      length: metaTags.title.length,
+    })
   }
 
-  if (metaTags.twitterTitle && metaTags.twitterTitle.trim()) {
-    return metaTags.twitterTitle.trim()
+  // 2. Open Graph title (often used by Google for social sharing context)
+  if (metaTags.ogTitle) {
+    potentialTitles.push({
+      title: metaTags.ogTitle,
+      priority: 9,
+      length: metaTags.ogTitle.length,
+    })
   }
 
-  if (metaTags.title && metaTags.title.trim()) {
-    return metaTags.title.trim()
+  // 3. Twitter title
+  if (metaTags.twitterTitle) {
+    potentialTitles.push({
+      title: metaTags.twitterTitle,
+      priority: 8,
+      length: metaTags.twitterTitle.length,
+    })
   }
 
-  if (headings.h1.length > 0 && headings.h1[0].trim()) {
-    return headings.h1[0].trim()
+  // 4. First H1 tag (often used when title tag is missing or generic)
+  if (headings.h1.length > 0) {
+    potentialTitles.push({
+      title: headings.h1[0],
+      priority: 7,
+      length: headings.h1[0].length,
+    })
   }
 
-  return "Website Analysis"
+  // 5. Other H1 tags
+  headings.h1.slice(1).forEach((h1) => {
+    potentialTitles.push({
+      title: h1,
+      priority: 6,
+      length: h1.length,
+    })
+  })
+
+  // 6. First H2 tag
+  if (headings.h2.length > 0) {
+    potentialTitles.push({
+      title: headings.h2[0],
+      priority: 5,
+      length: headings.h2[0].length,
+    })
+  }
+
+  // If no titles found, extract from domain
+  if (potentialTitles.length === 0) {
+    try {
+      const domain = new URL(url).hostname
+      const siteName = domain.replace(/^www\./, "").split(".")[0]
+      const formattedSiteName = siteName.charAt(0).toUpperCase() + siteName.slice(1)
+
+      return formattedSiteName
+    } catch (e) {
+      return "Website Analysis"
+    }
+  }
+
+  // Filter out very long or very short titles
+  const filteredTitles = potentialTitles.filter((t) => t.title.length >= 10 && t.title.length <= 70)
+
+  // If all titles were filtered out, use the original list
+  const titleList = filteredTitles.length > 0 ? filteredTitles : potentialTitles
+
+  // Sort by priority first, then prefer titles between 30-60 chars (ideal for Google)
+  titleList.sort((a, b) => {
+    // First sort by priority
+    if (a.priority !== b.priority) {
+      return b.priority - a.priority
+    }
+
+    // Then prefer titles in the ideal length range
+    const aIdealLength = a.length >= 30 && a.length <= 60
+    const bIdealLength = b.length >= 30 && b.length <= 60
+
+    if (aIdealLength && !bIdealLength) return -1
+    if (!aIdealLength && bIdealLength) return 1
+
+    // If both are ideal or both are not ideal, prefer shorter titles
+    return a.length - b.length
+  })
+
+  // Return the best title
+  return titleList[0].title
 }
 
 function extractKeywords(metaKeywords: string | undefined, content: string): string[] {

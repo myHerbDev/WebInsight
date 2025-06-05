@@ -147,13 +147,18 @@ function extractEnhancedSections(lines: string[], contentType: string, websiteDa
 function generateExecutiveSummary(websiteData?: any): string {
   if (!websiteData) return "Comprehensive analysis completed with professional insights and recommendations."
 
+  const performanceScore = Math.round(websiteData.performance_score || websiteData.sustainability?.performance || 0)
+  const sustainabilityScore = Math.round(websiteData.sustainability_score || websiteData.sustainability?.score || 0)
+  const securityScore = Math.round(websiteData.security_score || 85)
+  const contentQualityScore = Math.round(websiteData.content_quality_score || 75)
+
   return `This analysis of ${websiteData.title || websiteData.url} reveals critical insights for optimization and strategic planning.
 
 Key Performance Indicators:
-• Overall Performance Score: ${websiteData.performance_score || websiteData.sustainability?.performance || 0}/100
-• Sustainability Rating: ${websiteData.sustainability_score || websiteData.sustainability?.score || 0}/100
-• Security Assessment: ${websiteData.security_score || 85}/100
-• Content Quality Score: ${websiteData.content_quality_score || 75}/100
+• Overall Performance Score: ${performanceScore}/100
+• Sustainability Rating: ${sustainabilityScore}/100
+• Security Assessment: ${securityScore}/100
+• Content Quality Score: ${contentQualityScore}/100
 
 Strategic Implications:
 The analysis identifies significant opportunities for improvement across multiple dimensions, with potential for enhanced user experience, reduced environmental impact, and improved business outcomes.
@@ -549,14 +554,17 @@ function createDefaultSections(lines: string[], contentType: string, websiteData
 }
 
 function generatePerformanceSection(websiteData: any): string {
+  const performanceScore = Math.round(websiteData.performance_score || websiteData.sustainability?.performance || 0)
+  const sustainabilityPerformance = Math.round(websiteData.sustainability?.performance || 0)
+
   return `Performance analysis reveals the following key metrics:
 
-**Overall Performance Score**: ${websiteData.performance_score || websiteData.sustainability?.performance || 0}/100
+**Overall Performance Score**: ${performanceScore}/100
 
 **Core Web Vitals**:
-• Loading Performance: ${websiteData.sustainability?.performance || 0}/100
-• Interactivity Score: ${Math.min((websiteData.performance_score || 0) + 10, 100)}/100
-• Visual Stability: ${Math.min((websiteData.performance_score || 0) + 5, 100)}/100
+• Loading Performance: ${sustainabilityPerformance}/100
+• Interactivity Score: ${Math.min(performanceScore + 10, 100)}/100
+• Visual Stability: ${Math.min(performanceScore + 5, 100)}/100
 
 **Resource Analysis**:
 • Total Page Weight: ${websiteData.contentStats?.wordCount ? Math.round(websiteData.contentStats.wordCount / 100) : "N/A"} KB estimated
@@ -568,14 +576,18 @@ The analysis identifies specific areas where performance improvements can be ach
 }
 
 function generateSustainabilitySection(websiteData: any): string {
+  const sustainabilityScore = Math.round(websiteData.sustainability_score || websiteData.sustainability?.score || 0)
+  const sustainabilityPerformance = Math.round(websiteData.sustainability?.performance || 0)
+  const scriptOptimization = Math.round(websiteData.sustainability?.scriptOptimization || 0)
+
   return `Sustainability assessment provides insights into environmental impact:
 
-**Sustainability Score**: ${websiteData.sustainability_score || websiteData.sustainability?.score || 0}/100
+**Sustainability Score**: ${sustainabilityScore}/100
 
 **Environmental Impact Factors**:
-• Carbon Footprint: ${websiteData.sustainability?.score >= 70 ? "Low" : "Moderate"} impact estimated
-• Energy Efficiency: ${websiteData.sustainability?.performance || 0}/100
-• Resource Optimization: ${websiteData.sustainability?.scriptOptimization || 0}/100
+• Carbon Footprint: ${sustainabilityScore >= 70 ? "Low" : "Moderate"} impact estimated
+• Energy Efficiency: ${sustainabilityPerformance}/100
+• Resource Optimization: ${scriptOptimization}/100
 
 **Green Hosting Assessment**:
 • SSL Certificate: ${websiteData.ssl_certificate ? "Implemented" : "Not detected"}

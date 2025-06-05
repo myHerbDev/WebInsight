@@ -66,16 +66,22 @@ function structureContent(content: string, contentType: string, websiteData?: an
   }
 }
 
-function generateComprehensivePrompt(contentType: string, websiteData: any, customPrompt: string, tone: string) {
+function generateComprehensivePrompt(
+  contentType: string,
+  websiteData: any,
+  customPrompt: string,
+  contentStructure: string,
+  tone: string,
+) {
   const websiteUrl = websiteData?.url || "the analyzed website"
   const websiteTitle = websiteData?.title || "Website"
   const websiteSummary = websiteData?.summary || "Analysis completed"
-  const performanceScore = websiteData?.performance_score || websiteData?.sustainability?.performance || 0
-  const sustainabilityScore = websiteData?.sustainability_score || websiteData?.sustainability?.score || 0
-  const securityScore = websiteData?.security_score || 85
-  const contentQualityScore = websiteData?.content_quality_score || 75
+  const performanceScore = Math.round(websiteData?.performance_score || websiteData?.sustainability?.performance || 0)
+  const sustainabilityScore = Math.round(websiteData?.sustainability_score || websiteData?.sustainability?.score || 0)
+  const securityScore = Math.round(websiteData?.security_score || 85)
+  const contentQualityScore = Math.round(websiteData?.content_quality_score || 75)
 
-  // Enhanced data context
+  // Enhanced data context with properly formatted numbers
   const dataContext = `
 WEBSITE ANALYSIS DATA:
 - Title: ${websiteTitle}
@@ -90,7 +96,27 @@ WEBSITE ANALYSIS DATA:
 - Improvements: ${websiteData?.sustainability?.improvements ? websiteData.sustainability.improvements.join(", ") : "Not available"}
 `
 
-  // Use custom prompt if provided
+  // If content structure is provided, use it as the primary template
+  if (contentStructure && contentStructure.trim()) {
+    return `Follow this EXACT content structure and fill it with relevant, detailed content:
+
+${contentStructure}
+
+${dataContext}
+
+INSTRUCTIONS:
+- Follow the provided structure EXACTLY as specified
+- Fill each section with comprehensive, relevant content
+- Write in a ${tone} tone
+- Use all available website data effectively
+- Ensure content is detailed and professional (minimum 1500 words)
+- Include specific metrics and data points where relevant
+- Make each section substantial and informative
+- Do not deviate from the provided structure
+- Replace placeholder text with actual content`
+  }
+
+  // Use custom prompt if provided (and no structure)
   if (customPrompt && customPrompt.trim()) {
     return `${customPrompt}
 
@@ -126,9 +152,9 @@ Provide a detailed 200-word executive summary highlighting key findings, environ
 
 ## 2. Website Overview and Context
 - Technical specifications: ${websiteTitle} (${websiteUrl})
-- Current performance baseline: ${performanceScore}/100
-- Sustainability baseline: ${sustainabilityScore}/100
-- Security and quality metrics: ${securityScore}/100, ${contentQualityScore}/100
+- Current performance baseline: ${Math.round(performanceScore)}/100
+- Sustainability baseline: ${Math.round(sustainabilityScore)}/100
+- Security and quality metrics: ${Math.round(securityScore)}/100, ${Math.round(contentQualityScore)}/100
 
 ## 3. Environmental Impact Analysis
 ### 3.1 Carbon Footprint Assessment
@@ -193,8 +219,8 @@ Provide a strategic overview of technical findings, critical issues, and optimiz
 
 ### 1.2 Website Profile
 - Target: ${websiteTitle} (${websiteUrl})
-- Current performance baseline: ${performanceScore}/100
-- Security posture: ${securityScore}/100
+- Current performance baseline: ${Math.round(performanceScore)}/100
+- Security posture: ${Math.round(securityScore)}/100
 - Overall technical health assessment
 
 ## 2. Performance Analysis
@@ -221,7 +247,7 @@ Provide a strategic overview of technical findings, critical issues, and optimiz
 - Content Security Policy (CSP) implementation
 - HTTP Strict Transport Security (HSTS)
 - X-Frame-Options and clickjacking protection
-- Security score: ${securityScore}/100 breakdown
+- Security score: ${Math.round(securityScore)}/100 breakdown
 
 ### 3.2 Vulnerability Assessment
 - Common security vulnerabilities scan
@@ -248,13 +274,13 @@ Provide a strategic overview of technical findings, critical issues, and optimiz
 ### 5.2 Content Quality Assessment
 - Content structure and organization
 - Readability and user experience
-- Content quality score: ${contentQualityScore}/100 analysis
+- Content quality score: ${Math.round(contentQualityScore)}/100 analysis
 
 ## 6. Sustainability and Environmental Impact
 ### 6.1 Green Performance Metrics
 - Energy efficiency assessment
 - Carbon footprint estimation
-- Sustainability score: ${sustainabilityScore}/100 breakdown
+- Sustainability score: ${Math.round(sustainabilityScore)}/100 breakdown
 
 ### 6.2 Optimization for Sustainability
 - Resource usage optimization
@@ -314,10 +340,10 @@ Provide a high-level assessment of ${websiteTitle}'s digital performance and str
 
 ## Key Performance Indicators
 ### Current State Assessment
-- Overall Performance Score: ${performanceScore}/100
-- Sustainability Rating: ${sustainabilityScore}/100
-- Security Posture: ${securityScore}/100
-- Content Quality Index: ${contentQualityScore}/100
+- Overall Performance Score: ${Math.round(performanceScore)}/100
+- Sustainability Rating: ${Math.round(sustainabilityScore)}/100
+- Security Posture: ${Math.round(securityScore)}/100
+- Content Quality Index: ${Math.round(contentQualityScore)}/100
 
 ### Business Impact Analysis
 - User experience implications and conversion impact
@@ -396,8 +422,8 @@ Provide a high-level assessment of ${websiteTitle}'s digital performance and str
 
 ## Success Metrics and KPIs
 ### Performance Targets
-- Target performance score: 90+/100 (current: ${performanceScore}/100)
-- Target sustainability rating: 85+/100 (current: ${sustainabilityScore}/100)
+- Target performance score: 90+/100 (current: ${Math.round(performanceScore)}/100)
+- Target sustainability rating: 85+/100 (current: ${Math.round(sustainabilityScore)}/100)
 - User experience improvement metrics
 
 ### Business Outcomes
@@ -549,15 +575,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { contentType, websiteData, customPrompt, tone = "professional" } = requestData
+    const { contentType, websiteData, customPrompt, contentStructure, tone = "professional" } = requestData
 
-    // Check if we have either website data or custom prompt
-    if (!websiteData && !customPrompt?.trim()) {
+    // Check if we have either website data, custom prompt, or content structure
+    if (!websiteData && !customPrompt?.trim() && !contentStructure?.trim()) {
       console.error("❌ No content source provided")
       return NextResponse.json(
         {
           success: false,
-          error: "Either website data or custom prompt is required",
+          error: "Either website data, custom prompt, or content structure is required",
         },
         { status: 400 },
       )
@@ -572,7 +598,7 @@ export async function POST(request: NextRequest) {
       prompt = customPrompt
     } else {
       // Generate prompt based on content type
-      prompt = generateComprehensivePrompt(contentType, websiteData, customPrompt, tone)
+      prompt = generateComprehensivePrompt(contentType, websiteData, customPrompt, contentStructure, tone)
     }
 
     console.log("📝 Generated prompt length:", prompt.length)

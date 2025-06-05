@@ -16,10 +16,13 @@ async function analyzeWebsiteEnhanced(url: string) {
   // Generate realistic scores based on website type
   const baseScores = generateRealisticScores(websiteProfile)
 
+  // Fetch website title using the Vercel API
+  const websiteTitle = await fetchWebsiteTitle(url, websiteProfile)
+
   const mockData = {
     _id: `analysis_${Date.now()}`,
     url,
-    title: websiteProfile.title || `${domain.replace("www.", "").split(".")[0]} - ${websiteProfile.category}`,
+    title: websiteTitle,
     summary: generateContextualSummary(domain, websiteProfile, baseScores),
     keyPoints: generateContextualKeyPoints(domain, websiteProfile, baseScores),
     keywords: generateRelevantKeywords(websiteProfile),
@@ -34,11 +37,11 @@ async function analyzeWebsiteEnhanced(url: string) {
     contentStats: generateRealisticContentStats(websiteProfile),
     rawData: generateRealisticTechnicalData(websiteProfile),
     // Backward compatibility fields
-    sustainability_score: baseScores.sustainability,
-    performance_score: baseScores.performance,
-    script_optimization_score: baseScores.scriptOptimization,
-    content_quality_score: baseScores.contentQuality,
-    security_score: baseScores.security,
+    sustainability_score: Math.round(baseScores.sustainability),
+    performance_score: Math.round(baseScores.performance),
+    script_optimization_score: Math.round(baseScores.scriptOptimization),
+    content_quality_score: Math.round(baseScores.contentQuality),
+    security_score: Math.round(baseScores.security),
     improvements: generateContextualImprovements(websiteProfile, baseScores),
     hosting_provider_name: websiteProfile.hostingProvider,
     ssl_certificate: baseScores.security > 70,
@@ -47,6 +50,82 @@ async function analyzeWebsiteEnhanced(url: string) {
   }
 
   return mockData
+}
+
+async function fetchWebsiteTitle(url: string, websiteProfile: any): Promise<string> {
+  try {
+    // Try to fetch the actual website title
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; WebInsightBot/1.0; +https://webinsight.app)",
+        Accept: "text/html",
+        "Accept-Language": "en-US,en;q=0.5",
+      },
+      signal: AbortSignal.timeout(5000), // 5 second timeout
+    })
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch website: ${response.status}`)
+    }
+
+    const html = await response.text()
+
+    // Extract title using regex patterns similar to how Google would
+    // First try the <title> tag
+    const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/is)
+    if (titleMatch && titleMatch[1]) {
+      const title = titleMatch[1]
+        .trim()
+        .replace(/\s+/g, " ")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+
+      // If title is not too long or too short, use it
+      if (title.length > 3 && title.length < 100) {
+        return title
+      }
+    }
+
+    // Try to find the first H1 tag as fallback
+    const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/is)
+    if (h1Match && h1Match[1]) {
+      const h1Text = h1Match[1]
+        .trim()
+        .replace(/<[^>]*>/g, " ")
+        .replace(/\s+/g, " ")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+
+      if (h1Text.length > 3) {
+        return h1Text
+      }
+    }
+
+    // If all else fails, use the profile title
+    return websiteProfile.title || formatDomainName(url)
+  } catch (error) {
+    console.error("Error fetching website title:", error)
+    // Fallback to the profile title or domain name
+    return websiteProfile.title || formatDomainName(url)
+  }
+}
+
+function formatDomainName(url: string): string {
+  try {
+    const domain = new URL(url).hostname
+    const siteName = domain.replace(/^www\./, "").split(".")[0]
+    return siteName.charAt(0).toUpperCase() + siteName.slice(1)
+  } catch (e) {
+    return "Website"
+  }
 }
 
 function getWebsiteProfile(domain: string) {
@@ -142,6 +221,15 @@ function getWebsiteProfile(domain: string) {
       expectedSecurity: 96,
       expectedSustainability: 79,
     },
+    "vercel.com": {
+      category: "Developer Platform",
+      title: "Vercel: Build and deploy the frontend with Next.js",
+      hostingProvider: "Vercel",
+      serverLocation: "United States",
+      expectedPerformance: 96,
+      expectedSecurity: 97,
+      expectedSustainability: 90,
+    },
   }
 
   // Check for exact matches first
@@ -225,7 +313,7 @@ function generateContextualSummary(domain: string, profile: any, scores: any) {
   if (overallScore < 75) performanceLevel = "good"
   if (overallScore < 65) performanceLevel = "moderate"
 
-  return `Comprehensive analysis of ${profile.title} (${profile.category}) reveals ${performanceLevel} performance with a ${overallScore}/100 overall score. The website demonstrates strong ${scores.security > 90 ? "security practices" : scores.performance > 90 ? "performance optimization" : "sustainability measures"} while showing opportunities for improvement in ${scores.sustainability < 80 ? "environmental impact" : scores.performance < 80 ? "loading speed" : "content optimization"}.`
+  return `Comprehensive analysis of ${profile.title} (${profile.category}) reveals ${performanceLevel} performance with a ${Math.round(overallScore)}/100 overall score. The website demonstrates strong ${scores.security > 90 ? "security practices" : scores.performance > 90 ? "performance optimization" : "sustainability measures"} while showing opportunities for improvement in ${scores.sustainability < 80 ? "environmental impact" : scores.performance < 80 ? "loading speed" : "content optimization"}.`
 }
 
 function generateContextualKeyPoints(domain: string, profile: any, scores: any) {
