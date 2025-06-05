@@ -1,15 +1,27 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Book, Code, FileText, HelpCircle, MessageSquare, Search, Shield, Users, ExternalLink } from "lucide-react"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import {
+  Book,
+  Code,
+  FileText,
+  HelpCircle,
+  Menu,
+  MessageSquare,
+  Search,
+  Shield,
+  Users,
+  ExternalLink,
+} from "lucide-react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { Suspense } from "react"
-import { useSearchParams } from "next/navigation"
 
 const navigationItems = [
   {
@@ -68,10 +80,9 @@ interface DocsLayoutProps {
   children: React.ReactNode
 }
 
-export default function DocsLayout({ children }: DocsLayoutProps) {
+function SidebarContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const pathname = usePathname()
-  const searchParams = useSearchParams()
 
   const isActive = (href: string) => {
     if (href === "/docs" && pathname === "/docs") return true
@@ -79,7 +90,7 @@ export default function DocsLayout({ children }: DocsLayoutProps) {
     return false
   }
 
-  const SidebarContent = () => (
+  return (
     <div className="space-y-6">
       {/* Search */}
       <div className="relative">
@@ -154,14 +165,44 @@ export default function DocsLayout({ children }: DocsLayoutProps) {
       </div>
     </div>
   )
+}
 
+export default function DocsLayout({ children }: DocsLayoutProps) {
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="container mx-auto px-4 py-8">
-        <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
-      </main>
+
+      <div className="flex-1 flex">
+        {/* Desktop Sidebar */}
+        <aside className="hidden lg:block w-64 border-r bg-gray-50/50 dark:bg-gray-900/50">
+          <ScrollArea className="h-[calc(100vh-4rem)] p-6">
+            <SidebarContent />
+          </ScrollArea>
+        </aside>
+
+        {/* Mobile Sidebar */}
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="lg:hidden fixed top-20 left-4 z-40">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-64 p-0">
+            <ScrollArea className="h-full p-6">
+              <SidebarContent />
+            </ScrollArea>
+          </SheetContent>
+        </Sheet>
+
+        {/* Main Content */}
+        <main className="flex-1 lg:pl-0 pl-16">
+          <div className="max-w-4xl mx-auto px-6 py-8">
+            <Suspense fallback={<div className="animate-pulse">Loading...</div>}>{children}</Suspense>
+          </div>
+        </main>
+      </div>
+
       <Footer />
-    </>
+    </div>
   )
 }
