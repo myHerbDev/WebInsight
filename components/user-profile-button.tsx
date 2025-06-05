@@ -1,83 +1,85 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { LoginModal } from "@/components/login-modal"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useAuth } from "@/lib/auth-provider"
-import { Loader2, LogOut, Settings, User } from "lucide-react"
+import { LoginModal } from "./login-modal"
+import { LogOut, User, Settings } from "lucide-react"
 
 export function UserProfileButton() {
-  const [showLoginModal, setShowLoginModal] = useState(false)
-  const { user, signOut, isLoading } = useAuth()
+  const { user, signOut, loading, isConfigured } = useAuth()
 
-  const handleSignOut = async () => {
-    await signOut()
+  if (loading) {
+    return <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
   }
 
-  if (isLoading) {
+  if (!isConfigured) {
     return (
-      <Button variant="ghost" size="icon" disabled>
-        <Loader2 className="h-5 w-5 animate-spin" />
+      <Button variant="ghost" size="sm" disabled>
+        Login Unavailable
       </Button>
     )
   }
 
   if (!user) {
     return (
-      <>
-        <Button
-          variant="default"
-          className="bg-gradient-to-r from-purple-600 to-teal-600 hover:from-purple-700 hover:to-teal-700"
-          onClick={() => setShowLoginModal(true)}
-        >
+      <LoginModal>
+        <Button variant="default" size="sm">
           Login
         </Button>
-        {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
-      </>
+      </LoginModal>
     )
   }
 
+  const initials = user.email
+    .split("@")[0]
+    .split(".")
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
+
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="relative">
-            <User className="h-5 w-5" />
-            <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-green-500" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <div className="px-2 py-1.5">
-            <p className="text-sm font-medium">{user.email}</p>
-            <p className="text-xs text-muted-foreground">Logged in</p>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">Account</p>
+            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
           </div>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <a href="/profile">
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
-            </a>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <a href="/settings">
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </a>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleSignOut}>
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Log out</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>
+          <User className="mr-2 h-4 w-4" />
+          <span>Profile</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Settings</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => signOut()}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Log out</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
+
+export default UserProfileButton
