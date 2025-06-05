@@ -1,85 +1,61 @@
 import { Redis } from "@upstash/redis"
 
-// Check if Upstash Redis is configured
-export const isRedisConfigured = (): boolean => {
-  return Boolean(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
-}
-
-// Create Redis client
+// Initialize Redis connection
 let redis: Redis | null = null
 
-if (isRedisConfigured()) {
-  try {
+try {
+  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
     redis = new Redis({
-      url: process.env.KV_REST_API_URL!,
-      token: process.env.KV_REST_API_TOKEN!,
+      url: process.env.KV_REST_API_URL,
+      token: process.env.KV_REST_API_TOKEN,
     })
-    console.log("Upstash Redis client initialized successfully")
-  } catch (error) {
-    console.warn("Failed to initialize Redis client:", error)
-    redis = null
+    console.log("Upstash Redis connection initialized")
+  } else {
+    console.warn("Redis environment variables not found - Redis will not be available")
   }
-} else {
-  console.log("Redis environment variables not found - using fallback mode")
-}
-
-// Helper function to safely handle Redis operations
-export async function safeRedisOperation<T>(
-  operation: () => Promise<T>,
-  fallbackValue: T,
-  errorMessage = "Redis operation failed",
-): Promise<T> {
-  try {
-    if (!redis) {
-      console.warn("Redis not available, using fallback")
-      return fallbackValue
-    }
-
-    console.log("Executing Redis operation...")
-    const result = await operation()
-    console.log("Redis operation completed successfully")
-    return result
-  } catch (error: any) {
-    console.error(errorMessage, error)
-
-    // Log additional error details
-    if (error.name) {
-      console.error("Redis error name:", error.name)
-    }
-    if (error.cause) {
-      console.error("Redis error cause:", error.cause)
-    }
-
-    return fallbackValue
-  }
+} catch (error) {
+  console.error("Failed to initialize Redis:", error)
 }
 
 // Check if Redis is available
 export function isRedisAvailable(): boolean {
-  return redis !== null && isRedisConfigured()
+  return redis !== null && !!process.env.KV_REST_API_URL && !!process.env.KV_REST_API_TOKEN
 }
 
-// Get Redis client
-export function getRedisClient() {
-  return redis
-}
-
-// Cache utilities
+// Cache key generators
 export const CACHE_KEYS = {
-  ANALYSIS: (url: string) => `analysis:${url}`,
+  ANALYSIS: (url: string) => `analysis:${encodeURIComponent(url)}`,
   USER_SESSION: (sessionId: string) => `session:${sessionId}`,
   USER_DATA: (userId: string) => `user:${userId}`,
-  HOSTING_PROVIDERS: "hosting_providers",
-  GENERATED_CONTENT: (analysisId: string) => `content:${analysisId}`,
+  CONTENT_GENERATION: (id: string) => `content:${id}`,
 }
 
+// Cache TTL (Time To Live) in seconds
 export const CACHE_TTL = {
   ANALYSIS: 24 * 60 * 60, // 24 hours
   SESSION: 7 * 24 * 60 * 60, // 7 days
   USER_DATA: 60 * 60, // 1 hour
-  HOSTING_PROVIDERS: 24 * 60 * 60, // 24 hours
-  GENERATED_CONTENT: 24 * 60 * 60, // 24 hours
+  CONTENT: 60 * 60, // 1 hour
 }
 
-// Export the Redis client
+// Safe Redis operation wrapper
+export async function safeRedisOperation<T>(
+  operation: () => Promise<T>,
+  fallback: T,
+  errorMessage = "Redis operation failed",
+): Promise<T> {
+  if (!isRedisAvailable()) {
+    console.warn("Redis not available, using fallback")
+    return fallback
+  }
+
+  try {
+    return await operation()
+  } catch (error) {
+    console.error(errorMessage, error)
+    return fallback
+  }
+}
+
+// Export the redis instance
 export { redis }

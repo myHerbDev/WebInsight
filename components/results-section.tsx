@@ -1,585 +1,300 @@
 "use client"
 
-import { useState } from "react"
-import type { WebsiteData } from "@/types/website-data"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
+import { useState, useEffect } from "react"
 import { Analytics } from "@/components/analytics"
-import { SocialShare } from "@/components/social-share"
 import { SustainabilityChart } from "@/components/sustainability-chart"
-import { ContentTypeGenerator } from "@/components/content-type-generator"
-import { toast } from "@/components/ui/use-toast"
-import {
-  BarChart,
-  Clipboard,
-  Download,
-  FileText,
-  Globe,
-  Loader2,
-  Mail,
-  MessageSquare,
-  Save,
-  Share2,
-  Star,
-} from "lucide-react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  shareToTwitter,
-  shareToLinkedIn,
-  shareToFacebook,
-  shareViaGmail,
-  createGoogleDoc,
-  copyToClipboard,
-} from "@/lib/share"
+import { SocialShare } from "@/components/social-share"
+import { ContentExport } from "@/components/content-export"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { motion } from "framer-motion"
+import { BarChart3, TrendingUp, Download, Heart, Bookmark, Globe, Shield, Zap, Users, AlertCircle } from "lucide-react"
+import type { WebsiteData } from "@/types/website-data"
 
 interface ResultsSectionProps {
   data: WebsiteData
-  onSignUpClick: (tempUserId?: string) => void
+  onSignUpClick: (userId: string) => void
   onSave: () => void
   onFavorite: () => void
   userId: string | null
 }
 
 export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId }: ResultsSectionProps) {
-  const [selectedTab, setSelectedTab] = useState("overview")
-  const [toneVoice, setToneVoice] = useState("professional")
-  const [isExporting, setIsExporting] = useState<string | null>(null)
-  const [markdownEnabled, setMarkdownEnabled] = useState(true)
+  const [isClient, setIsClient] = useState(false)
+  const [activeTab, setActiveTab] = useState("overview")
 
-  const handleExport = async (format: string) => {
-    setIsExporting(format)
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
-    try {
-      const response = await fetch("/api/export", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          analysisId: data._id,
-          format: format === "pdf" ? "pdf" : markdownEnabled ? "markdown" : "plain",
-          includeScreenshot: false,
-        }),
-      })
+  // Safe data validation
+  if (!data) {
+    return (
+      <Card className="w-full">
+        <CardContent className="flex items-center justify-center py-8">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">No analysis data available</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Export failed")
-      }
+  // Ensure data has required structure
+  const safeData: WebsiteData = {
+    _id: data._id || "unknown",
+    url: data.url || "",
+    title: data.title || "Website Analysis",
+    summary: data.summary || "Analysis completed",
+    keyPoints: Array.isArray(data.keyPoints) ? data.keyPoints : [],
+    keywords: Array.isArray(data.keywords) ? data.keywords : [],
+    sustainability: data.sustainability || {
+      score: 0,
+      performance: 0,
+      scriptOptimization: 0,
+      duplicateContent: 0,
+      improvements: [],
+    },
+    subdomains: Array.isArray(data.subdomains) ? data.subdomains : [],
+    contentStats: data.contentStats || {},
+    rawData: data.rawData || {},
+    // Backward compatibility
+    sustainability_score: data.sustainability_score || data.sustainability?.score || 0,
+    performance_score: data.performance_score || data.sustainability?.performance || 0,
+    script_optimization_score: data.script_optimization_score || data.sustainability?.scriptOptimization || 0,
+    content_quality_score: data.content_quality_score || 0,
+    security_score: data.security_score || 0,
+    improvements: data.improvements || data.sustainability?.improvements || [],
+    hosting_provider_name: data.hosting_provider_name || "Unknown",
+    ssl_certificate: data.ssl_certificate || false,
+    server_location: data.server_location || "Unknown",
+    ip_address: data.ip_address || "Unknown",
+  }
 
-      const result = await response.json()
+  const getOverallScore = () => {
+    const scores = [
+      safeData.sustainability_score || 0,
+      safeData.performance_score || 0,
+      safeData.security_score || 0,
+      safeData.content_quality_score || 0,
+    ].filter((score) => typeof score === "number" && !isNaN(score))
 
-      // Handle different export types with real functionality
-      switch (format) {
-        case "clipboard":
-          const success = await copyToClipboard(result.content)
-          if (success) {
-            toast({
-              title: "Copied to clipboard",
-              description: "Analysis content has been copied to your clipboard",
-            })
-          } else {
-            throw new Error("Failed to copy to clipboard")
-          }
-          break
+    if (scores.length === 0) return 0
+    return Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length)
+  }
 
-        case "pdf":
-          // Create a blob and download as HTML (can be printed as PDF)
-          const blob = new Blob([result.content], { type: "text/html" })
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement("a")
-          a.href = url
-          a.download = `${result.websiteTitle?.replace(/[^a-z0-9]/gi, "_") || "analysis"}_report.html`
-          document.body.appendChild(a)
-          a.click()
-          document.body.removeChild(a)
-          URL.revokeObjectURL(url)
+  const overallScore = getOverallScore()
 
-          toast({
-            title: "PDF Export",
-            description: "HTML report downloaded. Open in browser and print as PDF (Ctrl+P).",
-          })
-          break
+  const getScoreColor = (score: number) => {
+    if (typeof score !== "number" || isNaN(score)) return "text-gray-500"
+    if (score >= 80) return "text-green-600"
+    if (score >= 60) return "text-yellow-600"
+    return "text-red-600"
+  }
 
-        case "gdocs":
-          createGoogleDoc(result.content, result.websiteTitle || result.title)
-          toast({
-            title: "Google Docs",
-            description: "Text file downloaded. Upload to Google Docs to edit.",
-          })
-          break
+  const getScoreBadge = (score: number) => {
+    if (typeof score !== "number" || isNaN(score)) return "Unknown"
+    if (score >= 80) return "Excellent"
+    if (score >= 60) return "Good"
+    return "Needs Improvement"
+  }
 
-        case "gmail":
-          shareViaGmail({
-            title: result.websiteTitle || result.title,
-            url: result.websiteUrl || data.url,
-            summary: data.summary,
-            analysisUrl: window.location.href,
-          })
-          toast({
-            title: "Gmail",
-            description: "Gmail compose window opened with analysis content.",
-          })
-          break
-
-        case "twitter":
-          shareToTwitter({
-            title: result.websiteTitle || result.title,
-            url: result.websiteUrl || data.url,
-            summary: data.summary,
-            analysisUrl: window.location.href,
-          })
-          toast({
-            title: "Twitter",
-            description: "Twitter compose window opened.",
-          })
-          break
-
-        case "linkedin":
-          shareToLinkedIn({
-            title: result.websiteTitle || result.title,
-            url: result.websiteUrl || data.url,
-            summary: data.summary,
-            analysisUrl: window.location.href,
-          })
-          toast({
-            title: "LinkedIn",
-            description: "LinkedIn share window opened.",
-          })
-          break
-
-        case "facebook":
-          shareToFacebook({
-            title: result.websiteTitle || result.title,
-            url: result.websiteUrl || data.url,
-            summary: data.summary,
-            analysisUrl: window.location.href,
-          })
-          toast({
-            title: "Facebook",
-            description: "Facebook share window opened.",
-          })
-          break
-      }
-    } catch (error) {
-      console.error("Export error:", error)
-      toast({
-        title: "Export failed",
-        description: error instanceof Error ? error.message : "Failed to export content. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsExporting(null)
-    }
+  // Don't render until client-side to avoid hydration issues
+  if (!isClient) {
+    return (
+      <div className="w-full space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-2/3 mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-8 mb-12">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6">
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <h2 className="text-2xl font-bold">{data.title}</h2>
-            <p className="text-gray-500 dark:text-gray-400">{data.url}</p>
-            <div className="flex items-center mt-2 space-x-4 text-sm text-gray-600 dark:text-gray-400">
-              <span>Sustainability: {data.sustainability_score || 0}%</span>
-              <span>Performance: {data.performance_score || 0}%</span>
-              <span>Security: {data.security_score || 0}%</span>
-              <span>Words: {data.content_stats?.wordCount || 0}</span>
-            </div>
-          </div>
-          <div className="flex space-x-2">
-            <Button variant="outline" size="sm" onClick={onSave}>
-              <Save className="h-4 w-4 mr-2" />
-              Save
-            </Button>
-            <Button variant="outline" size="sm" onClick={onFavorite}>
-              <Star className="h-4 w-4 mr-2" />
-              Favorite
-            </Button>
-            <Button
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="w-full space-y-6"
+    >
+      {/* Header Section */}
+      <div className="text-center space-y-4">
+        <div className="flex items-center justify-center space-x-4">
+          <div className={`text-6xl font-bold ${getScoreColor(overallScore)}`}>{overallScore}%</div>
+          <div className="text-left">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{safeData.title}</h2>
+            <Badge
               variant="outline"
-              size="sm"
-              onClick={() => handleExport("clipboard")}
-              disabled={isExporting === "clipboard"}
+              className={`mt-1 ${
+                overallScore >= 80
+                  ? "border-green-200 text-green-700 bg-green-50"
+                  : overallScore >= 60
+                    ? "border-yellow-200 text-yellow-700 bg-yellow-50"
+                    : "border-red-200 text-red-700 bg-red-50"
+              }`}
             >
-              {isExporting === "clipboard" ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Share2 className="h-4 w-4 mr-2" />
-              )}
-              Share
-            </Button>
+              {getScoreBadge(overallScore)}
+            </Badge>
           </div>
         </div>
 
-        <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="grid grid-cols-5 mb-6">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="sustainability">Sustainability</TabsTrigger>
-            <TabsTrigger value="content">Content</TabsTrigger>
-            <TabsTrigger value="generate">Generate</TabsTrigger>
-          </TabsList>
+        <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">{safeData.summary}</p>
 
-          <TabsContent value="overview" className="space-y-6">
+        {/* Action Buttons */}
+        <div className="flex flex-wrap justify-center gap-3">
+          <Button onClick={onSave} variant="outline" size="sm">
+            <Bookmark className="mr-2 h-4 w-4" />
+            Save Analysis
+          </Button>
+          <Button onClick={onFavorite} variant="outline" size="sm">
+            <Heart className="mr-2 h-4 w-4" />
+            Add to Favorites
+          </Button>
+          <SocialShare data={safeData} />
+        </div>
+      </div>
+
+      {/* Key Points */}
+      {safeData.keyPoints && safeData.keyPoints.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <TrendingUp className="h-5 w-5 text-blue-500" />
+              <span>Key Findings</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {safeData.keyPoints.map((point, index) => (
+                <motion.li
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex items-start space-x-2"
+                >
+                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+                  <span className="text-gray-700 dark:text-gray-300">{point}</span>
+                </motion.li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Main Content Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview" className="flex items-center space-x-2">
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">Overview</span>
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center space-x-2">
+            <TrendingUp className="h-4 w-4" />
+            <span className="hidden sm:inline">Analytics</span>
+          </TabsTrigger>
+          <TabsTrigger value="sustainability" className="flex items-center space-x-2">
+            <Globe className="h-4 w-4" />
+            <span className="hidden sm:inline">Sustainability</span>
+          </TabsTrigger>
+          <TabsTrigger value="export" className="flex items-center space-x-2">
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Export</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>{data.summary}</p>
+              <CardContent className="p-4 text-center">
+                <Globe className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                <div className={`text-2xl font-bold ${getScoreColor(safeData.sustainability_score || 0)}`}>
+                  {typeof safeData.sustainability_score === "number" && !isNaN(safeData.sustainability_score)
+                    ? `${safeData.sustainability_score}%`
+                    : "N/A"}
+                </div>
+                <div className="text-sm text-gray-500">Sustainability</div>
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Key Points</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-2">
-                    {data.key_points.map((point, index) => (
-                      <li key={index} className="flex items-start">
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 text-xs font-medium mr-3">
-                          {index + 1}
-                        </span>
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Keywords</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {data.keywords.map((keyword, index) => (
-                      <Badge key={index} variant="secondary">
-                        {keyword}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {data.subdomains && data.subdomains.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Related Domains</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {data.subdomains.map((subdomain, index) => (
-                      <div key={index} className="flex items-center p-3 border rounded-lg">
-                        <Globe className="h-5 w-5 mr-2 text-gray-500" />
-                        <span className="text-sm">{subdomain}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-6">
-            <Analytics data={data} />
-          </TabsContent>
-
-          <TabsContent value="sustainability" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Sustainability Score</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-center mb-6">
-                    <div className="relative w-40 h-40 flex items-center justify-center">
-                      <svg className="w-full h-full" viewBox="0 0 100 100">
-                        <circle
-                          className="text-gray-200 dark:text-gray-700"
-                          strokeWidth="10"
-                          stroke="currentColor"
-                          fill="transparent"
-                          r="40"
-                          cx="50"
-                          cy="50"
-                        />
-                        <circle
-                          className="text-purple-500"
-                          strokeWidth="10"
-                          strokeDasharray={251.2}
-                          strokeDashoffset={251.2 - (251.2 * (data.sustainability_score || 0)) / 100}
-                          strokeLinecap="round"
-                          stroke="currentColor"
-                          fill="transparent"
-                          r="40"
-                          cx="50"
-                          cy="50"
-                        />
-                      </svg>
-                      <div className="absolute text-3xl font-bold">{data.sustainability_score || 0}</div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span>Performance</span>
-                        <span>{data.performance_score || 0}%</span>
-                      </div>
-                      <Progress value={data.performance_score || 0} />
-                    </div>
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span>Script Optimization</span>
-                        <span>{data.script_optimization_score || 0}%</span>
-                      </div>
-                      <Progress value={data.script_optimization_score || 0} />
-                    </div>
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span>Content Quality</span>
-                        <span>{data.content_quality_score || 0}%</span>
-                      </div>
-                      <Progress value={data.content_quality_score || 0} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Improvement Suggestions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {(data.improvements || []).map((improvement, index) => (
-                      <li key={index} className="flex items-start p-3 border rounded-lg">
-                        <div className="w-6 h-6 rounded-full bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200 flex items-center justify-center mr-3 text-xs">
-                          {index + 1}
-                        </div>
-                        <span className="text-sm">{improvement}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            </div>
-
             <Card>
-              <CardHeader>
-                <CardTitle>Sustainability Metrics</CardTitle>
-              </CardHeader>
-              <CardContent className="h-80">
-                <SustainabilityChart
-                  performance={data.performance_score || 0}
-                  scriptOptimization={data.script_optimization_score || 0}
-                  contentQuality={data.content_quality_score || 0}
-                  security={data.security_score || 0}
-                />
+              <CardContent className="p-4 text-center">
+                <Zap className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+                <div className={`text-2xl font-bold ${getScoreColor(safeData.performance_score || 0)}`}>
+                  {typeof safeData.performance_score === "number" && !isNaN(safeData.performance_score)
+                    ? `${safeData.performance_score}%`
+                    : "N/A"}
+                </div>
+                <div className="text-sm text-gray-500">Performance</div>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="content" className="space-y-6">
+            <Card>
+              <CardContent className="p-4 text-center">
+                <Shield className="h-8 w-8 text-purple-500 mx-auto mb-2" />
+                <div className={`text-2xl font-bold ${getScoreColor(safeData.security_score || 0)}`}>
+                  {typeof safeData.security_score === "number" && !isNaN(safeData.security_score)
+                    ? `${safeData.security_score}%`
+                    : "N/A"}
+                </div>
+                <div className="text-sm text-gray-500">Security</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4 text-center">
+                <Users className="h-8 w-8 text-orange-500 mx-auto mb-2" />
+                <div className={`text-2xl font-bold ${getScoreColor(safeData.content_quality_score || 0)}`}>
+                  {typeof safeData.content_quality_score === "number" && !isNaN(safeData.content_quality_score)
+                    ? `${safeData.content_quality_score}%`
+                    : "N/A"}
+                </div>
+                <div className="text-sm text-gray-500">Content</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Keywords */}
+          {safeData.keywords && safeData.keywords.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Content Statistics</CardTitle>
+                <CardTitle>Keywords</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  {Object.entries(data.content_stats || {}).map(([key, value]) => (
-                    <div key={key} className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg text-center">
-                      <div className="text-2xl font-bold">{value}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400 capitalize">
-                        {key.replace(/([A-Z])/g, " $1").trim()}
-                      </div>
-                    </div>
+                <div className="flex flex-wrap gap-2">
+                  {safeData.keywords.slice(0, 20).map((keyword, index) => (
+                    <Badge key={index} variant="secondary">
+                      {keyword}
+                    </Badge>
                   ))}
                 </div>
               </CardContent>
             </Card>
+          )}
+        </TabsContent>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Export & Share Options</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button
-                      variant="outline"
-                      className="justify-start"
-                      onClick={() => handleExport("gdocs")}
-                      disabled={!!isExporting}
-                    >
-                      {isExporting === "gdocs" ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <FileText className="h-4 w-4 mr-2" />
-                      )}
-                      Google Docs
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="justify-start"
-                      onClick={() => handleExport("gmail")}
-                      disabled={!!isExporting}
-                    >
-                      {isExporting === "gmail" ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Mail className="h-4 w-4 mr-2" />
-                      )}
-                      Gmail
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="justify-start"
-                      onClick={() => handleExport("twitter")}
-                      disabled={!!isExporting}
-                    >
-                      {isExporting === "twitter" ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <MessageSquare className="h-4 w-4 mr-2" />
-                      )}
-                      Twitter
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="justify-start"
-                      onClick={() => handleExport("linkedin")}
-                      disabled={!!isExporting}
-                    >
-                      {isExporting === "linkedin" ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <BarChart className="h-4 w-4 mr-2" />
-                      )}
-                      LinkedIn
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="justify-start"
-                      onClick={() => handleExport("clipboard")}
-                      disabled={!!isExporting}
-                    >
-                      {isExporting === "clipboard" ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Clipboard className="h-4 w-4 mr-2" />
-                      )}
-                      Copy to Clipboard
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="justify-start"
-                      onClick={() => handleExport("pdf")}
-                      disabled={!!isExporting}
-                    >
-                      {isExporting === "pdf" ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Download className="h-4 w-4 mr-2" />
-                      )}
-                      Export PDF
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="justify-start"
-                      onClick={() => handleExport("facebook")}
-                      disabled={!!isExporting}
-                    >
-                      {isExporting === "facebook" ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Share2 className="h-4 w-4 mr-2" />
-                      )}
-                      Facebook
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+        <TabsContent value="analytics">
+          <Analytics data={safeData} />
+        </TabsContent>
 
-              <SocialShare data={data} />
-            </div>
+        <TabsContent value="sustainability">
+          <SustainabilityChart data={safeData} />
+        </TabsContent>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Export Settings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span>Export with Markdown</span>
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        variant={markdownEnabled ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setMarkdownEnabled(true)}
-                      >
-                        Yes
-                      </Button>
-                      <Button
-                        variant={!markdownEnabled ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setMarkdownEnabled(false)}
-                      >
-                        No
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Content Tone</label>
-                    <Select value={toneVoice} onValueChange={setToneVoice}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select tone" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="professional">Professional</SelectItem>
-                        <SelectItem value="casual">Casual</SelectItem>
-                        <SelectItem value="enthusiastic">Enthusiastic</SelectItem>
-                        <SelectItem value="technical">Technical</SelectItem>
-                        <SelectItem value="friendly">Friendly</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="generate" className="space-y-6">
-            <ContentTypeGenerator
-              analysisId={data._id}
-              tone={toneVoice}
-              onSignUpClick={() => onSignUpClick(userId || undefined)}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      <div className="bg-purple-50 dark:bg-gray-800/50 rounded-xl p-6 text-center">
-        <h3 className="text-xl font-bold mb-3">Save Your Analysis</h3>
-        <p className="mb-4 text-gray-600 dark:text-gray-300">
-          Sign up to save your analysis, access historical data, and export to PDF.
-        </p>
-        <Button
-          onClick={() => onSignUpClick(userId || undefined)}
-          className="bg-gradient-to-r from-purple-600 to-teal-600"
-        >
-          Sign Up Now
-        </Button>
-      </div>
-    </div>
+        <TabsContent value="export">
+          <ContentExport data={safeData} onSignUpClick={onSignUpClick} />
+        </TabsContent>
+      </Tabs>
+    </motion.div>
   )
 }

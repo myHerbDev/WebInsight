@@ -27,15 +27,23 @@ export default function Home() {
   const [lastAnalyzedUrl, setLastAnalyzedUrl] = useState<string>("")
   const [showScrollToTop, setShowScrollToTop] = useState(false)
   const [activeTab, setActiveTab] = useState("analyze")
+  const [isClient, setIsClient] = useState(false)
+
+  // Client-side hydration
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   // Enhanced scroll detection
   useEffect(() => {
+    if (!isClient) return
+
     const handleScroll = () => {
       setShowScrollToTop(window.scrollY > 300)
     }
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+  }, [isClient])
 
   const determineErrorType = (
     error: Error | string,
@@ -63,6 +71,8 @@ export default function Home() {
   }
 
   const handleAnalyzeWebsite = async (url: string) => {
+    if (!isClient) return
+
     setIsLoading(true)
     setWebsiteData(null)
     setError(null)
@@ -97,14 +107,19 @@ export default function Home() {
 
       console.log("Sending analysis request...")
 
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(requestData),
+        signal: controller.signal,
       })
 
+      clearTimeout(timeoutId)
       console.log("Response status:", response.status)
 
       // Handle non-OK responses
@@ -113,7 +128,7 @@ export default function Home() {
 
         try {
           const responseText = await response.text()
-          console.log("Error response text:", responseText)
+          console.log("Error response text:", responseText.substring(0, 500))
 
           if (responseText && responseText.trim()) {
             try {
@@ -157,7 +172,7 @@ export default function Home() {
           throw new Error("Invalid data format received from server")
         }
 
-        // Ensure required fields exist
+        // Ensure required fields exist with safe defaults
         data = {
           _id: data._id || "unknown",
           url: data.url || url,
@@ -175,6 +190,17 @@ export default function Home() {
           subdomains: data.subdomains || [],
           contentStats: data.contentStats || {},
           rawData: data.rawData || {},
+          // Backward compatibility
+          sustainability_score: data.sustainability_score || data.sustainability?.score || 0,
+          performance_score: data.performance_score || data.sustainability?.performance || 0,
+          script_optimization_score: data.script_optimization_score || data.sustainability?.scriptOptimization || 0,
+          content_quality_score: data.content_quality_score || 0,
+          security_score: data.security_score || 0,
+          improvements: data.improvements || data.sustainability?.improvements || [],
+          hosting_provider_name: data.hosting_provider_name || "Unknown",
+          ssl_certificate: data.ssl_certificate || false,
+          server_location: data.server_location || "Unknown",
+          ip_address: data.ip_address || "Unknown",
         }
       } catch (parseError: any) {
         console.error("Response parsing error:", parseError)
@@ -191,16 +217,21 @@ export default function Home() {
     } catch (error: any) {
       console.error("Error analyzing website:", error)
 
-      if (errorType === "unknown") {
-        setErrorType(determineErrorType(error))
-      }
+      if (error.name === "AbortError") {
+        setError("Request timeout - analysis took too long")
+        setErrorType("timeout")
+      } else {
+        if (errorType === "unknown") {
+          setErrorType(determineErrorType(error))
+        }
 
-      const errorMessage = error.message || "Failed to analyze the website. Please try again."
-      setError(errorMessage)
+        const errorMessage = error.message || "Failed to analyze the website. Please try again."
+        setError(errorMessage)
+      }
 
       toast({
         title: "Analysis Failed",
-        description: errorMessage,
+        description: error.message || "Failed to analyze the website. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -209,7 +240,7 @@ export default function Home() {
   }
 
   const handleSaveAnalysis = async (type: "save" | "favorite") => {
-    if (!websiteData) return
+    if (!websiteData || !isClient) return
 
     try {
       const response = await fetch("/api/user/save", {
@@ -278,7 +309,29 @@ export default function Home() {
   }
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    if (isClient) {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }
+
+  // Don't render until client-side to avoid hydration issues
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-8">
+            <div className="h-96 bg-gray-200 rounded-3xl"></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-48 bg-gray-200 rounded-xl"></div>
+              ))}
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
   }
 
   return (
@@ -290,8 +343,8 @@ export default function Home() {
             key={i}
             className="absolute w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20"
             initial={{
-              x: Math.random() * (typeof window !== "undefined" ? window.innerWidth : 1200),
-              y: Math.random() * (typeof window !== "undefined" ? window.innerHeight : 800),
+              x: Math.random() * window.innerWidth,
+              y: Math.random() * window.innerHeight,
             }}
             animate={{
               y: [null, -50],

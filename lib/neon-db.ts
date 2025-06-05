@@ -1,135 +1,42 @@
 import { neon } from "@neondatabase/serverless"
 
-// Check if Neon is configured
-export const isNeonConfigured = (): boolean => {
-  return Boolean(process.env.DATABASE_URL)
-}
+// Initialize Neon connection
+let sql: ReturnType<typeof neon> | null = null
 
-// Create Neon SQL client
-let sql: any = null
-
-if (isNeonConfigured()) {
-  try {
-    sql = neon(process.env.DATABASE_URL!)
-    console.log("Neon database client initialized successfully")
-  } catch (error) {
-    console.warn("Failed to initialize Neon client:", error)
-    sql = null
+try {
+  if (process.env.DATABASE_URL) {
+    sql = neon(process.env.DATABASE_URL)
+    console.log("Neon database connection initialized")
+  } else {
+    console.warn("DATABASE_URL not found - Neon database will not be available")
   }
-} else {
-  console.log("Neon DATABASE_URL not found - using fallback mode")
-}
-
-// Helper function to safely handle database operations
-export async function safeDbOperation<T>(
-  operation: () => Promise<T>,
-  fallbackValue: T,
-  errorMessage = "Database operation failed",
-): Promise<T> {
-  try {
-    if (!sql) {
-      console.warn("Neon not available, using fallback")
-      return fallbackValue
-    }
-
-    console.log("Executing database operation...")
-    const result = await operation()
-    console.log("Database operation completed successfully")
-    return result
-  } catch (error: any) {
-    console.error(errorMessage, error)
-
-    // Log additional error details
-    if (error.code) {
-      console.error("Database error code:", error.code)
-    }
-    if (error.detail) {
-      console.error("Database error detail:", error.detail)
-    }
-
-    return fallbackValue
-  }
+} catch (error) {
+  console.error("Failed to initialize Neon database:", error)
 }
 
 // Check if Neon is available
 export function isNeonAvailable(): boolean {
-  return sql !== null && isNeonConfigured()
+  return sql !== null && !!process.env.DATABASE_URL
 }
 
-// Get Neon SQL client
-export function getNeonClient() {
-  return sql
+// Safe database operation wrapper
+export async function safeDbOperation<T>(
+  operation: () => Promise<T>,
+  fallback: T,
+  errorMessage = "Database operation failed",
+): Promise<T> {
+  if (!isNeonAvailable()) {
+    console.warn("Neon database not available, using fallback")
+    return fallback
+  }
+
+  try {
+    return await operation()
+  } catch (error) {
+    console.error(errorMessage, error)
+    return fallback
+  }
 }
 
-// Database interfaces
-export interface WebsiteAnalysis {
-  id: string
-  url: string
-  title: string
-  summary: string
-  key_points: string[]
-  keywords: string[]
-  sustainability_score: number
-  performance_score: number
-  script_optimization_score: number
-  content_quality_score: number
-  security_score: number
-  improvements: string[]
-  content_stats: any
-  raw_data: any
-  hosting_provider_name?: string
-  ssl_certificate?: boolean
-  created_at: string
-  updated_at: string
-}
-
-export interface GeneratedContent {
-  id: string
-  analysis_id: string
-  content_type: string
-  tone: string
-  content: string
-  markdown?: string
-  created_at: string
-}
-
-export interface HostingProvider {
-  id: string
-  name: string
-  website: string
-  sustainability_score: number
-  performance_rating: number
-  green_energy: boolean
-  carbon_neutral: boolean
-  renewable_energy_percentage: number
-  data_center_locations: string[]
-  certifications: string[]
-  pricing_model: string
-  features: string[]
-  created_at: string
-}
-
-export interface User {
-  id: string
-  email: string
-  password_hash: string
-  created_at: string
-  updated_at: string
-}
-
-export interface SavedAnalysis {
-  id: string
-  user_id: string
-  analysis_id: string
-  created_at: string
-}
-
-export interface Favorite {
-  id: string
-  user_id: string
-  analysis_id: string
-  created_at: string
-}
-
-// Export the SQL client
+// Export the sql instance
 export { sql }
