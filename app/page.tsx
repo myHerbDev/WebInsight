@@ -1,614 +1,181 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Footer } from "@/components/footer"
-import { Header } from "@/components/header"
-import { LoadingAnimation } from "@/components/loading-animation"
+import { useState } from "react"
+import { WebsiteForm } from "@/components/website-form"
 import { ResultsSection } from "@/components/results-section"
-import { SignUpModal } from "@/components/sign-up-modal"
-import { MagicalWebsiteInput } from "@/components/magical-website-input"
-import { EnhancedErrorMessage } from "@/components/enhanced-error-message"
 import { EnhancedAIGenerator } from "@/components/enhanced-ai-generator"
-import { GoogleStyleCard } from "@/components/google-style-card"
+import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
+import { SignUpModal } from "@/components/sign-up-modal"
+import { LoginModal } from "@/components/login-modal"
+import { LoadingAnimation } from "@/components/loading-animation"
 import { toast } from "@/components/ui/use-toast"
 import type { WebsiteData } from "@/types/website-data"
-import { motion, AnimatePresence } from "framer-motion"
-import { Sparkles, TrendingUp, Shield, Leaf, Globe, Users, ArrowUp, Brain } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-export default function Home() {
-  const [isLoading, setIsLoading] = useState(false)
+export default function HomePage() {
   const [websiteData, setWebsiteData] = useState<WebsiteData | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [showSignUpModal, setShowSignUpModal] = useState(false)
-  const [userId, setUserId] = useState<string | null>(null)
+  const [showLoginModal, setShowLoginModal] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [errorType, setErrorType] = useState<"url" | "access" | "timeout" | "server" | "unknown">("unknown")
-  const [lastAnalyzedUrl, setLastAnalyzedUrl] = useState<string>("")
-  const [showScrollToTop, setShowScrollToTop] = useState(false)
-  const [activeTab, setActiveTab] = useState("analyze")
-  const [isClient, setIsClient] = useState(false)
 
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
-
-  useEffect(() => {
-    if (!isClient) return
-
-    const handleScroll = () => {
-      setShowScrollToTop(window.scrollY > 300)
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [isClient])
-
-  const determineErrorType = (
-    error: Error | string,
-    statusCode?: number,
-  ): "url" | "access" | "timeout" | "server" | "unknown" => {
-    const errorMessage = typeof error === "string" ? error : error.message || ""
-
-    if (errorMessage.includes("Invalid URL") || errorMessage.includes("URL format")) {
-      return "url"
-    }
-
-    if (errorMessage.includes("access denied") || errorMessage.includes("403") || statusCode === 403) {
-      return "access"
-    }
-
-    if (errorMessage.includes("timeout") || errorMessage.includes("timed out") || statusCode === 408) {
-      return "timeout"
-    }
-
-    if (errorMessage.includes("server error") || statusCode === 500) {
-      return "server"
-    }
-
-    return "unknown"
-  }
-
-  const handleAnalyzeWebsite = async (url: string) => {
-    if (!isClient) return
-
-    setIsLoading(true)
-    setWebsiteData(null)
-    setError(null)
-    setLastAnalyzedUrl(url)
-    setActiveTab("analyze")
-
-    try {
-      let normalizedUrl = ""
-      try {
-        normalizedUrl = url.trim()
-        if (!normalizedUrl) {
-          throw new Error("URL cannot be empty")
-        }
-
-        if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
-          normalizedUrl = "https://" + normalizedUrl
-        }
-
-        const urlObj = new URL(normalizedUrl)
-        if (!urlObj.hostname || urlObj.hostname.length < 3) {
-          throw new Error("Invalid hostname")
-        }
-      } catch (urlError: any) {
-        setErrorType("url")
-        throw new Error(`Invalid URL format: ${url}. Please enter a valid website address.`)
-      }
-
-      console.log("Starting website analysis for:", normalizedUrl)
-
-      const requestData = {
-        url: normalizedUrl,
-        includeAdvancedMetrics: true,
-        analyzeSEO: true,
-        checkAccessibility: true,
-        analyzePerformance: true,
-        checkSecurity: true,
-        analyzeSustainability: true,
-        includeContentAnalysis: true,
-        checkMobileOptimization: true,
-        analyzeLoadingSpeed: true,
-        checkSocialMedia: true,
-      }
-
-      if (!requestData.url) {
-        throw new Error("Request data validation failed")
-      }
-
-      console.log("Sending analysis request...")
-
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => {
-        console.log("Request timeout triggered")
-        controller.abort()
-      }, 30000)
-
-      let response: Response
-      try {
-        response = await fetch("/api/analyze", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestData),
-          signal: controller.signal,
-        })
-      } catch (fetchError: any) {
-        clearTimeout(timeoutId)
-        if (fetchError.name === "AbortError") {
-          setErrorType("timeout")
-          throw new Error("Request timeout - analysis took too long")
-        }
-        throw new Error(`Network error: ${fetchError.message}`)
-      }
-
-      clearTimeout(timeoutId)
-      console.log("Response received with status:", response.status)
-
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`
-
-        try {
-          const responseText = await response.text()
-          console.log("Error response text length:", responseText?.length || 0)
-
-          if (responseText && responseText.trim()) {
-            try {
-              const errorData = JSON.parse(responseText)
-              errorMessage = errorData.error || errorData.message || errorMessage
-            } catch (parseError) {
-              console.warn("Could not parse error response as JSON")
-              errorMessage = responseText.substring(0, 200)
-            }
-          }
-        } catch (textError) {
-          console.error("Failed to read error response:", textError)
-        }
-
-        const errorType = determineErrorType(errorMessage, response.status)
-        setErrorType(errorType)
-        throw new Error(errorMessage)
-      }
-
-      let data
-      try {
-        const responseText = await response.text()
-        console.log("Success response length:", responseText?.length || 0)
-
-        if (!responseText || !responseText.trim()) {
-          throw new Error("Empty response from server")
-        }
-
-        const trimmed = responseText.trim()
-        if (!trimmed.startsWith("{")) {
-          throw new Error("Invalid response format from server")
-        }
-
-        data = JSON.parse(responseText)
-        console.log("Successfully parsed response data")
-
-        if (!data || typeof data !== "object") {
-          throw new Error("Invalid data format received from server")
-        }
-
-        data = {
-          _id: data._id || "unknown",
-          url: data.url || normalizedUrl,
-          title: data.title || "Website Analysis",
-          summary: data.summary || "Analysis completed successfully",
-          keyPoints: Array.isArray(data.keyPoints) ? data.keyPoints : [],
-          keywords: Array.isArray(data.keywords) ? data.keywords : [],
-          sustainability: data.sustainability || {
-            score: 0,
-            performance: 0,
-            scriptOptimization: 0,
-            duplicateContent: 0,
-            improvements: [],
-          },
-          subdomains: Array.isArray(data.subdomains) ? data.subdomains : [],
-          contentStats: data.contentStats || {},
-          rawData: data.rawData || {},
-          sustainability_score: data.sustainability_score || data.sustainability?.score || 0,
-          performance_score: data.performance_score || data.sustainability?.performance || 0,
-          script_optimization_score: data.script_optimization_score || data.sustainability?.scriptOptimization || 0,
-          content_quality_score: data.content_quality_score || 0,
-          security_score: data.security_score || 0,
-          improvements: data.improvements || data.sustainability?.improvements || [],
-          hosting_provider_name: data.hosting_provider_name || "Unknown",
-          ssl_certificate: data.ssl_certificate || false,
-          server_location: data.server_location || "Unknown",
-          ip_address: data.ip_address || "Unknown",
-        }
-      } catch (parseError: any) {
-        console.error("Response parsing error:", parseError.message)
-        throw new Error(`Failed to parse server response: ${parseError.message}`)
-      }
-
-      if (!data._id || !data.url) {
-        throw new Error("Response missing required fields")
-      }
-
-      setWebsiteData(data)
-      setShowScrollToTop(true)
-
-      setTimeout(() => setActiveTab("results"), 500)
-
-      console.log("Analysis completed successfully")
-    } catch (error: any) {
-      console.error("Error analyzing website:", error)
-
-      if (error.name === "AbortError") {
-        setError("Request timeout - analysis took too long")
-        setErrorType("timeout")
-      } else {
-        if (errorType === "unknown") {
-          setErrorType(determineErrorType(error))
-        }
-
-        const errorMessage = error.message || "Failed to analyze the website. Please try again."
-        setError(errorMessage)
-      }
-
+  const handleAnalyze = async (url: string) => {
+    if (!url || !url.trim()) {
       toast({
-        title: "Analysis Failed",
-        description: error.message || "Failed to analyze the website. Please try again.",
+        title: "Invalid URL",
+        description: "Please enter a valid website URL.",
         variant: "destructive",
       })
-    } finally {
-      setIsLoading(false)
+      return
     }
-  }
 
-  const handleSaveAnalysis = async (type: "save" | "favorite") => {
-    if (!websiteData || !isClient) return
+    setIsAnalyzing(true)
+    setError(null)
+    setWebsiteData(null)
 
     try {
-      const response = await fetch("/api/user/save", {
+      console.log("🚀 Starting website analysis for:", url)
+
+      const response = await fetch("/api/analyze", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          userId,
-          analysisId: websiteData._id,
-          type: type === "favorite" ? "favorite" : "save",
-        }),
+        body: JSON.stringify({ url: url.trim() }),
       })
+
+      console.log("📥 Response status:", response.status)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error("❌ Analysis failed:", errorText)
+
+        let errorMessage = "Failed to analyze website"
+        try {
+          const errorData = JSON.parse(errorText)
+          errorMessage = errorData.error || errorMessage
+        } catch (e) {
+          // If JSON parsing fails, use the raw text
+          errorMessage = errorText || errorMessage
+        }
+
+        throw new Error(errorMessage)
+      }
+
+      const responseText = await response.text()
+      console.log("📄 Response text length:", responseText.length)
+
+      if (!responseText || responseText.trim().length === 0) {
+        throw new Error("Empty response from server")
+      }
 
       let data
       try {
-        const responseText = await response.text()
-        if (responseText.trim()) {
-          data = JSON.parse(responseText)
-        } else {
-          throw new Error("Empty response from server")
-        }
-      } catch (e) {
-        throw new Error(`Failed to ${type} analysis: Invalid response format`)
+        data = JSON.parse(responseText)
+      } catch (parseError) {
+        console.error("❌ JSON parse error:", parseError)
+        console.error("❌ Response text:", responseText.substring(0, 500))
+        throw new Error("Invalid response format from server")
       }
 
-      if (!response.ok) {
-        throw new Error(data.error || `Failed to ${type} analysis`)
+      if (!data || typeof data !== "object") {
+        throw new Error("Invalid data format received")
       }
 
-      if (data.userId && !userId) {
-        setUserId(data.userId)
-      }
+      console.log("✅ Analysis completed successfully")
+      setWebsiteData(data)
 
       toast({
-        title: "Success",
-        description: data.message || `${type === "favorite" ? "Added to favorites" : "Analysis saved"}`,
+        title: "Analysis Complete!",
+        description: `Successfully analyzed ${data.title || url}`,
       })
     } catch (error: any) {
-      console.error(`Error ${type}ing analysis:`, error)
+      console.error("💥 Analysis error:", error)
+      const errorMessage = error.message || "An unexpected error occurred"
+      setError(errorMessage)
+
       toast({
-        title: "Error",
-        description: `Failed to ${type} the analysis. Please try again.`,
+        title: "Analysis Failed",
+        description: errorMessage,
         variant: "destructive",
       })
+    } finally {
+      setIsAnalyzing(false)
     }
   }
 
-  const handleSignUp = (tempUserId: string) => {
-    setUserId(tempUserId || userId)
+  const handleSignUpClick = () => {
     setShowSignUpModal(true)
   }
 
-  const handleRetryAnalysis = () => {
-    if (lastAnalyzedUrl) {
-      handleAnalyzeWebsite(lastAnalyzedUrl)
-    }
-  }
-
-  const handleResetAnalysis = () => {
-    setError(null)
-    setWebsiteData(null)
-    setLastAnalyzedUrl("")
-    setShowScrollToTop(false)
-    setActiveTab("analyze")
-  }
-
-  const scrollToTop = () => {
-    if (isClient) {
-      window.scrollTo({ top: 0, behavior: "smooth" })
-    }
-  }
-
-  if (!isClient) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-        <Header />
-        <main className="container mx-auto px-4 py-8">
-          <div className="animate-pulse space-y-8">
-            <div className="h-96 bg-gray-200 rounded-3xl"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-48 bg-gray-200 rounded-xl"></div>
-              ))}
-            </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    )
+  const handleLoginClick = () => {
+    setShowLoginModal(true)
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20"
-            initial={{
-              x: Math.random() * (typeof window !== "undefined" ? window.innerWidth : 1000),
-              y: Math.random() * (typeof window !== "undefined" ? window.innerHeight : 1000),
-            }}
-            animate={{
-              y: [null, -50],
-              opacity: [0.2, 0.5, 0.2],
-              scale: [1, 1.5, 1],
-            }}
-            transition={{
-              duration: Math.random() * 4 + 3,
-              repeat: Number.POSITIVE_INFINITY,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <Header onSignUpClick={handleSignUpClick} onLoginClick={handleLoginClick} />
 
-      <Header />
+      <main className="container mx-auto px-4 py-8 space-y-12">
+        {/* Hero Section */}
+        <section className="text-center space-y-6 py-12">
+          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            WebInSight
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Comprehensive website analysis with AI-powered insights. Analyze performance, sustainability, security, and
+            generate professional content.
+          </p>
+        </section>
 
-      <main className="relative z-10">
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="flex justify-center mb-8">
-                <TabsList className="grid grid-cols-3 w-full max-w-md bg-white shadow-lg border border-gray-200 rounded-full p-1">
-                  <TabsTrigger
-                    value="analyze"
-                    className="rounded-full data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-300"
-                  >
-                    <Globe className="w-4 h-4 mr-2" />
-                    Analyze
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="results"
-                    className="rounded-full data-[state=active]:bg-green-500 data-[state=active]:text-white transition-all duration-300"
-                    disabled={!websiteData && !error}
-                  >
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    Results
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="ai-content"
-                    className="rounded-full data-[state=active]:bg-purple-500 data-[state=active]:text-white transition-all duration-300"
-                  >
-                    <Brain className="w-4 h-4 mr-2" />
-                    AI Content
-                  </TabsTrigger>
-                </TabsList>
-              </div>
+        {/* Website Analysis Form */}
+        <section className="max-w-2xl mx-auto">
+          <WebsiteForm onAnalyze={handleAnalyze} isLoading={isAnalyzing} />
+        </section>
 
-              <TabsContent value="analyze" className="space-y-8">
-                <GoogleStyleCard className="p-0 overflow-hidden">
-                  <MagicalWebsiteInput onAnalyze={handleAnalyzeWebsite} isLoading={isLoading} />
-                </GoogleStyleCard>
-
-                <AnimatePresence>
-                  {isLoading && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                      <GoogleStyleCard>
-                        <LoadingAnimation />
-                      </GoogleStyleCard>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <AnimatePresence>
-                  {error && !isLoading && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                    >
-                      <GoogleStyleCard>
-                        <EnhancedErrorMessage
-                          error={error}
-                          errorType={errorType}
-                          onRetry={handleRetryAnalysis}
-                          onReset={handleResetAnalysis}
-                        />
-                      </GoogleStyleCard>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {!isLoading && !error && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                  >
-                    {[
-                      {
-                        icon: TrendingUp,
-                        title: "Performance Analysis",
-                        description: "Deep dive into loading speeds, Core Web Vitals, and optimization opportunities",
-                        color: "from-green-500 to-emerald-500",
-                      },
-                      {
-                        icon: Shield,
-                        title: "Security Assessment",
-                        description:
-                          "Comprehensive security analysis including SSL, headers, and vulnerability detection",
-                        color: "from-blue-500 to-cyan-500",
-                      },
-                      {
-                        icon: Leaf,
-                        title: "Sustainability Metrics",
-                        description: "Environmental impact analysis and carbon footprint optimization suggestions",
-                        color: "from-emerald-500 to-teal-500",
-                      },
-                      {
-                        icon: Brain,
-                        title: "AI Content Generation",
-                        description: "Generate blog posts, social media content, and marketing copy from your analysis",
-                        color: "from-purple-500 to-pink-500",
-                      },
-                      {
-                        icon: Globe,
-                        title: "SEO & Accessibility",
-                        description: "Complete SEO audit and accessibility compliance checking",
-                        color: "from-orange-500 to-red-500",
-                      },
-                      {
-                        icon: Users,
-                        title: "Mobile & Social",
-                        description: "Mobile optimization analysis and social media integration assessment",
-                        color: "from-indigo-500 to-purple-500",
-                      },
-                    ].map((feature, index) => (
-                      <motion.div
-                        key={feature.title}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 * index }}
-                        whileHover={{ y: -5 }}
-                      >
-                        <GoogleStyleCard className="h-full hover:shadow-xl transition-all duration-300">
-                          <div
-                            className={`w-12 h-12 rounded-xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-4`}
-                          >
-                            <feature.icon className="w-6 h-6 text-white" />
-                          </div>
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                          <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
-                        </GoogleStyleCard>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="results" className="space-y-8">
-                <AnimatePresence>
-                  {websiteData && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                    >
-                      <GoogleStyleCard>
-                        <div className="text-center mb-6">
-                          <h2 className="text-2xl font-bold text-gray-900 mb-2">Analysis Complete</h2>
-                          <p className="text-gray-600">
-                            Comprehensive analysis results for{" "}
-                            <span className="font-semibold text-blue-600">{websiteData.url}</span>
-                          </p>
-                        </div>
-
-                        <ResultsSection
-                          data={websiteData}
-                          onSignUpClick={handleSignUp}
-                          onSave={() => handleSaveAnalysis("save")}
-                          onFavorite={() => handleSaveAnalysis("favorite")}
-                          userId={userId}
-                        />
-
-                        <div className="text-center mt-8">
-                          <Button
-                            onClick={() => setActiveTab("ai-content")}
-                            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                          >
-                            <Brain className="mr-2 h-5 w-5" />
-                            Generate AI Content
-                          </Button>
-                        </div>
-                      </GoogleStyleCard>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </TabsContent>
-
-              <TabsContent value="ai-content" className="space-y-8">
-                <GoogleStyleCard>
-                  <div className="text-center mb-6">
-                    <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-100 to-pink-100 border border-purple-200 mb-4">
-                      <Brain className="w-5 h-5 text-purple-600" />
-                      <span className="text-sm font-medium text-purple-700">AI-Powered Content Generation</span>
-                      <Sparkles className="w-5 h-5 text-pink-600" />
-                    </div>
-                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Create Amazing Content</h2>
-                    <p className="text-gray-600 max-w-2xl mx-auto">
-                      Transform your website analysis into engaging content for blogs, social media, marketing
-                      campaigns, and more.
-                    </p>
-                  </div>
-
-                  <EnhancedAIGenerator websiteData={websiteData} onSignUpClick={() => handleSignUp("")} />
-                </GoogleStyleCard>
-              </TabsContent>
-            </Tabs>
-          </motion.div>
-        </div>
-      </main>
-
-      <AnimatePresence>
-        {showScrollToTop && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0 }}
-            onClick={scrollToTop}
-            className="fixed bottom-8 right-8 z-50 bg-white text-gray-700 p-3 rounded-full shadow-lg hover:shadow-xl border border-gray-200 transition-all duration-300 hover:scale-110"
-          >
-            <ArrowUp className="h-5 w-5" />
-          </motion.button>
+        {/* Loading State */}
+        {isAnalyzing && (
+          <section className="max-w-4xl mx-auto">
+            <div className="text-center py-12">
+              <LoadingAnimation />
+              <p className="text-gray-600 mt-4">Analyzing website...</p>
+            </div>
+          </section>
         )}
-      </AnimatePresence>
+
+        {/* Error State */}
+        {error && !isAnalyzing && (
+          <section className="max-w-4xl mx-auto">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+              <h3 className="text-lg font-semibold text-red-800 mb-2">Analysis Failed</h3>
+              <p className="text-red-600">{error}</p>
+            </div>
+          </section>
+        )}
+
+        {/* Results Section */}
+        {websiteData && !isAnalyzing && (
+          <section className="max-w-6xl mx-auto space-y-8">
+            <ResultsSection data={websiteData} />
+          </section>
+        )}
+
+        {/* AI Content Generator */}
+        {websiteData && !isAnalyzing && (
+          <section className="max-w-6xl mx-auto">
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">AI Content Generator</h2>
+              <EnhancedAIGenerator websiteData={websiteData} onSignUpClick={handleSignUpClick} />
+            </div>
+          </section>
+        )}
+      </main>
 
       <Footer />
 
-      {showSignUpModal && (
-        <SignUpModal
-          onClose={() => setShowSignUpModal(false)}
-          tempUserId={userId}
-          onSignUpSuccess={(newUserId) => {
-            setUserId(newUserId)
-            setShowSignUpModal(false)
-            toast({
-              title: "Success",
-              description: "Account created successfully!",
-            })
-          }}
-        />
-      )}
+      {/* Modals */}
+      <SignUpModal isOpen={showSignUpModal} onClose={() => setShowSignUpModal(false)} />
+      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </div>
   )
 }

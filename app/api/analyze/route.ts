@@ -5,73 +5,94 @@ import { safeAsyncOperation, validateRequired } from "@/lib/error-boundary"
 
 // Enhanced mock analysis with better sensitivity and realistic results
 async function analyzeWebsiteEnhanced(url: string) {
-  // Simulate realistic analysis delay
-  await new Promise((resolve) => setTimeout(resolve, 1500))
+  try {
+    // Simulate realistic analysis delay
+    await new Promise((resolve) => setTimeout(resolve, 1500))
 
-  const domain = new URL(url).hostname.toLowerCase()
+    const domain = new URL(url).hostname.toLowerCase()
 
-  // Determine website category and adjust scores accordingly
-  const websiteProfile = getWebsiteProfile(domain)
+    // Determine website category and adjust scores accordingly
+    const websiteProfile = getWebsiteProfile(domain)
 
-  // Generate realistic scores based on website type
-  const baseScores = generateRealisticScores(websiteProfile)
+    // Generate realistic scores based on website type
+    const baseScores = generateRealisticScores(websiteProfile)
 
-  // Fetch website title using the Vercel API
-  const websiteTitle = await fetchWebsiteTitle(url, websiteProfile)
+    // Fetch website title with proper error handling
+    let websiteTitle = websiteProfile.title
+    try {
+      websiteTitle = await fetchWebsiteTitle(url, websiteProfile)
+    } catch (error) {
+      console.warn("Failed to fetch website title, using fallback:", error)
+      websiteTitle = websiteProfile.title || formatDomainName(url)
+    }
 
-  const mockData = {
-    _id: `analysis_${Date.now()}`,
-    url,
-    title: websiteTitle,
-    summary: generateContextualSummary(domain, websiteProfile, baseScores),
-    keyPoints: generateContextualKeyPoints(domain, websiteProfile, baseScores),
-    keywords: generateRelevantKeywords(websiteProfile),
-    sustainability: {
-      score: baseScores.sustainability,
-      performance: baseScores.performance,
-      scriptOptimization: baseScores.scriptOptimization,
-      duplicateContent: baseScores.duplicateContent,
+    const mockData = {
+      _id: `analysis_${Date.now()}`,
+      url,
+      title: websiteTitle,
+      summary: generateContextualSummary(domain, websiteProfile, baseScores),
+      keyPoints: generateContextualKeyPoints(domain, websiteProfile, baseScores),
+      keywords: generateRelevantKeywords(websiteProfile),
+      sustainability: {
+        score: Math.round(baseScores.sustainability),
+        performance: Math.round(baseScores.performance),
+        scriptOptimization: Math.round(baseScores.scriptOptimization),
+        duplicateContent: Math.round(baseScores.duplicateContent),
+        improvements: generateContextualImprovements(websiteProfile, baseScores),
+      },
+      subdomains: generateRealisticSubdomains(domain, websiteProfile),
+      contentStats: generateRealisticContentStats(websiteProfile),
+      rawData: generateRealisticTechnicalData(websiteProfile),
+      // Backward compatibility fields
+      sustainability_score: Math.round(baseScores.sustainability),
+      performance_score: Math.round(baseScores.performance),
+      script_optimization_score: Math.round(baseScores.scriptOptimization),
+      content_quality_score: Math.round(baseScores.contentQuality),
+      security_score: Math.round(baseScores.security),
       improvements: generateContextualImprovements(websiteProfile, baseScores),
-    },
-    subdomains: generateRealisticSubdomains(domain, websiteProfile),
-    contentStats: generateRealisticContentStats(websiteProfile),
-    rawData: generateRealisticTechnicalData(websiteProfile),
-    // Backward compatibility fields
-    sustainability_score: Math.round(baseScores.sustainability),
-    performance_score: Math.round(baseScores.performance),
-    script_optimization_score: Math.round(baseScores.scriptOptimization),
-    content_quality_score: Math.round(baseScores.contentQuality),
-    security_score: Math.round(baseScores.security),
-    improvements: generateContextualImprovements(websiteProfile, baseScores),
-    hosting_provider_name: websiteProfile.hostingProvider,
-    ssl_certificate: baseScores.security > 70,
-    server_location: websiteProfile.serverLocation,
-    ip_address: generateRealisticIP(),
-  }
+      hosting_provider_name: websiteProfile.hostingProvider,
+      ssl_certificate: baseScores.security > 70,
+      server_location: websiteProfile.serverLocation,
+      ip_address: generateRealisticIP(),
+    }
 
-  return mockData
+    return mockData
+  } catch (error) {
+    console.error("Error in analyzeWebsiteEnhanced:", error)
+    throw new Error(`Analysis failed: ${error.message}`)
+  }
 }
 
 async function fetchWebsiteTitle(url: string, websiteProfile: any): Promise<string> {
   try {
-    // Try to fetch the actual website title
+    // Try to fetch the actual website title with timeout and proper error handling
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000)
+
     const response = await fetch(url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (compatible; WebInsightBot/1.0; +https://webinsight.app)",
-        Accept: "text/html",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.5",
       },
-      signal: AbortSignal.timeout(5000), // 5 second timeout
+      signal: controller.signal,
     })
 
+    clearTimeout(timeoutId)
+
     if (!response.ok) {
-      throw new Error(`Failed to fetch website: ${response.status}`)
+      console.warn(`Failed to fetch website: ${response.status}`)
+      return websiteProfile.title || formatDomainName(url)
     }
 
     const html = await response.text()
 
+    if (!html || html.trim().length === 0) {
+      console.warn("Empty HTML response")
+      return websiteProfile.title || formatDomainName(url)
+    }
+
     // Extract title using regex patterns similar to how Google would
-    // First try the <title> tag
     const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/is)
     if (titleMatch && titleMatch[1]) {
       const title = titleMatch[1]
@@ -84,7 +105,6 @@ async function fetchWebsiteTitle(url: string, websiteProfile: any): Promise<stri
         .replace(/&quot;/g, '"')
         .replace(/&#39;/g, "'")
 
-      // If title is not too long or too short, use it
       if (title.length > 3 && title.length < 100) {
         return title
       }
@@ -109,11 +129,9 @@ async function fetchWebsiteTitle(url: string, websiteProfile: any): Promise<stri
       }
     }
 
-    // If all else fails, use the profile title
     return websiteProfile.title || formatDomainName(url)
   } catch (error) {
-    console.error("Error fetching website title:", error)
-    // Fallback to the profile title or domain name
+    console.warn("Error fetching website title:", error)
     return websiteProfile.title || formatDomainName(url)
   }
 }

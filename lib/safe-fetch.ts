@@ -35,7 +35,13 @@ export async function safeFetch<T = any>(
 
       // Check if response is ok
       if (!response.ok) {
-        const errorText = await response.text().catch(() => "Unknown error")
+        let errorText = "Unknown error"
+        try {
+          errorText = await response.text()
+        } catch (e) {
+          console.warn("Failed to read error response text")
+        }
+
         return {
           success: false,
           error: `HTTP ${response.status}: ${errorText}`,
@@ -44,7 +50,15 @@ export async function safeFetch<T = any>(
       }
 
       // Get response text
-      const responseText = await response.text()
+      let responseText = ""
+      try {
+        responseText = await response.text()
+      } catch (e) {
+        return {
+          success: false,
+          error: "Failed to read response text",
+        }
+      }
 
       // Handle empty responses
       if (!responseText || !responseText.trim()) {
@@ -79,6 +93,7 @@ export async function safeFetch<T = any>(
           }
         } catch (parseError: any) {
           console.error("JSON parse error:", parseError.message)
+          console.error("Response text:", responseText.substring(0, 500))
           return {
             success: false,
             error: `Invalid JSON response: ${parseError.message}`,
@@ -129,13 +144,14 @@ export function safeJsonParse<T = any>(text: string, fallback: T): T {
 
     const trimmed = text.trim()
     if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
-      console.warn("Text does not appear to be JSON")
+      console.warn("Text does not appear to be JSON:", trimmed.substring(0, 100))
       return fallback
     }
 
     return JSON.parse(trimmed)
   } catch (error) {
     console.error("JSON parse error:", error)
+    console.error("Text that failed to parse:", text.substring(0, 200))
     return fallback
   }
 }
