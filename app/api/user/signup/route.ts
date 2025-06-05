@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
-import clientPromise from "@/lib/mongodb"
-import { hashPassword } from "@/lib/auth"
+import { createServerSupabaseClient } from "@/lib/supabase"
 
 export async function POST(request: Request) {
   try {
@@ -10,9 +9,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    // For preview mode or when MongoDB is not available, use mock data
-    if (!process.env.MONGODB_URI) {
-      // Generate a mock user ID
+    // Check if Supabase is configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      // Generate a mock user ID for preview mode
       const mockUserId = "user-" + Math.random().toString(36).substring(2, 10)
 
       return NextResponse.json({
@@ -22,44 +21,47 @@ export async function POST(request: Request) {
       })
     }
 
-    // Real implementation with MongoDB
     try {
-      const client = await clientPromise
-      const db = client.db("website-analyzer")
+      const supabase = createServerSupabaseClient()
 
       // Check if user already exists
-      const existingUser = await db.collection("users").findOne({ email })
+      const { data: existingUser } = await supabase.from("auth.users").select("id").eq("email", email).single()
 
       if (existingUser) {
         return NextResponse.json({ error: "User already exists" }, { status: 400 })
       }
 
-      // Hash password using our custom function instead of bcrypt
-      const hashedPassword = await hashPassword(password)
-
-      // Create new user
-      const result = await db.collection("users").insertOne({
+      // Create new user with Supabase Auth
+      const { data, error } = await supabase.auth.admin.createUser({
         email,
-        password: hashedPassword,
-        isTemporary: false,
-        createdAt: new Date(),
+        password,
+        email_confirm: true, // Auto-confirm for simplicity
       })
 
-      const userId = result.insertedId.toString()
+      if (error) {
+        return NextResponse.json({ error: error.message }, { status: 400 })
+      }
+
+      if (!data.user) {
+        return NextResponse.json({ error: "Failed to create user" }, { status: 500 })
+      }
+
+      const userId = data.user.id
 
       // If tempUserId exists, transfer saved analyses and favorites
       if (tempUserId) {
-        // Transfer saved analyses
-        await db.collection("saved-analyses").updateMany({ userId: tempUserId }, { $set: { userId } })
+        try {
+          // Transfer saved analyses
+          await supabase.from("saved_analyses").update({ user_id: userId }).eq("user_id", tempUserId)
 
-        // Transfer favorites
-        await db.collection("favorites").updateMany({ userId: tempUserId }, { $set: { userId } })
+          // Transfer favorites
+          await supabase.from("favorites").update({ user_id: userId }).eq("user_id", tempUserId)
 
-        // Delete temporary user - use string ID instead of ObjectId
-        await db.collection("users").deleteOne({
-          _id: tempUserId,
-          isTemporary: true,
-        })
+          // Note: We don't delete the temp user as it might not exist in auth.users
+        } catch (transferError) {
+          console.error("Error transferring data:", transferError)
+          // Continue even if transfer fails
+        }
       }
 
       return NextResponse.json({
@@ -67,9 +69,9 @@ export async function POST(request: Request) {
         userId,
         message: "User created successfully",
       })
-    } catch (dbError) {
-      console.error("Database error:", dbError)
-      // Fall back to mock data if database operations fail
+    } catch (supabaseError) {
+      console.error("Supabase error:", supabaseError)
+      // Fall back to mock data if Supabase operations fail
       const mockUserId = "user-" + Math.random().toString(36).substring(2, 10)
 
       return NextResponse.json({

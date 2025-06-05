@@ -89,3 +89,25 @@ export function shareViaTelegram(data: ShareData) {
   const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(data.analysisUrl || data.url)}&text=${encodeURIComponent(text)}`
   window.open(telegramUrl, "_blank")
 }
+
+export async function shareAnalysis(data: any): Promise<void> {
+  const shareUrl = `${window.location.origin}/analysis/${data._id || data.id}`
+  const shareText = `Check out this website analysis: ${data.title}\n\nSustainability Score: ${data.sustainability_score}%\nPerformance Score: ${data.performance_score}%\n\n${data.summary}`
+
+  try {
+    if (navigator.share) {
+      // Use native Web Share API if available
+      await navigator.share({
+        title: `Website Analysis: ${data.title}`,
+        text: shareText,
+        url: shareUrl,
+      })
+    } else {
+      // Fallback to copying to clipboard
+      await copyToClipboard(shareUrl)
+    }
+  } catch (error) {
+    // If native sharing fails, copy to clipboard as fallback
+    await copyToClipboard(shareUrl)
+  }
+}
