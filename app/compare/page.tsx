@@ -6,23 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import {
-  X,
-  BarChart3,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Download,
-  Sparkles,
-  Zap,
-  Shield,
-  Globe,
-  Star,
-  Award,
-  Plus,
-} from "lucide-react"
+import { X, BarChart3, TrendingUp, TrendingDown, Minus, Download } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
-import { Logo } from "@/components/logo"
 
 interface ComparisonData {
   id: string
@@ -73,7 +58,7 @@ export default function ComparePage() {
       setNewUrl("")
 
       toast({
-        title: "✨ Analysis Complete",
+        title: "Analysis Complete",
         description: `${data.title} has been added to comparison`,
       })
     } catch (error) {
@@ -110,16 +95,8 @@ export default function ComparePage() {
   const getScoreComparison = (score: number, average: number) => {
     const diff = score - average
     if (Math.abs(diff) < 5) return { icon: Minus, color: "text-gray-500", text: "Average" }
-    if (diff > 0) return { icon: TrendingUp, color: "text-emerald-500", text: `+${diff}` }
+    if (diff > 0) return { icon: TrendingUp, color: "text-green-500", text: `+${diff}` }
     return { icon: TrendingDown, color: "text-red-500", text: `${diff}` }
-  }
-
-  const getScoreGradient = (score: number) => {
-    if (score >= 90) return "from-emerald-500 to-green-500"
-    if (score >= 80) return "from-green-500 to-lime-500"
-    if (score >= 70) return "from-yellow-500 to-orange-500"
-    if (score >= 60) return "from-orange-500 to-red-500"
-    return "from-red-500 to-pink-500"
   }
 
   const saveComparison = async () => {
@@ -149,7 +126,7 @@ export default function ComparePage() {
 
       if (response.ok) {
         toast({
-          title: "✨ Comparison Saved",
+          title: "Comparison Saved",
           description: "Your comparison has been saved successfully",
         })
       }
@@ -191,36 +168,18 @@ export default function ComparePage() {
   const averages = getAverageScores()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-teal-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-      <div className="container mx-auto px-4 py-8">
-        {/* Magical Header */}
-        <div className="text-center mb-12">
-          <div className="flex justify-center mb-6">
-            <Logo size="lg" showText={true} />
-          </div>
-          <div className="relative">
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-teal-600 bg-clip-text text-transparent mb-4">
-              Website Comparison Tool
-            </h1>
-            <div className="absolute -top-2 -right-8">
-              <Sparkles className="h-8 w-8 text-purple-500 animate-pulse" />
-            </div>
-          </div>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            Compare multiple websites side-by-side with magical insights. Discover performance differences, security
-            gaps, and sustainability opportunities with our intelligent analysis.
-          </p>
-        </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-4">Website Comparison Tool</h1>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
+          Compare multiple websites side-by-side to identify performance differences, security gaps, and sustainability
+          opportunities.
+        </p>
 
-        {/* Magical Add Website Form */}
-        <Card className="mb-8 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-0 shadow-xl">
+        {/* Add Website Form */}
+        <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-2xl">
-              <div className="p-2 bg-gradient-to-r from-purple-500 to-teal-500 rounded-lg">
-                <Plus className="h-5 w-5 text-white" />
-              </div>
-              Add Website to Comparison
-            </CardTitle>
+            <CardTitle>Add Website to Comparison</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex gap-4">
@@ -229,24 +188,10 @@ export default function ComparePage() {
                 value={newUrl}
                 onChange={(e) => setNewUrl(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && newUrl && analyzeWebsite(newUrl)}
-                className="flex-1 border-purple-200 focus:border-purple-500 text-lg py-6"
+                className="flex-1"
               />
-              <Button
-                onClick={() => newUrl && analyzeWebsite(newUrl)}
-                disabled={isAnalyzing || !newUrl}
-                className="bg-gradient-to-r from-purple-600 to-teal-600 hover:from-purple-700 hover:to-teal-700 text-white px-8 py-6 text-lg shadow-lg"
-              >
-                {isAnalyzing ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="h-5 w-5 mr-2" />
-                    Add Website
-                  </>
-                )}
+              <Button onClick={() => newUrl && analyzeWebsite(newUrl)} disabled={isAnalyzing || !newUrl}>
+                {isAnalyzing ? "Analyzing..." : "Add Website"}
               </Button>
             </div>
           </CardContent>
@@ -254,234 +199,189 @@ export default function ComparePage() {
 
         {/* Comparison Actions */}
         {websites.length > 0 && (
-          <div className="flex gap-4 mb-8">
+          <div className="flex gap-4 mb-6">
             <Input
               placeholder="Comparison name (optional)"
               value={comparisonName}
               onChange={(e) => setComparisonName(e.target.value)}
-              className="max-w-xs border-purple-200 focus:border-purple-500"
+              className="max-w-xs"
             />
-            <Button onClick={saveComparison} variant="outline" className="border-purple-200 hover:bg-purple-50">
-              <Star className="h-4 w-4 mr-2" />
+            <Button onClick={saveComparison} variant="outline">
               Save Comparison
             </Button>
-            <Button onClick={exportComparison} variant="outline" className="border-purple-200 hover:bg-purple-50">
+            <Button onClick={exportComparison} variant="outline">
               <Download className="h-4 w-4 mr-2" />
-              Export Data
+              Export CSV
             </Button>
           </div>
         )}
+      </div>
 
-        {websites.length === 0 ? (
-          <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-0 shadow-xl">
-            <CardContent className="text-center py-16">
-              <div className="relative mb-8">
-                <BarChart3 className="h-24 w-24 mx-auto text-purple-300 dark:text-purple-700" />
-                <div className="absolute -top-2 -right-2">
-                  <Sparkles className="h-8 w-8 text-teal-500 animate-bounce" />
+      {websites.length === 0 ? (
+        <Card>
+          <CardContent className="text-center py-12">
+            <BarChart3 className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+            <h3 className="text-lg font-medium mb-2">No Websites Added</h3>
+            <p className="text-gray-500 dark:text-gray-400">
+              Add websites above to start comparing their performance, security, and sustainability metrics.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Average Scores Overview */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Average Scores Across {websites.length} Websites</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">{averages.sustainability}%</div>
+                  <div className="text-sm text-gray-500">Sustainability</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{averages.performance}%</div>
+                  <div className="text-sm text-gray-500">Performance</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">{averages.security}%</div>
+                  <div className="text-sm text-gray-500">Security</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">{averages.content}%</div>
+                  <div className="text-sm text-gray-500">Content Quality</div>
                 </div>
               </div>
-              <h3 className="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-4">Ready to Compare Websites?</h3>
-              <p className="text-gray-500 dark:text-gray-400 text-lg max-w-md mx-auto">
-                Add websites above to start comparing their performance, security, and sustainability metrics with
-                magical insights and beautiful visualizations.
-              </p>
             </CardContent>
           </Card>
-        ) : (
-          <>
-            {/* Magical Average Scores Overview */}
-            <Card className="mb-8 bg-gradient-to-r from-purple-600 via-blue-600 to-teal-600 border-0 shadow-2xl">
-              <CardHeader>
-                <CardTitle className="text-white text-2xl flex items-center gap-2">
-                  <Award className="h-6 w-6" />
-                  Average Performance Across {websites.length} Websites
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  {[
-                    { label: "Sustainability", value: averages.sustainability, icon: Globe, color: "text-emerald-300" },
-                    { label: "Performance", value: averages.performance, icon: Zap, color: "text-yellow-300" },
-                    { label: "Security", value: averages.security, icon: Shield, color: "text-blue-300" },
-                    { label: "Content", value: averages.content, icon: BarChart3, color: "text-purple-300" },
-                  ].map((metric, index) => (
-                    <div key={index} className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4">
-                      <metric.icon className={`h-8 w-8 mx-auto mb-2 ${metric.color}`} />
-                      <div className="text-3xl font-bold text-white mb-1">{metric.value}%</div>
-                      <div className="text-sm text-white/80">{metric.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Enhanced Comparison Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {websites.map((website, index) => {
-                const sustainabilityComp = getScoreComparison(website.sustainability_score, averages.sustainability)
-                const performanceComp = getScoreComparison(website.performance_score, averages.performance)
-                const securityComp = getScoreComparison(website.security_score, averages.security)
-                const contentComp = getScoreComparison(website.content_quality_score, averages.content)
+          {/* Detailed Comparison Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Detailed Comparison</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-4">Website</th>
+                      <th className="text-center p-4">Sustainability</th>
+                      <th className="text-center p-4">Performance</th>
+                      <th className="text-center p-4">Security</th>
+                      <th className="text-center p-4">Content</th>
+                      <th className="text-center p-4">Hosting</th>
+                      <th className="text-center p-4">SSL</th>
+                      <th className="text-center p-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {websites.map((website) => {
+                      const sustainabilityComp = getScoreComparison(
+                        website.sustainability_score,
+                        averages.sustainability,
+                      )
+                      const performanceComp = getScoreComparison(website.performance_score, averages.performance)
+                      const securityComp = getScoreComparison(website.security_score, averages.security)
+                      const contentComp = getScoreComparison(website.content_quality_score, averages.content)
 
-                const isTopPerformer =
-                  website.sustainability_score >= 90 || website.performance_score >= 90 || website.security_score >= 90
-
-                return (
-                  <Card
-                    key={website.id}
-                    className="group relative bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-500"
-                  >
-                    {/* Top Performer Badge */}
-                    {isTopPerformer && (
-                      <div className="absolute -top-2 -right-2 z-10">
-                        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-2 rounded-full shadow-lg">
-                          <Star className="h-4 w-4" />
-                        </div>
-                      </div>
-                    )}
-
-                    <CardHeader className="relative overflow-hidden">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <CardTitle className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-purple-600 transition-colors">
-                            {website.title}
-                          </CardTitle>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{website.url}</p>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
+                      return (
+                        <tr key={website.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
+                          <td className="p-4">
+                            <div>
+                              <div className="font-medium">{website.title}</div>
+                              <div className="text-sm text-gray-500">{website.url}</div>
+                            </div>
+                          </td>
+                          <td className="p-4 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <span className="font-bold">{website.sustainability_score}%</span>
+                              <sustainabilityComp.icon className={`h-4 w-4 ${sustainabilityComp.color}`} />
+                            </div>
+                            <Progress value={website.sustainability_score} className="w-16 h-2 mx-auto mt-1" />
+                          </td>
+                          <td className="p-4 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <span className="font-bold">{website.performance_score}%</span>
+                              <performanceComp.icon className={`h-4 w-4 ${performanceComp.color}`} />
+                            </div>
+                            <Progress value={website.performance_score} className="w-16 h-2 mx-auto mt-1" />
+                          </td>
+                          <td className="p-4 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <span className="font-bold">{website.security_score}%</span>
+                              <securityComp.icon className={`h-4 w-4 ${securityComp.color}`} />
+                            </div>
+                            <Progress value={website.security_score} className="w-16 h-2 mx-auto mt-1" />
+                          </td>
+                          <td className="p-4 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                              <span className="font-bold">{website.content_quality_score}%</span>
+                              <contentComp.icon className={`h-4 w-4 ${contentComp.color}`} />
+                            </div>
+                            <Progress value={website.content_quality_score} className="w-16 h-2 mx-auto mt-1" />
+                          </td>
+                          <td className="p-4 text-center">
+                            <Badge variant="outline" className="text-xs">
                               {website.hosting_provider_name}
                             </Badge>
+                          </td>
+                          <td className="p-4 text-center">
                             <Badge
                               className={
                                 website.ssl_certificate
-                                  ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
-                                  : "bg-gradient-to-r from-red-500 to-pink-500 text-white"
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                  : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
                               }
                             >
-                              {website.ssl_certificate ? "🔒 SSL" : "❌ No SSL"}
+                              {website.ssl_certificate ? "Yes" : "No"}
                             </Badge>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeWebsite(website.id)}
-                          className="hover:bg-red-100 dark:hover:bg-red-900"
-                        >
-                          <X className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </CardHeader>
+                          </td>
+                          <td className="p-4 text-center">
+                            <Button variant="ghost" size="sm" onClick={() => removeWebsite(website.id)}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
 
-                    <CardContent className="space-y-4">
-                      {/* Enhanced Score Displays */}
-                      {[
-                        {
-                          label: "Sustainability",
-                          score: website.sustainability_score,
-                          comparison: sustainabilityComp,
-                          icon: Globe,
-                        },
-                        {
-                          label: "Performance",
-                          score: website.performance_score,
-                          comparison: performanceComp,
-                          icon: Zap,
-                        },
-                        {
-                          label: "Security",
-                          score: website.security_score,
-                          comparison: securityComp,
-                          icon: Shield,
-                        },
-                        {
-                          label: "Content",
-                          score: website.content_quality_score,
-                          comparison: contentComp,
-                          icon: BarChart3,
-                        },
-                      ].map((metric, index) => (
-                        <div key={index} className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                              <metric.icon className="h-4 w-4 text-gray-500" />
-                              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                {metric.label}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg font-bold text-gray-900 dark:text-white">{metric.score}%</span>
-                              <metric.comparison.icon className={`h-4 w-4 ${metric.comparison.color}`} />
-                            </div>
-                          </div>
-                          <div className="relative">
-                            <Progress value={metric.score} className="h-2" />
-                            <div
-                              className={`absolute top-0 left-0 h-2 rounded-full bg-gradient-to-r ${getScoreGradient(metric.score)} transition-all duration-700`}
-                              style={{ width: `${metric.score}%` }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-
-            {/* Magical Insights Panel */}
-            <Card className="mt-8 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 border-0 shadow-2xl">
-              <CardHeader>
-                <CardTitle className="text-white text-2xl flex items-center gap-2">
-                  <Sparkles className="h-6 w-6" />
-                  Magical Insights & Recommendations
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6">
-                    <h4 className="font-semibold mb-4 text-white text-lg flex items-center gap-2">
-                      <Award className="h-5 w-5" />🏆 Best Performers
-                    </h4>
-                    <ul className="space-y-2 text-white/90">
-                      <li className="flex items-center gap-2">
-                        <Globe className="h-4 w-4 text-emerald-300" />
-                        Sustainability:{" "}
-                        <span className="font-bold">{getBestPerformer("sustainability_score")?.title}</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-yellow-300" />
-                        Performance: <span className="font-bold">{getBestPerformer("performance_score")?.title}</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <Shield className="h-4 w-4 text-blue-300" />
-                        Security: <span className="font-bold">{getBestPerformer("security_score")?.title}</span>
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <BarChart3 className="h-4 w-4 text-purple-300" />
-                        Content: <span className="font-bold">{getBestPerformer("content_quality_score")?.title}</span>
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6">
-                    <h4 className="font-semibold mb-4 text-white text-lg flex items-center gap-2">
-                      <Sparkles className="h-5 w-5" />✨ Smart Recommendations
-                    </h4>
-                    <ul className="space-y-2 text-white/90 text-sm">
-                      <li>• Focus on improving lowest-scoring metrics across all sites</li>
-                      <li>• Consider migrating to top-performing hosting providers</li>
-                      <li>• Implement security best practices from leading sites</li>
-                      <li>• Optimize performance using insights from best performers</li>
-                      <li>• Enhance sustainability with green hosting solutions</li>
-                    </ul>
-                  </div>
+          {/* Key Insights */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Key Insights</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">Best Performers</h4>
+                  <ul className="space-y-1 text-sm">
+                    <li>🌱 Sustainability: {getBestPerformer("sustainability_score")?.title}</li>
+                    <li>⚡ Performance: {getBestPerformer("performance_score")?.title}</li>
+                    <li>🔒 Security: {getBestPerformer("security_score")?.title}</li>
+                    <li>📝 Content: {getBestPerformer("content_quality_score")?.title}</li>
+                  </ul>
                 </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
-      </div>
+                <div>
+                  <h4 className="font-medium mb-2">Recommendations</h4>
+                  <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                    <li>• Focus on improving lowest-scoring metrics</li>
+                    <li>• Consider green hosting providers for sustainability</li>
+                    <li>• Implement security best practices across all sites</li>
+                    <li>• Optimize performance for better user experience</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   )
 }

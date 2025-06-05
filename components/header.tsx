@@ -1,12 +1,11 @@
 "use client"
 
-import { MoonIcon, SunIcon, Menu } from "lucide-react"
+import { MoonIcon, SunIcon, Menu, User } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/logo"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
-import { UserProfileButton } from "@/components/user-profile-button"
 
 export function Header() {
   const { theme, setTheme } = useTheme()
@@ -44,10 +43,10 @@ export function Header() {
             Recommendations
           </Link>
           <Link
-            href="/docs"
+            href="/saved"
             className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400 transition-colors"
           >
-            Documentation
+            Saved
           </Link>
         </nav>
 
@@ -61,7 +60,22 @@ export function Header() {
             {theme === "dark" ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
           </Button>
 
-          <UserProfileButton />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <User className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>
+                <Link href="/profile">Profile</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link href="/settings">Settings</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>Sign Out</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild className="md:hidden">
@@ -83,7 +97,7 @@ export function Header() {
                 <Link href="/recommendations">Recommendations</Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Link href="/docs">Documentation</Link>
+                <Link href="/saved">Saved</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
