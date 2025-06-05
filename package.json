@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/groq": "latest",
+    "@ai-sdk/xai": "latest",
     "@emotion/is-prop-valid": "latest",
     "@hookform/resolvers": "^3.9.1",
     "@neondatabase/serverless": "latest",
