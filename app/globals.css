@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Light Mode - Google AI Inspired Palette */
+    /* Light Mode - Enhanced Vibrant Palette */
     --background: 220 20% 97%; /* Lighter, slightly cool off-white */
     --foreground: 220 15% 25%; /* Dark, desaturated blue-gray for text */
 
@@ -14,16 +14,16 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 15% 25%;
 
-    /* Primary Gradient - Core of the new theme */
-    --primary-gradient-start: 210 100% 55%; /* Vibrant Blue */
+    /* Enhanced Primary Gradient - More vibrant with purple-green transition */
+    --primary-gradient-start: 140 80% 50%; /* Vibrant Green */
     --primary-gradient-middle: 260 100% 65%; /* Purple */
-    --primary-gradient-end: 310 100% 50%; /* Magenta/Pinkish */
+    --primary-gradient-end: 320 90% 55%; /* Magenta */
 
-    --primary-gradient-start-rgb: 25, 150, 255;
+    --primary-gradient-start-rgb: 25, 220, 125;
     --primary-gradient-middle-rgb: 128, 77, 255;
-    --primary-gradient-end-rgb: 255, 25, 178;
+    --primary-gradient-end-rgb: 255, 40, 180;
 
-    --primary: 210 100% 55%; /* Fallback solid primary */
+    --primary: 260 100% 65%; /* Purple as primary */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 20% 92%; /* Lighter cool gray for secondary elements */
@@ -40,23 +40,23 @@
 
     --border: 220 20% 85%; /* Softer border */
     --input: 220 20% 90%; /* Input border */
-    --ring: 210 100% 60%; /* Ring color for focus */
+    --ring: 260 100% 65%; /* Ring color for focus */
 
     --radius: 1rem; /* Increased from 0.75rem for a rounder look */
 
     /* Brand specific colors (can be same as primary or distinct) */
-    --brand-default: hsl(var(--primary-gradient-start));
-    --brand-default-rgb: var(--primary-gradient-start-rgb);
-    --brand-light: hsl(var(--primary-gradient-start) / 0.1);
-    --brand-dark: hsl(var(--primary-gradient-middle));
-    --brand-text: hsl(var(--primary-gradient-start));
+    --brand-default: hsl(var(--primary-gradient-middle));
+    --brand-default-rgb: var(--primary-gradient-middle-rgb);
+    --brand-light: hsl(var(--primary-gradient-middle) / 0.1);
+    --brand-dark: hsl(var(--primary-gradient-start));
+    --brand-text: hsl(var(--primary-gradient-middle));
 
     /* Header height for sticky elements */
     --header-height: 64px; /* Adjust if your header height changes */
   }
 
   .dark {
-    /* Dark Mode - Google AI Inspired Palette */
+    /* Dark Mode - Enhanced Vibrant Palette */
     --background: 220 25% 8%; /* Very dark, slightly cool background */
     --foreground: 220 15% 85%; /* Light gray text */
 
@@ -69,7 +69,7 @@
     /* Primary Gradient remains vibrant */
     /* --primary-gradient-start, middle, end are the same */
 
-    --primary: 210 100% 60%; /* Fallback solid primary for dark */
+    --primary: 260 100% 65%; /* Purple as primary for dark */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 20% 15%; /* Darker cool gray */
@@ -86,14 +86,14 @@
 
     --border: 220 15% 22%; /* Softer dark border */
     --input: 220 15% 25%;
-    --ring: 210 100% 65%;
+    --ring: 260 100% 65%;
 
     /* Brand specific colors for dark mode */
-    --brand-default: hsl(var(--primary-gradient-start));
-    --brand-default-rgb: var(--primary-gradient-start-rgb);
-    --brand-light: hsl(var(--primary-gradient-start) / 0.15);
-    --brand-dark: hsl(var(--primary-gradient-middle));
-    --brand-text: hsl(var(--primary-gradient-start));
+    --brand-default: hsl(var(--primary-gradient-middle));
+    --brand-default-rgb: var(--primary-gradient-middle-rgb);
+    --brand-light: hsl(var(--primary-gradient-middle) / 0.15);
+    --brand-dark: hsl(var(--primary-gradient-start));
+    --brand-text: hsl(var(--primary-gradient-middle));
   }
 }
 
@@ -149,14 +149,26 @@ body {
 }
 
 @layer utilities {
+  /* Enhanced animated gradient with green-purple transition */
+  .bg-primary-gradient {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary-gradient-start)),
+      hsl(var(--primary-gradient-middle)),
+      hsl(var(--primary-gradient-end))
+    );
+    background-size: 200% 200%;
+    animation: gradientShift 8s ease infinite;
+  }
+
   .bg-animated-gradient {
     background: linear-gradient(
       120deg,
-      hsl(var(--primary-gradient-start) / 0.05),
-      hsl(var(--primary-gradient-middle) / 0.05),
-      hsl(var(--primary-gradient-end) / 0.05),
-      hsl(var(--primary-gradient-middle) / 0.05),
-      hsl(var(--primary-gradient-start) / 0.05)
+      hsl(var(--primary-gradient-start) / 0.08),
+      hsl(var(--primary-gradient-middle) / 0.08),
+      hsl(var(--primary-gradient-end) / 0.08),
+      hsl(var(--primary-gradient-middle) / 0.08),
+      hsl(var(--primary-gradient-start) / 0.08)
     );
     background-size: 400% 400%;
     animation: gradientAnimation 10s ease infinite;
@@ -165,11 +177,11 @@ body {
   .dark .bg-animated-gradient {
     background: linear-gradient(
       120deg,
-      hsl(var(--primary-gradient-start) / 0.1),
-      hsl(var(--primary-gradient-middle) / 0.1),
-      hsl(var(--primary-gradient-end) / 0.1),
-      hsl(var(--primary-gradient-middle) / 0.1),
-      hsl(var(--primary-gradient-start) / 0.1)
+      hsl(var(--primary-gradient-start) / 0.15),
+      hsl(var(--primary-gradient-middle) / 0.15),
+      hsl(var(--primary-gradient-end) / 0.15),
+      hsl(var(--primary-gradient-middle) / 0.15),
+      hsl(var(--primary-gradient-start) / 0.15)
     );
     background-size: 400% 400%;
     animation: gradientAnimation 10s ease infinite;
@@ -186,50 +198,48 @@ body {
     animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
   }
 
-  /* Cursor Aura Styles */
-  .cursor-aura {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 32px; /* Increased size */
-    height: 32px; /* Increased size */
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9999;
-    mix-blend-mode: overlay; /* Softer blend mode */
-    background: radial-gradient(
-      circle,
-      hsla(var(--primary-gradient-middle-rgb), 0.25) 0% /* Softer, larger gradient */,
-      hsla(var(--primary-gradient-middle-rgb), 0) 70%
-    );
-    transform: translate(-50%, -50%);
-    transition: width 0.2s ease-out, height 0.2s ease-out, opacity 0.2s ease-out; /* Smooth transitions */
-    opacity: 0; /* Start hidden */
+  /* Magic animation for page transitions */
+  .magic-fade-in {
+    animation: magicFadeIn 0.8s ease-out forwards;
   }
 
-  body:hover .cursor-aura {
-    /* Show on body hover */
-    opacity: 1;
+  /* Floating animation for cards */
+  .float-animation {
+    animation: float 6s ease-in-out infinite;
   }
 
-  /* Optional: Scale aura on interactive elements */
-  a:hover ~ .cursor-aura,
-  button:hover ~ .cursor-aura,
-  [role="button"]:hover ~ .cursor-aura,
-  input:hover ~ .cursor-aura,
-  select:hover ~ .cursor-aura,
-  textarea:hover ~ .cursor-aura {
-    width: 48px; /* Larger on hover over interactive elements */
-    height: 48px;
-    background: radial-gradient(
-      circle,
-      hsla(var(--primary-gradient-start-rgb), 0.3) 0%,
-      hsla(var(--primary-gradient-start-rgb), 0) 70%
-    );
+  /* Shimmer effect for buttons and highlights */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transform: rotate(30deg);
+    animation: shimmer 3s infinite;
   }
 }
 
 @keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes gradientShift {
   0% {
     background-position: 0% 50%;
   }
@@ -256,10 +266,39 @@ body {
 }
 
 @keyframes ping-slow {
-  /* For SparklesIcon in ActionButtonsBar */
   75%,
   100% {
     transform: scale(1.5);
     opacity: 0;
+  }
+}
+
+@keyframes magicFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-150%) rotate(30deg);
+  }
+  100% {
+    transform: translateX(150%) rotate(30deg);
   }
 }

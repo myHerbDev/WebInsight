@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { WebsiteForm } from "@/components/website-form"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { SustainabilityQuote } from "@/components/sustainability-quote"
-import { ActionButtonsBar } from "@/components/action-buttons-bar"
+// Removed ActionButtonsBar import
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
@@ -111,7 +111,7 @@ export default function Home() {
 
           <SustainabilityQuote />
           <WebsiteForm onSubmit={handleAnalyzeWebsite} className="mb-8 sm:mb-10" />
-          <ActionButtonsBar />
+          {/* ActionButtonsBar removed as requested */}
         </div>
 
         {/* Analysis Results Section */}
@@ -126,8 +126,6 @@ export default function Home() {
           )}
           {websiteData && !isLoading && (
             <div className="mt-0">
-              {" "}
-              {/* Adjusted margin */}
               <ResultsSection
                 data={websiteData}
                 onSignUpClick={handleSignUp}

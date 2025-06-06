@@ -1,12 +1,11 @@
 "use client"
 
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Search,
   Leaf,
@@ -16,7 +15,6 @@ import {
   ExternalLink,
   SortAsc,
   SortDesc,
-  AlertTriangle,
   Star,
   Award,
   TreePine,
@@ -31,14 +29,345 @@ import {
   SlidersHorizontal,
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { toast } from "@/components/ui/use-toast"
 import Link from "next/link"
 import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
-import { LoadingAnimation } from "@/components/loading-animation"
-import { Toaster } from "@/components/ui/toaster"
 import { cn } from "@/lib/utils"
 import { useSearchParams } from "next/navigation"
+
+// Static data for hosting providers
+const STATIC_HOSTING_PROVIDERS = [
+  {
+    id: 1,
+    name: "GreenHost",
+    website: "https://www.greenhost.com",
+    description:
+      "100% renewable energy powered hosting with a focus on sustainability and minimal environmental impact.",
+    sustainability_score: 95,
+    renewable_energy_percentage: 100,
+    carbon_neutral: true,
+    green_certifications: ["Green Web Foundation", "B Corp Certified", "Climate Neutral"],
+    data_center_locations: ["Netherlands", "Iceland", "Sweden"],
+    pricing_tier: "mid-range",
+    performance_rating: 88,
+    security_features: ["DDoS Protection", "Daily Backups", "SSL Certificates", "Firewall"],
+    uptime_guarantee: 99.9,
+    support_quality: 4.7,
+    rank: 1,
+    average_rating: 4.8,
+    reviews_count: 523,
+    cdn_available: true,
+    ssl_support: "free",
+    infrastructure_type: "cloud",
+  },
+  {
+    id: 2,
+    name: "EcoWeb Solutions",
+    website: "https://www.ecoweb.solutions",
+    description: "Eco-friendly hosting with carbon offset programs and energy-efficient infrastructure.",
+    sustainability_score: 92,
+    renewable_energy_percentage: 95,
+    carbon_neutral: true,
+    green_certifications: ["Green Web Foundation", "Carbon Neutral Certified"],
+    data_center_locations: ["Germany", "Finland", "Canada"],
+    pricing_tier: "premium",
+    performance_rating: 92,
+    security_features: ["Advanced Firewall", "Malware Scanning", "SSL Certificates", "Two-Factor Authentication"],
+    uptime_guarantee: 99.95,
+    support_quality: 4.5,
+    rank: 2,
+    average_rating: 4.7,
+    reviews_count: 412,
+    cdn_available: true,
+    ssl_support: "free",
+    infrastructure_type: "cloud",
+  },
+  {
+    id: 3,
+    name: "SustainableServers",
+    website: "https://www.sustainableservers.net",
+    description: "Hosting focused on minimal resource usage and sustainable practices across all operations.",
+    sustainability_score: 90,
+    renewable_energy_percentage: 90,
+    carbon_neutral: true,
+    green_certifications: ["Green Web Foundation", "Energy Star Partner"],
+    data_center_locations: ["Denmark", "Oregon, USA", "Singapore"],
+    pricing_tier: "mid-range",
+    performance_rating: 85,
+    security_features: ["DDoS Protection", "Daily Backups", "SSL Certificates"],
+    uptime_guarantee: 99.9,
+    support_quality: 4.3,
+    rank: 3,
+    average_rating: 4.5,
+    reviews_count: 387,
+    cdn_available: true,
+    ssl_support: "free",
+    infrastructure_type: "hybrid",
+  },
+  {
+    id: 4,
+    name: "CloudGreen",
+    website: "https://www.cloudgreen.tech",
+    description: "High-performance cloud hosting with a commitment to renewable energy and carbon neutrality.",
+    sustainability_score: 88,
+    renewable_energy_percentage: 100,
+    carbon_neutral: true,
+    green_certifications: ["Climate Neutral", "Renewable Energy Certified"],
+    data_center_locations: ["Ireland", "Oregon, USA", "Singapore", "Sydney, Australia"],
+    pricing_tier: "premium",
+    performance_rating: 94,
+    security_features: ["Advanced Firewall", "DDoS Protection", "SSL Certificates", "Identity Management"],
+    uptime_guarantee: 99.99,
+    support_quality: 4.8,
+    rank: 4,
+    average_rating: 4.9,
+    reviews_count: 612,
+    cdn_available: true,
+    ssl_support: "free",
+    infrastructure_type: "cloud",
+  },
+  {
+    id: 5,
+    name: "EarthHost",
+    website: "https://www.earthhost.eco",
+    description: "Budget-friendly hosting with a strong commitment to environmental sustainability.",
+    sustainability_score: 85,
+    renewable_energy_percentage: 85,
+    carbon_neutral: true,
+    green_certifications: ["Green Web Foundation"],
+    data_center_locations: ["Germany", "France", "UK"],
+    pricing_tier: "budget",
+    performance_rating: 80,
+    security_features: ["Basic Firewall", "SSL Certificates", "Weekly Backups"],
+    uptime_guarantee: 99.5,
+    support_quality: 4.0,
+    rank: 5,
+    average_rating: 4.3,
+    reviews_count: 256,
+    cdn_available: false,
+    ssl_support: "free",
+    infrastructure_type: "shared",
+  },
+  {
+    id: 6,
+    name: "GreenScale",
+    website: "https://www.greenscale.cloud",
+    description: "Scalable cloud infrastructure with a focus on energy efficiency and sustainable operations.",
+    sustainability_score: 82,
+    renewable_energy_percentage: 80,
+    carbon_neutral: true,
+    green_certifications: ["Carbon Neutral Certified", "Green Power Partner"],
+    data_center_locations: ["Virginia, USA", "Oregon, USA", "Ireland", "Singapore", "Tokyo, Japan"],
+    pricing_tier: "enterprise",
+    performance_rating: 96,
+    security_features: ["Advanced Threat Protection", "Compliance Management", "Identity Services", "Encryption"],
+    uptime_guarantee: 99.99,
+    support_quality: 4.9,
+    rank: 6,
+    average_rating: 4.7,
+    reviews_count: 823,
+    cdn_available: true,
+    ssl_support: "included",
+    infrastructure_type: "cloud",
+  },
+  {
+    id: 7,
+    name: "EcoVPS",
+    website: "https://www.ecovps.host",
+    description: "Virtual private servers powered by renewable energy with a focus on developer-friendly features.",
+    sustainability_score: 80,
+    renewable_energy_percentage: 75,
+    carbon_neutral: true,
+    green_certifications: ["Green Web Foundation"],
+    data_center_locations: ["Netherlands", "Germany", "France"],
+    pricing_tier: "mid-range",
+    performance_rating: 87,
+    security_features: ["DDoS Protection", "Firewall", "SSL Certificates"],
+    uptime_guarantee: 99.9,
+    support_quality: 4.2,
+    rank: 7,
+    average_rating: 4.4,
+    reviews_count: 312,
+    cdn_available: false,
+    ssl_support: "free",
+    infrastructure_type: "vps",
+  },
+  {
+    id: 8,
+    name: "SustainableWP",
+    website: "https://www.sustainablewp.com",
+    description: "WordPress-specific hosting with eco-friendly practices and optimized performance.",
+    sustainability_score: 78,
+    renewable_energy_percentage: 70,
+    carbon_neutral: true,
+    green_certifications: ["Green Web Foundation"],
+    data_center_locations: ["Canada", "UK", "Germany"],
+    pricing_tier: "mid-range",
+    performance_rating: 89,
+    security_features: ["WordPress Security Suite", "Daily Backups", "SSL Certificates", "Malware Scanning"],
+    uptime_guarantee: 99.95,
+    support_quality: 4.6,
+    rank: 8,
+    average_rating: 4.6,
+    reviews_count: 427,
+    cdn_available: true,
+    ssl_support: "free",
+    infrastructure_type: "shared",
+  },
+  {
+    id: 9,
+    name: "GreenDedicated",
+    website: "https://www.greendedicated.net",
+    description: "Dedicated servers with a focus on energy efficiency and sustainable hardware lifecycle management.",
+    sustainability_score: 75,
+    renewable_energy_percentage: 65,
+    carbon_neutral: true,
+    green_certifications: ["Energy Star Partner"],
+    data_center_locations: ["France", "Canada", "Germany"],
+    pricing_tier: "premium",
+    performance_rating: 95,
+    security_features: ["Hardware Firewall", "DDoS Protection", "Custom Security Solutions"],
+    uptime_guarantee: 99.99,
+    support_quality: 4.7,
+    rank: 9,
+    average_rating: 4.5,
+    reviews_count: 198,
+    cdn_available: true,
+    ssl_support: "included",
+    infrastructure_type: "dedicated",
+  },
+  {
+    id: 10,
+    name: "EcoReseller",
+    website: "https://www.ecoreseller.host",
+    description: "Reseller hosting with green practices, perfect for agencies and web professionals.",
+    sustainability_score: 72,
+    renewable_energy_percentage: 60,
+    carbon_neutral: true,
+    green_certifications: ["Green Web Foundation"],
+    data_center_locations: ["UK", "Germany", "USA"],
+    pricing_tier: "budget",
+    performance_rating: 82,
+    security_features: ["SSL Certificates", "Basic Firewall", "Weekly Backups"],
+    uptime_guarantee: 99.9,
+    support_quality: 4.0,
+    rank: 10,
+    average_rating: 4.2,
+    reviews_count: 156,
+    cdn_available: false,
+    ssl_support: "paid",
+    infrastructure_type: "shared",
+  },
+  {
+    id: 11,
+    name: "CloudFlex",
+    website: "https://www.cloudflex.com",
+    description: "Flexible cloud infrastructure with partial renewable energy commitment and carbon offset programs.",
+    sustainability_score: 68,
+    renewable_energy_percentage: 55,
+    carbon_neutral: false,
+    green_certifications: ["Carbon Offset Partner"],
+    data_center_locations: ["USA", "UK", "Germany", "Singapore", "Australia"],
+    pricing_tier: "enterprise",
+    performance_rating: 93,
+    security_features: ["Advanced Security Suite", "Compliance Management", "Identity Services"],
+    uptime_guarantee: 99.99,
+    support_quality: 4.8,
+    rank: 11,
+    average_rating: 4.7,
+    reviews_count: 542,
+    cdn_available: true,
+    ssl_support: "included",
+    infrastructure_type: "cloud",
+  },
+  {
+    id: 12,
+    name: "ValueHost",
+    website: "https://www.valuehost.net",
+    description: "Budget-friendly hosting with basic sustainability initiatives and reliable service.",
+    sustainability_score: 65,
+    renewable_energy_percentage: 50,
+    carbon_neutral: false,
+    green_certifications: [],
+    data_center_locations: ["USA", "UK"],
+    pricing_tier: "budget",
+    performance_rating: 78,
+    security_features: ["Basic Firewall", "SSL Certificates"],
+    uptime_guarantee: 99.5,
+    support_quality: 3.8,
+    rank: 12,
+    average_rating: 4.0,
+    reviews_count: 312,
+    cdn_available: false,
+    ssl_support: "paid",
+    infrastructure_type: "shared",
+  },
+  {
+    id: 13,
+    name: "PerformanceVPS",
+    website: "https://www.performancevps.com",
+    description: "High-performance VPS hosting with some energy efficiency measures but limited green credentials.",
+    sustainability_score: 60,
+    renewable_energy_percentage: 40,
+    carbon_neutral: false,
+    green_certifications: [],
+    data_center_locations: ["USA", "UK", "Singapore", "Australia"],
+    pricing_tier: "mid-range",
+    performance_rating: 91,
+    security_features: ["DDoS Protection", "Firewall", "SSL Certificates"],
+    uptime_guarantee: 99.95,
+    support_quality: 4.3,
+    rank: 13,
+    average_rating: 4.5,
+    reviews_count: 287,
+    cdn_available: true,
+    ssl_support: "free",
+    infrastructure_type: "vps",
+  },
+  {
+    id: 14,
+    name: "RapidWeb",
+    website: "https://www.rapidweb.host",
+    description: "Speed-focused hosting with limited sustainability initiatives but excellent performance.",
+    sustainability_score: 55,
+    renewable_energy_percentage: 30,
+    carbon_neutral: false,
+    green_certifications: [],
+    data_center_locations: ["USA", "UK", "Germany", "Japan"],
+    pricing_tier: "premium",
+    performance_rating: 94,
+    security_features: ["Advanced Firewall", "DDoS Protection", "SSL Certificates", "Daily Backups"],
+    uptime_guarantee: 99.99,
+    support_quality: 4.6,
+    rank: 14,
+    average_rating: 4.7,
+    reviews_count: 412,
+    cdn_available: true,
+    ssl_support: "free",
+    infrastructure_type: "cloud",
+  },
+  {
+    id: 15,
+    name: "BudgetServe",
+    website: "https://www.budgetserve.com",
+    description: "Low-cost hosting with minimal sustainability features but reliable basic service.",
+    sustainability_score: 50,
+    renewable_energy_percentage: 20,
+    carbon_neutral: false,
+    green_certifications: [],
+    data_center_locations: ["USA", "UK"],
+    pricing_tier: "budget",
+    performance_rating: 75,
+    security_features: ["Basic Firewall", "SSL Certificates"],
+    uptime_guarantee: 99.5,
+    support_quality: 3.5,
+    rank: 15,
+    average_rating: 3.8,
+    reviews_count: 245,
+    cdn_available: false,
+    ssl_support: "paid",
+    infrastructure_type: "shared",
+  },
+]
 
 interface HostingProvider {
   id: number
@@ -56,14 +385,14 @@ interface HostingProvider {
   uptime_guarantee: number
   support_quality: number
   rank?: number
-  average_rating?: number // 0-5
+  average_rating?: number
   reviews_count?: number
   cdn_available?: boolean
   ssl_support?: "free" | "paid" | "included" | "none"
   infrastructure_type?: "cloud" | "dedicated" | "vps" | "shared" | "hybrid"
 }
 
-const ITEMS_PER_PAGE = 15
+const ITEMS_PER_PAGE = 6
 
 // Helper component for the refined filter bar
 const HostingFilterBar = ({
@@ -177,51 +506,15 @@ export default function HostingProvidersPage() {
   const searchParams = useSearchParams() // Hook for accessing URL search parameters
   const initialViewFromQuery = searchParams.get("view")
 
-  const [providers, setProviders] = useState<HostingProvider[]>([])
-  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [sortBy, setSortBy] = useState("rank")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [filterTier, setFilterTier] = useState("all")
-  const [apiError, setApiError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState(initialViewFromQuery === "green" ? "green" : "all")
   const [currentPage, setCurrentPage] = useState(1)
 
-  const fetchProviders = useCallback(async () => {
-    setLoading(true)
-    setApiError(null)
-    console.log("Fetching providers...")
-    try {
-      const response = await fetch("/api/hosting-providers")
-      if (response.ok) {
-        const data = await response.json()
-        console.log("Providers data fetched:", data.length, "providers")
-        setProviders(data)
-      } else {
-        const errorData = await response.json()
-        console.error("Failed to fetch providers, status:", response.status, errorData)
-        throw new Error(errorData.error || `Failed to fetch providers (status: ${response.status})`)
-      }
-    } catch (error) {
-      console.error("Error fetching providers:", error)
-      const message = error instanceof Error ? error.message : "Unknown error occurred"
-      setApiError(message)
-      toast({
-        title: "Error Loading Providers",
-        description: `Could not load hosting providers: ${message}. Please try again later.`,
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchProviders()
-  }, [fetchProviders])
-
   const { greenProviders, lessGreenProviders, paginatedProviders, totalPages, totalFilteredCount } = useMemo(() => {
-    let tempProviders = [...providers]
+    let tempProviders = [...STATIC_HOSTING_PROVIDERS]
 
     if (searchTerm) {
       tempProviders = tempProviders.filter((provider) => {
@@ -301,22 +594,18 @@ export default function HostingProvidersPage() {
       totalPages: calculatedTotalPages > 0 ? calculatedTotalPages : 1, // Ensure totalPages is at least 1
       totalFilteredCount: count,
     }
-  }, [providers, searchTerm, sortBy, sortOrder, filterTier, activeTab, currentPage])
-
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [searchTerm, sortBy, sortOrder, filterTier, activeTab])
+  }, [searchTerm, sortBy, sortOrder, filterTier, activeTab, currentPage])
 
   const ProviderCard = ({ provider }: { provider: HostingProvider }) => {
     const isGreen = provider.sustainability_score >= 75 || provider.carbon_neutral
     return (
       <Card
         className={cn(
-          "group relative overflow-hidden transition-all duration-300 ease-out hover:shadow-2xl flex flex-col rounded-xl", // Ensure rounded-xl
+          "group relative overflow-hidden transition-all duration-300 ease-out hover:shadow-2xl flex flex-col rounded-xl float-animation", // Added float-animation
           "bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border",
           isGreen
             ? "border-green-400/50 hover:border-green-500/80"
-            : "border-slate-200/60 dark:border-slate-800/60 hover:border-primary-gradient-start/50",
+            : "border-slate-200/60 dark:border-slate-800/60 hover:border-primary-gradient-middle/50",
         )}
       >
         <div
@@ -328,7 +617,7 @@ export default function HostingProvidersPage() {
         {provider.rank && (
           <Badge
             variant="secondary"
-            className="absolute top-3 left-3 z-20 bg-primary-gradient text-white px-2.5 py-1 text-xs font-bold rounded-md"
+            className="absolute top-3 left-3 z-20 bg-primary-gradient text-white px-2.5 py-1 text-xs font-bold rounded-md shimmer" // Added shimmer
           >
             Rank #{provider.rank}
           </Badge>
@@ -342,7 +631,7 @@ export default function HostingProvidersPage() {
         <CardHeader className="pb-3 relative z-10">
           <div className="flex items-start justify-between">
             <div className="flex-1 pr-8">
-              <CardTitle className="text-xl font-semibold text-slate-800 dark:text-slate-100 group-hover:text-primary-gradient-start transition-colors">
+              <CardTitle className="text-xl font-semibold text-slate-800 dark:text-slate-100 group-hover:text-primary-gradient-middle transition-colors">
                 {provider.name}
               </CardTitle>
               {provider.average_rating !== undefined && provider.reviews_count !== undefined && (
@@ -358,7 +647,7 @@ export default function HostingProvidersPage() {
               variant="ghost"
               size="icon"
               asChild
-              className="text-slate-500 hover:text-primary-gradient-start dark:text-slate-400 dark:hover:text-primary-gradient-start -mt-1 -mr-1 transition-colors z-20 rounded-full"
+              className="text-slate-500 hover:text-primary-gradient-middle dark:text-slate-400 dark:hover:text-primary-gradient-middle -mt-1 -mr-1 transition-colors z-20 rounded-full"
             >
               <a
                 href={provider.website}
@@ -447,7 +736,7 @@ export default function HostingProvidersPage() {
             <Button
               asChild
               size="sm"
-              className="flex-1 bg-primary-gradient hover:opacity-90 text-white dark:text-primary-foreground transition-opacity rounded-md"
+              className="flex-1 bg-primary-gradient hover:opacity-90 text-white dark:text-primary-foreground transition-opacity rounded-md shimmer" // Added shimmer
             >
               <Link href={`/hosting/${provider.id}`}>View Details</Link>
             </Button>
@@ -455,7 +744,7 @@ export default function HostingProvidersPage() {
               asChild
               variant="outline"
               size="sm"
-              className="border-primary-gradient-start/30 text-primary-gradient-start hover:bg-primary-gradient-start/10 rounded-md"
+              className="border-primary-gradient-middle/30 text-primary-gradient-middle hover:bg-primary-gradient-middle/10 rounded-md"
             >
               <Link href={`/compare?providers=${provider.id}`}>Compare</Link>
             </Button>
@@ -466,7 +755,6 @@ export default function HostingProvidersPage() {
   }
 
   const renderStars = (rating?: number) => {
-    // Moved outside ProviderCard for general use if needed
     if (typeof rating !== "number" || rating < 0 || rating > 5) {
       return <span className="text-xs text-muted-foreground">N/A</span>
     }
@@ -546,7 +834,7 @@ export default function HostingProvidersPage() {
             size="icon"
             onClick={() => setCurrentPage(pageNumber)}
             aria-label={`Go to page ${pageNumber}`}
-            className={cn("rounded-lg", currentPage === pageNumber && "bg-primary-gradient text-white")}
+            className={cn("rounded-lg", currentPage === pageNumber && "bg-primary-gradient text-white shimmer")} // Added shimmer
           >
             {pageNumber}
           </Button>
@@ -573,56 +861,57 @@ export default function HostingProvidersPage() {
     )
   }
 
-  if (loading && providers.length === 0) {
-    // Show loading only on initial load
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-1">
-          <LoadingAnimation />
-        </main>
-        <Footer />
-        <Toaster />
-      </div>
-    )
-  }
-
-  if (apiError && providers.length === 0) {
-    // Show error only if no providers could be loaded initially
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-1 container mx-auto px-4 py-8">
-          <Alert variant="destructive" className="max-w-2xl mx-auto rounded-xl">
-            <AlertTriangle className="h-5 w-5" />
-            <AlertTitle>Failed to Load Providers</AlertTitle>
-            <AlertDescription>{apiError}</AlertDescription>
-            <Button onClick={fetchProviders} className="mt-4 rounded-md">
-              Try Again
-            </Button>
-          </Alert>
-        </main>
-        <Footer />
-        <Toaster />
-      </div>
-    )
-  }
-
-  const currentProvidersForTab =
-    activeTab === "green" ? greenProviders : activeTab === "less-green" ? lessGreenProviders : providers
-
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 py-8 magic-fade-in"> {/* Added magic-fade-in */}
         <div className="mb-10 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold bg-primary-gradient bg-clip-text text-transparent mb-4">
-            Hosting Providers Catalog
+            Green Hosting Providers Catalog
           </h1>
           <p className="text-slate-600 dark:text-slate-400 max-w-3xl mx-auto text-lg">
             Discover hosting providers committed to sustainability. Compare environmental impact, performance, and
             features to make informed decisions for responsible web hosting.
           </p>
+        </div>
+
+        {/* Feature Highlights */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <Card className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 rounded-xl shimmer">
+            <CardContent className="p-6 flex flex-col items-center text-center">
+              <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
+                <Leaf className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Eco-Friendly Options</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Find hosting providers that use renewable energy and implement sustainable practices to reduce carbon footprint.
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 rounded-xl shimmer">
+            <CardContent className="p-6 flex flex-col items-center text-center">
+              <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
+                <Zap className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Performance Metrics</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Compare speed, uptime guarantees, and reliability metrics to ensure your website performs at its best.
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 rounded-xl shimmer">
+            <CardContent className="p-6 flex flex-col items-center text-center">
+              <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4">
+                <Shield className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Security Features</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Evaluate security offerings including SSL certificates, DDoS protection, and backup solutions.
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         <HostingFilterBar
@@ -634,7 +923,7 @@ export default function HostingProvidersPage() {
           setSortOrder={setSortOrder}
           filterTier={filterTier}
           setFilterTier={setFilterTier}
-          totalProviders={providers.length}
+          totalProviders={STATIC_HOSTING_PROVIDERS.length}
           filteredCount={totalFilteredCount}
           currentPage={currentPage}
           totalPages={totalPages}
@@ -646,88 +935,10 @@ export default function HostingProvidersPage() {
               value="all"
               className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-md data-[state=active]:shadow-lg transition-all"
             >
-              All ({providers.length})
+              All ({STATIC_HOSTING_PROVIDERS.length})
             </TabsTrigger>
             <TabsTrigger
               value="green"
               className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-md data-[state=active]:shadow-lg transition-all"
             >
-              <Leaf className="h-4 w-4 mr-2" />
-              Green ({greenProviders.length})
-            </TabsTrigger>
-            <TabsTrigger
-              value="less-green"
-              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-md data-[state=active]:shadow-lg transition-all"
-            >
-              Less Green ({lessGreenProviders.length})
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="all" className="mt-6">
-            {paginatedProviders.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {paginatedProviders.map((provider) => (
-                  <ProviderCard key={`${provider.id}-all`} provider={provider} />
-                ))}
-              </div>
-            ) : (
-              <Card className="text-center py-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-xl">
-                <CardContent>
-                  <Search className="h-10 w-10 text-slate-400 dark:text-slate-500 mx-auto mb-3" />
-                  <p className="text-slate-600 dark:text-slate-400">No providers found matching your criteria.</p>
-                </CardContent>
-              </Card>
-            )}
-            <PaginationControls />
-          </TabsContent>
-
-          <TabsContent value="green" className="mt-6">
-            {paginatedProviders.length > 0 && activeTab === "green" ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {paginatedProviders.map((provider) => (
-                  <ProviderCard key={`${provider.id}-green`} provider={provider} />
-                ))}
-              </div>
-            ) : (
-              activeTab === "green" && (
-                <Card className="text-center py-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-xl">
-                  <CardContent>
-                    <Leaf className="h-10 w-10 text-green-500 mx-auto mb-3" />
-                    <p className="text-slate-600 dark:text-slate-400">
-                      No green providers found matching your criteria.
-                    </p>
-                  </CardContent>
-                </Card>
-              )
-            )}
-            <PaginationControls />
-          </TabsContent>
-
-          <TabsContent value="less-green" className="mt-6">
-            {paginatedProviders.length > 0 && activeTab === "less-green" ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {paginatedProviders.map((provider) => (
-                  <ProviderCard key={`${provider.id}-less`} provider={provider} />
-                ))}
-              </div>
-            ) : (
-              activeTab === "less-green" && (
-                <Card className="text-center py-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-xl">
-                  <CardContent>
-                    <AlertTriangle className="h-10 w-10 text-orange-500 mx-auto mb-3" />
-                    <p className="text-slate-600 dark:text-slate-400">
-                      No less green providers found matching your criteria.
-                    </p>
-                  </CardContent>
-                </Card>
-              )
-            )}
-            <PaginationControls />
-          </TabsContent>
-        </Tabs>
-      </main>
-      <Footer />
-      <Toaster />
-    </div>
-  )
-}
+              \
