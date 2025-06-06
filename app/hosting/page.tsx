@@ -36,7 +36,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { cn } from "@/lib/utils"
 import { useSearchParams } from "next/navigation"
 
-// Static data for hosting providers
+// Static data for hosting providers - optimized for instant loading
 const STATIC_HOSTING_PROVIDERS = [
   {
     id: 1,
@@ -371,9 +371,6 @@ const STATIC_HOSTING_PROVIDERS = [
   },
 ]
 
-// Add this after the STATIC_HOSTING_PROVIDERS array
-console.log(`Loaded ${STATIC_HOSTING_PROVIDERS.length} hosting providers`)
-
 interface HostingProvider {
   id: number
   name: string
@@ -399,7 +396,7 @@ interface HostingProvider {
 
 const ITEMS_PER_PAGE = 6
 
-// Helper component for the refined filter bar
+// Enhanced filter bar with better UX
 const HostingFilterBar = ({
   searchTerm,
   setSearchTerm,
@@ -428,7 +425,7 @@ const HostingFilterBar = ({
   totalPages: number
 }) => {
   return (
-    <Card className="mb-8 p-4 sm:p-6 shadow-xl border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-[calc(var(--header-height,64px)+1rem)] z-30 rounded-xl">
+    <Card className="mb-8 p-4 sm:p-6 shadow-2xl border-slate-200/60 dark:border-slate-800/60 glass-card sticky top-[calc(var(--header-height,64px)+1rem)] z-30 rounded-2xl hover-lift">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
         <div className="relative lg:col-span-1">
           <label
@@ -442,7 +439,7 @@ const HostingFilterBar = ({
             placeholder="Search by name, description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-10 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60 focus:ring-primary-gradient-start focus:border-primary-gradient-start rounded-lg pl-8"
+            className="h-10 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60 focus:ring-primary-gradient-start focus:border-primary-gradient-start rounded-xl pl-8 transition-all duration-300"
           />
           <Search className="absolute left-2.5 top-[calc(50%+2px)] transform -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
         </div>
@@ -454,7 +451,7 @@ const HostingFilterBar = ({
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger
                 id="sort-by"
-                className="flex-grow h-10 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60 rounded-lg"
+                className="flex-grow h-10 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60 rounded-xl"
               >
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
@@ -470,7 +467,7 @@ const HostingFilterBar = ({
               variant="outline"
               size="icon"
               onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-              className="h-10 w-10 border-slate-300/60 dark:border-slate-700/60 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-lg"
+              className="h-10 w-10 border-slate-300/60 dark:border-slate-700/60 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-xl transition-all duration-300"
               aria-label={sortOrder === "asc" ? "Sort Descending" : "Sort Ascending"}
             >
               {sortOrder === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
@@ -484,7 +481,7 @@ const HostingFilterBar = ({
           <Select value={filterTier} onValueChange={setFilterTier}>
             <SelectTrigger
               id="filter-tier"
-              className="h-10 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60 rounded-lg"
+              className="h-10 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60 rounded-xl"
             >
               <SelectValue placeholder="Filter by tier" />
             </SelectTrigger>
@@ -508,7 +505,7 @@ const HostingFilterBar = ({
 }
 
 export default function HostingProvidersPage() {
-  const searchParams = useSearchParams() // Hook for accessing URL search parameters
+  const searchParams = useSearchParams()
   const initialViewFromQuery = searchParams.get("view")
 
   const [searchTerm, setSearchTerm] = useState("")
@@ -517,7 +514,6 @@ export default function HostingProvidersPage() {
   const [filterTier, setFilterTier] = useState("all")
   const [activeTab, setActiveTab] = useState(initialViewFromQuery === "green" ? "green" : "all")
   const [currentPage, setCurrentPage] = useState(1)
-  const [isLoading, setIsLoading] = useState(false)
 
   const { greenProviders, lessGreenProviders, paginatedProviders, totalPages, totalFilteredCount } = useMemo(() => {
     let tempProviders = [...STATIC_HOSTING_PROVIDERS]
@@ -535,7 +531,7 @@ export default function HostingProvidersPage() {
       tempProviders = tempProviders.filter((provider) => provider.pricing_tier === filterTier)
     }
 
-    // Sorting logic
+    // Enhanced sorting logic
     tempProviders.sort((a, b) => {
       let aValue = a[sortBy as keyof HostingProvider]
       let bValue = b[sortBy as keyof HostingProvider]
@@ -597,7 +593,7 @@ export default function HostingProvidersPage() {
       greenProviders: green,
       lessGreenProviders: lessGreen,
       paginatedProviders: paginated,
-      totalPages: calculatedTotalPages > 0 ? calculatedTotalPages : 1, // Ensure totalPages is at least 1
+      totalPages: calculatedTotalPages > 0 ? calculatedTotalPages : 1,
       totalFilteredCount: count,
     }
   }, [searchTerm, sortBy, sortOrder, filterTier, activeTab, currentPage])
@@ -607,8 +603,8 @@ export default function HostingProvidersPage() {
     return (
       <Card
         className={cn(
-          "group relative overflow-hidden transition-all duration-300 ease-out hover:shadow-2xl flex flex-col rounded-xl float-animation", // Added float-animation
-          "bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border",
+          "group relative overflow-hidden transition-all duration-500 ease-out hover:shadow-2xl flex flex-col rounded-2xl float-animation hover-lift",
+          "glass-card border-2",
           isGreen
             ? "border-green-400/50 hover:border-green-500/80"
             : "border-slate-200/60 dark:border-slate-800/60 hover:border-primary-gradient-middle/50",
@@ -623,7 +619,7 @@ export default function HostingProvidersPage() {
         {provider.rank && (
           <Badge
             variant="secondary"
-            className="absolute top-3 left-3 z-20 bg-primary-gradient text-white px-2.5 py-1 text-xs font-bold rounded-md shimmer" // Added shimmer
+            className="absolute top-3 left-3 z-20 bg-primary-gradient text-white px-2.5 py-1 text-xs font-bold rounded-xl shimmer"
           >
             Rank #{provider.rank}
           </Badge>
@@ -742,7 +738,7 @@ export default function HostingProvidersPage() {
             <Button
               asChild
               size="sm"
-              className="flex-1 bg-primary-gradient hover:opacity-90 text-white dark:text-primary-foreground transition-opacity rounded-md shimmer" // Added shimmer
+              className="flex-1 bg-primary-gradient hover:opacity-90 text-white dark:text-primary-foreground transition-all duration-300 rounded-xl shimmer"
             >
               <Link href={`/hosting/${provider.id}`}>View Details</Link>
             </Button>
@@ -750,7 +746,7 @@ export default function HostingProvidersPage() {
               asChild
               variant="outline"
               size="sm"
-              className="border-primary-gradient-middle/30 text-primary-gradient-middle hover:bg-primary-gradient-middle/10 rounded-md"
+              className="border-primary-gradient-middle/30 text-primary-gradient-middle hover:bg-primary-gradient-middle/10 rounded-xl transition-all duration-300"
             >
               <Link href={`/compare?providers=${provider.id}`}>Compare</Link>
             </Button>
@@ -821,13 +817,18 @@ export default function HostingProvidersPage() {
           onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
           disabled={currentPage === 1}
           aria-label="Previous Page"
-          className="rounded-lg"
+          className="rounded-xl hover-lift transition-all duration-300"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         {startPage > 1 && (
           <>
-            <Button variant="outline" size="icon" onClick={() => setCurrentPage(1)} className="rounded-lg">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage(1)}
+              className="rounded-xl hover-lift transition-all duration-300"
+            >
               1
             </Button>
             {startPage > 2 && <span className="text-muted-foreground">...</span>}
@@ -840,7 +841,10 @@ export default function HostingProvidersPage() {
             size="icon"
             onClick={() => setCurrentPage(pageNumber)}
             aria-label={`Go to page ${pageNumber}`}
-            className={cn("rounded-lg", currentPage === pageNumber && "bg-primary-gradient text-white shimmer")} // Added shimmer
+            className={cn(
+              "rounded-xl hover-lift transition-all duration-300",
+              currentPage === pageNumber && "bg-primary-gradient text-white shimmer",
+            )}
           >
             {pageNumber}
           </Button>
@@ -848,7 +852,12 @@ export default function HostingProvidersPage() {
         {endPage < totalPages && (
           <>
             {endPage < totalPages - 1 && <span className="text-muted-foreground">...</span>}
-            <Button variant="outline" size="icon" onClick={() => setCurrentPage(totalPages)} className="rounded-lg">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage(totalPages)}
+              className="rounded-xl hover-lift transition-all duration-300"
+            >
               {totalPages}
             </Button>
           </>
@@ -859,7 +868,7 @@ export default function HostingProvidersPage() {
           onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
           disabled={currentPage === totalPages}
           aria-label="Next Page"
-          className="rounded-lg"
+          className="rounded-xl hover-lift transition-all duration-300"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -868,27 +877,20 @@ export default function HostingProvidersPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      {/* Quick verification - can be removed later */}
-      <div className="fixed top-20 right-4 z-50 bg-green-500 text-white px-3 py-1 rounded-md text-sm">
-        ✅ {STATIC_HOSTING_PROVIDERS.length} providers loaded
-      </div>
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 page-transition">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8 magic-fade-in">
-        {" "}
-        {/* Added magic-fade-in */}
         <div className="mb-10 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold bg-primary-gradient bg-clip-text text-transparent mb-4">
-            Green Hosting Providers Catalog
-          </h1>
+          <h1 className="text-4xl sm:text-5xl font-bold gradient-text mb-4">Green Hosting Providers Catalog</h1>
           <p className="text-slate-600 dark:text-slate-400 max-w-3xl mx-auto text-lg">
             Discover hosting providers committed to sustainability. Compare environmental impact, performance, and
             features to make informed decisions for responsible web hosting.
           </p>
         </div>
-        {/* Feature Highlights */}
+
+        {/* Enhanced Feature Highlights */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <Card className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 rounded-xl shimmer">
+          <Card className="glass-card rounded-2xl shimmer hover-lift">
             <CardContent className="p-6 flex flex-col items-center text-center">
               <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
                 <Leaf className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -901,7 +903,7 @@ export default function HostingProvidersPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 rounded-xl shimmer">
+          <Card className="glass-card rounded-2xl shimmer hover-lift">
             <CardContent className="p-6 flex flex-col items-center text-center">
               <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
                 <Zap className="h-6 w-6 text-purple-600 dark:text-purple-400" />
@@ -913,7 +915,7 @@ export default function HostingProvidersPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 rounded-xl shimmer">
+          <Card className="glass-card rounded-2xl shimmer hover-lift">
             <CardContent className="p-6 flex flex-col items-center text-center">
               <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4">
                 <Shield className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -925,6 +927,7 @@ export default function HostingProvidersPage() {
             </CardContent>
           </Card>
         </div>
+
         <HostingFilterBar
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -939,24 +942,25 @@ export default function HostingProvidersPage() {
           currentPage={currentPage}
           totalPages={totalPages}
         />
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8 mt-8">
-          <TabsList className="grid w-full grid-cols-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-lg p-1">
+          <TabsList className="grid w-full grid-cols-3 glass-card rounded-2xl p-1">
             <TabsTrigger
               value="all"
-              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-md data-[state=active]:shadow-lg transition-all"
+              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-xl data-[state=active]:shadow-lg transition-all duration-300"
             >
               All ({STATIC_HOSTING_PROVIDERS.length})
             </TabsTrigger>
             <TabsTrigger
               value="green"
-              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-md data-[state=active]:shadow-lg transition-all"
+              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-xl data-[state=active]:shadow-lg transition-all duration-300"
             >
               <Leaf className="h-4 w-4 mr-1" />
               Green ({greenProviders.length})
             </TabsTrigger>
             <TabsTrigger
               value="less-green"
-              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-md data-[state=active]:shadow-lg transition-all"
+              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-xl data-[state=active]:shadow-lg transition-all duration-300"
             >
               Standard ({lessGreenProviders.length})
             </TabsTrigger>

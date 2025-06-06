@@ -12,7 +12,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { WebsiteForm } from "@/components/website-form"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { SustainabilityQuote } from "@/components/sustainability-quote"
-// Removed ActionButtonsBar import
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
@@ -87,45 +86,53 @@ export default function Home() {
   }
 
   const handleSignUp = (tempUserId?: string) => {
-    setUserId(tempUserId || userId || null) // Ensure userId is string or null
+    setUserId(tempUserId || userId || null)
     setShowSignUpModal(true)
   }
 
   return (
-    <div className="min-h-screen flex flex-col text-foreground">
+    <div className="min-h-screen flex flex-col text-foreground page-transition">
       <Header />
       <main className="flex-1 flex flex-col items-center justify-center container mx-auto px-4 py-8 sm:py-12">
         <div className="w-full max-w-4xl text-center">
-          {/* Main Page Hero Content */}
+          {/* Enhanced Main Page Hero Content */}
           <div className="mb-8 sm:mb-12">
-            <div className="inline-block p-3 rounded-full bg-primary-gradient mb-5 shadow-lg animate-pulse-glow-slow">
-              <Sparkles className="h-10 w-10 sm:h-12 sm:w-12 text-white filter drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]" />
+            <div className="inline-block p-4 rounded-full bg-primary-gradient mb-6 shadow-2xl animate-pulse-glow-slow hover-lift">
+              <Sparkles className="h-12 w-12 sm:h-16 sm:w-16 text-white filter drop-shadow-[0_0_15px_rgba(255,255,255,0.9)]" />
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground tracking-tight">
-              Web<span className="text-transparent bg-clip-text bg-primary-gradient">InSight</span>
+            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-foreground tracking-tight mb-4">
+              Web<span className="gradient-text">InSight</span>
             </h1>
-            <p className="mt-3 sm:mt-4 text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto">
+            <p className="mt-4 sm:mt-6 text-xl sm:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               AI-Powered Analysis for a Smarter, Greener Web.
             </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-2 text-sm text-muted-foreground">
+              <span className="px-3 py-1 bg-primary-gradient/10 rounded-full">Performance Analysis</span>
+              <span className="px-3 py-1 bg-primary-gradient/10 rounded-full">Sustainability Insights</span>
+              <span className="px-3 py-1 bg-primary-gradient/10 rounded-full">SEO Optimization</span>
+            </div>
           </div>
 
           <SustainabilityQuote />
-          <WebsiteForm onSubmit={handleAnalyzeWebsite} className="mb-8 sm:mb-10" />
-          {/* ActionButtonsBar removed as requested */}
+
+          {/* Enhanced Website Form */}
+          <div className="search-focus">
+            <WebsiteForm onSubmit={handleAnalyzeWebsite} className="mb-8 sm:mb-10" />
+          </div>
         </div>
 
         {/* Analysis Results Section */}
-        <div className="w-full max-w-4xl mt-10 sm:mt-16">
+        <div className="w-full max-w-6xl mt-10 sm:mt-16">
           {isLoading && <LoadingAnimation />}
           {error && !isLoading && (
-            <Alert variant="destructive" className="shadow-lg rounded-xl p-6">
+            <Alert variant="destructive" className="shadow-2xl rounded-2xl p-6 glass-card">
               <AlertCircle className="h-5 w-5" />
               <AlertTitle className="font-semibold">Analysis Failed</AlertTitle>
               <AlertDescription>{error} Please check the URL or try a different website.</AlertDescription>
             </Alert>
           )}
           {websiteData && !isLoading && (
-            <div className="mt-0">
+            <div className="mt-0 magic-fade-in">
               <ResultsSection
                 data={websiteData}
                 onSignUpClick={handleSignUp}

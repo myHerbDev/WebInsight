@@ -104,6 +104,7 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    overflow-x: hidden;
   }
   /* Custom selection style */
   ::selection {
@@ -187,7 +188,106 @@ body {
     animation: gradientAnimation 10s ease infinite;
   }
 
-  /* Added animations */
+  /* Google-like particle effect background */
+  .particles-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+    overflow: hidden;
+  }
+
+  .particle {
+    position: absolute;
+    background: linear-gradient(
+      45deg,
+      hsl(var(--primary-gradient-start) / 0.6),
+      hsl(var(--primary-gradient-middle) / 0.6),
+      hsl(var(--primary-gradient-end) / 0.6)
+    );
+    border-radius: 50%;
+    animation: float-particle 20s infinite linear;
+  }
+
+  .particle:nth-child(1) {
+    width: 4px;
+    height: 4px;
+    left: 10%;
+    animation-delay: 0s;
+  }
+  .particle:nth-child(2) {
+    width: 6px;
+    height: 6px;
+    left: 20%;
+    animation-delay: 2s;
+  }
+  .particle:nth-child(3) {
+    width: 3px;
+    height: 3px;
+    left: 30%;
+    animation-delay: 4s;
+  }
+  .particle:nth-child(4) {
+    width: 5px;
+    height: 5px;
+    left: 40%;
+    animation-delay: 6s;
+  }
+  .particle:nth-child(5) {
+    width: 4px;
+    height: 4px;
+    left: 50%;
+    animation-delay: 8s;
+  }
+  .particle:nth-child(6) {
+    width: 7px;
+    height: 7px;
+    left: 60%;
+    animation-delay: 10s;
+  }
+  .particle:nth-child(7) {
+    width: 3px;
+    height: 3px;
+    left: 70%;
+    animation-delay: 12s;
+  }
+  .particle:nth-child(8) {
+    width: 5px;
+    height: 5px;
+    left: 80%;
+    animation-delay: 14s;
+  }
+  .particle:nth-child(9) {
+    width: 4px;
+    height: 4px;
+    left: 90%;
+    animation-delay: 16s;
+  }
+  .particle:nth-child(10) {
+    width: 6px;
+    height: 6px;
+    left: 15%;
+    animation-delay: 18s;
+  }
+
+  /* Enhanced glass morphism effect */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .glass-card {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Enhanced animations */
   .animate-pulse-glow-slow {
     animation: pulse-glow-slow 3s infinite ease-in-out;
   }
@@ -208,7 +308,7 @@ body {
     animation: float 6s ease-in-out infinite;
   }
 
-  /* Shimmer effect for buttons and highlights */
+  /* Enhanced shimmer effect for buttons and highlights */
   .shimmer {
     position: relative;
     overflow: hidden;
@@ -221,9 +321,66 @@ body {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent);
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.4), transparent);
     transform: rotate(30deg);
     animation: shimmer 3s infinite;
+  }
+
+  /* Google-like search focus effect */
+  .search-focus {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .search-focus:focus-within {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Smooth page transitions */
+  .page-transition {
+    animation: pageSlideIn 0.6s ease-out forwards;
+  }
+
+  /* Enhanced hover effects */
+  .hover-lift {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Gradient text effect */
+  .gradient-text {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary-gradient-start)),
+      hsl(var(--primary-gradient-middle)),
+      hsl(var(--primary-gradient-end))
+    );
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradientShift 8s ease infinite;
+  }
+}
+
+@keyframes float-particle {
+  0% {
+    transform: translateY(100vh) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) rotate(360deg);
+    opacity: 0;
   }
 }
 
@@ -284,6 +441,17 @@ body {
   }
 }
 
+@keyframes pageSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes float {
   0%,
   100% {
@@ -300,5 +468,20 @@ body {
   }
   100% {
     transform: translateX(150%) rotate(30deg);
+  }
+}
+
+/* Responsive design improvements */
+@media (max-width: 768px) {
+  .particle {
+    display: none; /* Hide particles on mobile for performance */
+  }
+}
+
+/* Print styles */
+@media print {
+  .particles-bg,
+  .particle {
+    display: none;
   }
 }
