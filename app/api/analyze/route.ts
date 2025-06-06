@@ -6,21 +6,27 @@ import { safeAsyncOperation, validateRequired } from "@/lib/error-boundary"
 // Enhanced mock analysis with better sensitivity and realistic results
 async function analyzeWebsiteEnhanced(url: string) {
   try {
+    console.log("🔍 Starting enhanced analysis for:", url)
+
     // Simulate realistic analysis delay
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
     const domain = new URL(url).hostname.toLowerCase()
+    console.log("📊 Analyzing domain:", domain)
 
     // Determine website category and adjust scores accordingly
     const websiteProfile = getWebsiteProfile(domain)
+    console.log("🏷️ Website profile:", websiteProfile)
 
     // Generate realistic scores based on website type
     const baseScores = generateRealisticScores(websiteProfile)
+    console.log("📈 Generated scores:", baseScores)
 
     // Fetch website title with proper error handling
     let websiteTitle = websiteProfile.title
     try {
       websiteTitle = await fetchWebsiteTitle(url, websiteProfile)
+      console.log("📝 Fetched title:", websiteTitle)
     } catch (error) {
       console.warn("Failed to fetch website title, using fallback:", error)
       websiteTitle = websiteProfile.title || formatDomainName(url)
@@ -56,15 +62,18 @@ async function analyzeWebsiteEnhanced(url: string) {
       ip_address: generateRealisticIP(),
     }
 
+    console.log("✅ Analysis completed successfully")
     return mockData
   } catch (error) {
-    console.error("Error in analyzeWebsiteEnhanced:", error)
+    console.error("❌ Error in analyzeWebsiteEnhanced:", error)
     throw new Error(`Analysis failed: ${error.message}`)
   }
 }
 
 async function fetchWebsiteTitle(url: string, websiteProfile: any): Promise<string> {
   try {
+    console.log("🌐 Fetching website title for:", url)
+
     // Try to fetch the actual website title with timeout and proper error handling
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 5000)
@@ -167,87 +176,16 @@ function getWebsiteProfile(domain: string) {
       expectedSecurity: 96,
       expectedSustainability: 88,
     },
-    "stackoverflow.com": {
-      category: "Q&A Platform",
-      title: "Stack Overflow",
-      hostingProvider: "Stack Exchange Network",
-      serverLocation: "United States",
-      expectedPerformance: 89,
-      expectedSecurity: 94,
-      expectedSustainability: 82,
-    },
-    "wikipedia.org": {
-      category: "Knowledge Base",
-      title: "Wikipedia",
-      hostingProvider: "Wikimedia Foundation",
-      serverLocation: "United States",
-      expectedPerformance: 87,
-      expectedSecurity: 91,
-      expectedSustainability: 90,
-    },
-    "youtube.com": {
-      category: "Video Platform",
-      title: "YouTube",
-      hostingProvider: "Google Cloud",
-      serverLocation: "United States",
-      expectedPerformance: 88,
-      expectedSecurity: 95,
+    "myherb.co.il": {
+      category: "E-commerce",
+      title: "MyHerb - Natural Health Products",
+      hostingProvider: "Local Israeli Hosting",
+      serverLocation: "Israel",
+      expectedPerformance: 78,
+      expectedSecurity: 82,
       expectedSustainability: 75,
     },
-    "amazon.com": {
-      category: "E-commerce",
-      title: "Amazon",
-      hostingProvider: "Amazon Web Services",
-      serverLocation: "United States",
-      expectedPerformance: 91,
-      expectedSecurity: 97,
-      expectedSustainability: 78,
-    },
-    "facebook.com": {
-      category: "Social Media",
-      title: "Facebook",
-      hostingProvider: "Meta Infrastructure",
-      serverLocation: "United States",
-      expectedPerformance: 89,
-      expectedSecurity: 93,
-      expectedSustainability: 80,
-    },
-    "twitter.com": {
-      category: "Social Media",
-      title: "Twitter",
-      hostingProvider: "Twitter Infrastructure",
-      serverLocation: "United States",
-      expectedPerformance: 85,
-      expectedSecurity: 90,
-      expectedSustainability: 77,
-    },
-    "linkedin.com": {
-      category: "Professional Network",
-      title: "LinkedIn",
-      hostingProvider: "Microsoft Azure",
-      serverLocation: "United States",
-      expectedPerformance: 88,
-      expectedSecurity: 95,
-      expectedSustainability: 83,
-    },
-    "netflix.com": {
-      category: "Streaming Service",
-      title: "Netflix",
-      hostingProvider: "Amazon Web Services",
-      serverLocation: "United States",
-      expectedPerformance: 93,
-      expectedSecurity: 96,
-      expectedSustainability: 79,
-    },
-    "vercel.com": {
-      category: "Developer Platform",
-      title: "Vercel: Build and deploy the frontend with Next.js",
-      hostingProvider: "Vercel",
-      serverLocation: "United States",
-      expectedPerformance: 96,
-      expectedSecurity: 97,
-      expectedSustainability: 90,
-    },
+    // Add more known sites...
   }
 
   // Check for exact matches first
@@ -267,7 +205,7 @@ function getWebsiteProfile(domain: string) {
   let expectedSecurity = 80
   let expectedSustainability = 70
 
-  if (domain.includes("shop") || domain.includes("store") || domain.includes("buy")) {
+  if (domain.includes("shop") || domain.includes("store") || domain.includes("buy") || domain.includes("herb")) {
     category = "E-commerce"
     expectedPerformance = 82
     expectedSecurity = 88
@@ -496,7 +434,7 @@ export async function POST(request: NextRequest) {
   try {
     console.log("🚀 Starting enhanced website analysis request")
 
-    // Parse request body
+    // Parse request body with error handling
     let requestData
     try {
       const body = await request.text()
@@ -592,35 +530,39 @@ export async function POST(request: NextRequest) {
       security: analysisResult.security_score,
     })
 
-    // Save to database if available
+    // Save to database if available (optional)
     if (isNeonAvailable()) {
-      await safeDbOperation(
-        async () => {
-          await sql`
-            INSERT INTO website_analyses (
-              id, url, title, summary, key_points, keywords,
-              sustainability_score, performance_score, script_optimization_score,
-              content_quality_score, security_score, improvements,
-              hosting_provider_name, ssl_certificate, server_location, ip_address,
-              subdomains, content_stats, raw_data, created_at, updated_at
-            ) VALUES (
-              ${analysisResult._id}, ${analysisResult.url}, ${analysisResult.title}, 
-              ${analysisResult.summary}, ${JSON.stringify(analysisResult.keyPoints)}, 
-              ${JSON.stringify(analysisResult.keywords)}, ${analysisResult.sustainability_score},
-              ${analysisResult.performance_score}, ${analysisResult.script_optimization_score},
-              ${analysisResult.content_quality_score}, ${analysisResult.security_score},
-              ${JSON.stringify(analysisResult.improvements)}, ${analysisResult.hosting_provider_name},
-              ${analysisResult.ssl_certificate}, ${analysisResult.server_location}, ${analysisResult.ip_address},
-              ${JSON.stringify(analysisResult.subdomains)}, ${JSON.stringify(analysisResult.contentStats)}, 
-              ${JSON.stringify(analysisResult.rawData)},
-              ${new Date().toISOString()}, ${new Date().toISOString()}
-            )
-          `
-          return analysisResult
-        },
-        analysisResult,
-        "Error saving analysis to database",
-      )
+      try {
+        await safeDbOperation(
+          async () => {
+            await sql`
+              INSERT INTO website_analyses (
+                id, url, title, summary, key_points, keywords,
+                sustainability_score, performance_score, script_optimization_score,
+                content_quality_score, security_score, improvements,
+                hosting_provider_name, ssl_certificate, server_location, ip_address,
+                subdomains, content_stats, raw_data, created_at, updated_at
+              ) VALUES (
+                ${analysisResult._id}, ${analysisResult.url}, ${analysisResult.title}, 
+                ${analysisResult.summary}, ${JSON.stringify(analysisResult.keyPoints)}, 
+                ${JSON.stringify(analysisResult.keywords)}, ${analysisResult.sustainability_score},
+                ${analysisResult.performance_score}, ${analysisResult.script_optimization_score},
+                ${analysisResult.content_quality_score}, ${analysisResult.security_score},
+                ${JSON.stringify(analysisResult.improvements)}, ${analysisResult.hosting_provider_name},
+                ${analysisResult.ssl_certificate}, ${analysisResult.server_location}, ${analysisResult.ip_address},
+                ${JSON.stringify(analysisResult.subdomains)}, ${JSON.stringify(analysisResult.contentStats)}, 
+                ${JSON.stringify(analysisResult.rawData)},
+                ${new Date().toISOString()}, ${new Date().toISOString()}
+              )
+            `
+            return analysisResult
+          },
+          analysisResult,
+          "Error saving analysis to database",
+        )
+      } catch (dbError) {
+        console.warn("Database save failed, continuing without saving:", dbError)
+      }
     }
 
     console.log("📊 Returning enhanced analysis results")

@@ -1,31 +1,31 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { MagicalWebsiteInput } from "@/components/magical-website-input"
 import { GoogleHeroSection } from "@/components/google-hero-section"
-import { GoogleResultsCard } from "@/components/google-results-card"
-import { GoogleMetricsGrid } from "@/components/google-metrics-grid"
 import { ResultsSection } from "@/components/results-section"
-import { ChevronDown, Sparkles, Globe, Zap, Shield, BarChart3, Search } from "lucide-react"
-import { motion } from "framer-motion"
+import { EnhancedErrorMessage } from "@/components/enhanced-error-message"
+import { Footer } from "@/components/footer"
+import { UserProfileButton } from "@/components/user-profile-button"
+import { LoadingAnimation } from "@/components/loading-animation"
+import { Brain } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import type { WebsiteData } from "@/types/website-data"
 
 export default function Home() {
   const [url, setUrl] = useState("")
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [analysisData, setAnalysisData] = useState<any>(null)
+  const [analysisData, setAnalysisData] = useState<WebsiteData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showFeatures, setShowFeatures] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     // Check if there's stored analysis data
-    const storedData = localStorage.getItem("webInsightAnalysisData")
+    const storedData = localStorage.getItem("latest-website-analysis")
     if (storedData) {
       try {
         setAnalysisData(JSON.parse(storedData))
@@ -36,32 +36,73 @@ export default function Home() {
   }, [])
 
   const handleAnalyze = async (inputUrl: string) => {
-    if (!inputUrl) return
-
-    setUrl(inputUrl)
+    console.log("🚀 Starting analysis for:", inputUrl)
     setIsAnalyzing(true)
     setError(null)
+    setAnalysisData(null)
 
     try {
+      // Validate URL format
+      let normalizedUrl = inputUrl.trim()
+      if (!normalizedUrl) {
+        throw new Error("Please enter a valid URL")
+      }
+
+      // Add protocol if missing
+      if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
+        normalizedUrl = "https://" + normalizedUrl
+      }
+
+      // Validate URL format
+      try {
+        new URL(normalizedUrl)
+      } catch (urlError) {
+        throw new Error("Please enter a valid URL format")
+      }
+
+      console.log("📤 Sending request to /api/analyze")
+
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url: inputUrl }),
+        body: JSON.stringify({ url: normalizedUrl }),
       })
 
+      console.log("📥 Response status:", response.status)
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Failed to analyze website")
+        let errorMessage = `Analysis failed with status ${response.status}`
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorMessage
+        } catch (parseError) {
+          console.warn("Could not parse error response")
+        }
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
+      console.log("✅ Analysis completed successfully")
+
+      // Validate response data
+      if (!data || typeof data !== "object") {
+        throw new Error("Invalid response format from server")
+      }
+
       setAnalysisData(data)
-      localStorage.setItem("webInsightAnalysisData", JSON.stringify(data))
+
+      // Store in localStorage for persistence
+      try {
+        localStorage.setItem("latest-website-analysis", JSON.stringify(data))
+      } catch (storageError) {
+        console.warn("Could not save to localStorage:", storageError)
+      }
     } catch (err: any) {
-      console.error("Analysis error:", err)
-      setError(err.message || "An unexpected error occurred")
+      console.error("💥 Analysis error:", err)
+      const errorMessage = err?.message || "An unexpected error occurred during analysis"
+      setError(errorMessage)
     } finally {
       setIsAnalyzing(false)
     }
@@ -69,145 +110,133 @@ export default function Home() {
 
   const handleClear = () => {
     setAnalysisData(null)
-    localStorage.removeItem("webInsightAnalysisData")
+    setError(null)
+    localStorage.removeItem("latest-website-analysis")
+  }
+
+  const handleRetry = () => {
+    setError(null)
+    // Could implement retry with last URL if needed
+  }
+
+  const handleReset = () => {
+    setAnalysisData(null)
+    setError(null)
+    setIsAnalyzing(false)
   }
 
   return (
-    <main className="flex min-h-screen flex-col">
-      <div className="container mx-auto px-4 py-8">
-        {!analysisData ? (
-          <div className="max-w-5xl mx-auto">
-            <div className="flex flex-col items-center justify-center text-center py-12">
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5 }}
-              >
-                <Logo size="xl" animated={true} />
-              </motion.div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30">
+      {/* Header */}
+      <motion.header
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="absolute top-0 right-0 z-50 p-6"
+      >
+        <UserProfileButton />
+      </motion.header>
 
-              <motion.h1
-                className="mt-8 text-4xl md:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.7 }}
-              >
-                Advanced Website Intelligence Platform
-              </motion.h1>
+      {/* Main Content */}
+      <main className="relative">
+        <AnimatePresence mode="wait">
+          {!analysisData && !isAnalyzing && !error && (
+            <motion.div
+              key="hero"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.5 }}
+            >
+              <GoogleHeroSection onAnalyze={handleAnalyze} isLoading={isAnalyzing} />
+            </motion.div>
+          )}
 
-              <motion.p
-                className="mt-4 text-xl text-gray-600 dark:text-gray-300 max-w-3xl"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.4, duration: 0.7 }}
-              >
-                Analyze your website's performance, sustainability, and security with AI-powered insights
-              </motion.p>
+          {isAnalyzing && (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="min-h-screen flex items-center justify-center"
+            >
+              <LoadingAnimation />
+            </motion.div>
+          )}
 
-              <motion.div
-                className="mt-8 w-full max-w-2xl"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.6, duration: 0.7 }}
-              >
-                <MagicalWebsiteInput onAnalyze={handleAnalyze} isAnalyzing={isAnalyzing} error={error} />
-              </motion.div>
-
-              <motion.div
-                className="mt-12"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1, duration: 0.7 }}
-              >
-                <Button
-                  variant="ghost"
-                  onClick={() => setShowFeatures(!showFeatures)}
-                  className="flex items-center gap-2 text-gray-600 dark:text-gray-300"
-                >
-                  Learn more about our features
-                  <ChevronDown className={`h-4 w-4 transition-transform ${showFeatures ? "rotate-180" : ""}`} />
-                </Button>
-              </motion.div>
-
-              {showFeatures && (
-                <motion.div
-                  className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <FeatureCard
-                    icon={<Globe className="h-6 w-6 text-blue-500" />}
-                    title="Website Analysis"
-                    description="Comprehensive analysis of your website's performance, SEO, and user experience"
-                  />
-                  <FeatureCard
-                    icon={<Shield className="h-6 w-6 text-green-500" />}
-                    title="Security Insights"
-                    description="Identify security vulnerabilities and get recommendations to protect your site"
-                  />
-                  <FeatureCard
-                    icon={<Zap className="h-6 w-6 text-yellow-500" />}
-                    title="Performance Optimization"
-                    description="Actionable tips to improve loading speed and overall performance"
-                  />
-                  <FeatureCard
-                    icon={<BarChart3 className="h-6 w-6 text-purple-500" />}
-                    title="Sustainability Metrics"
-                    description="Measure and reduce your website's carbon footprint and environmental impact"
-                  />
-                  <FeatureCard
-                    icon={<Search className="h-6 w-6 text-indigo-500" />}
-                    title="SEO Recommendations"
-                    description="Improve your search engine rankings with targeted optimization tips"
-                  />
-                  <FeatureCard
-                    icon={<Sparkles className="h-6 w-6 text-pink-500" />}
-                    title="AI Content Generation"
-                    description="Create optimized content based on your website's analysis results"
-                  />
-                </motion.div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div>
-            <div className="flex justify-between items-center mb-8">
-              <Logo size="md" />
-              <div className="flex gap-4">
-                <Button variant="outline" onClick={handleClear}>
-                  New Analysis
-                </Button>
-                <Button
-                  onClick={() => router.push("/ai-content")}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                >
-                  Generate Content <Sparkles className="ml-2 h-4 w-4" />
-                </Button>
+          {error && (
+            <motion.div
+              key="error"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="min-h-screen flex items-center justify-center p-6"
+            >
+              <div className="max-w-2xl w-full">
+                <EnhancedErrorMessage error={error} onRetry={handleRetry} onReset={handleReset} />
               </div>
-            </div>
+            </motion.div>
+          )}
 
-            <GoogleHeroSection
-              url={url}
-              title={analysisData.title || url}
-              description={analysisData.description || "Website analysis results"}
-            />
+          {analysisData && (
+            <motion.div
+              key="results"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ duration: 0.6 }}
+              className="min-h-screen"
+            >
+              <div className="container mx-auto px-6 py-12">
+                {/* Back to Search Button */}
+                <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="mb-8">
+                  <button onClick={handleReset} className="google-button-secondary text-sm">
+                    ← New Analysis
+                  </button>
+                </motion.div>
 
-            <div className="mt-8">
-              <GoogleResultsCard analysisData={analysisData} />
-            </div>
+                <ResultsSection data={analysisData} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
 
-            <div className="mt-8">
-              <GoogleMetricsGrid analysisData={analysisData} />
-            </div>
+      {/* Floating AI Content Button */}
+      {analysisData && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="fixed bottom-6 right-6 z-50"
+        >
+          <Button
+            onClick={() => {
+              // Save current analysis to localStorage
+              try {
+                localStorage.setItem("latest-website-analysis", JSON.stringify(analysisData))
+                window.open("/ai-content", "_blank")
+              } catch (error) {
+                console.warn("Could not save analysis data:", error)
+                window.open("/ai-content", "_blank")
+              }
+            }}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-full p-4"
+            size="lg"
+          >
+            <Brain className="w-5 h-5 mr-2" />
+            Generate AI Content
+          </Button>
+        </motion.div>
+      )}
 
-            <div className="mt-12">
-              <ResultsSection analysisData={analysisData} />
-            </div>
-          </div>
+      {/* Footer - only show when not in hero mode */}
+      <AnimatePresence>
+        {(analysisData || error) && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
+            <Footer />
+          </motion.div>
         )}
-      </div>
-    </main>
+      </AnimatePresence>
+    </div>
   )
 }
 
