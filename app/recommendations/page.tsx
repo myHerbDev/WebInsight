@@ -1,13 +1,12 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Lightbulb, AlertTriangle, Zap, Shield, Leaf, FileText, Search, Loader2 } from "lucide-react"
+import { Lightbulb, AlertTriangle, Zap, Shield, Leaf, FileText, Search, Loader2, ExternalLink } from "lucide-react" // Added ExternalLink
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
@@ -66,20 +65,22 @@ const mockRecommendations: Recommendation[] = [
   {
     id: "3",
     category: "sustainability",
-    priority: "low",
+    priority: "medium", // Elevated priority for emphasis
     title: "Choose a Green Hosting Provider",
     description:
-      "Selecting a hosting provider that uses renewable energy can significantly reduce your website's carbon footprint.",
+      "Selecting a hosting provider that uses renewable energy or purchases carbon offsets can significantly reduce your website's carbon footprint. This is a key step towards digital sustainability.",
     implementation_steps: [
-      "Research hosting providers and their energy sources.",
-      "Check for certifications like Green Power Partner.",
-      "Consider providers that purchase Renewable Energy Certificates (RECs).",
+      "Research hosting providers and their commitment to renewable energy.",
+      "Check for certifications like Green Power Partner or B Corp.",
+      "Consider providers that purchase Renewable Energy Certificates (RECs) or invest in carbon offset projects.",
+      "Evaluate their overall sustainability reports and transparency.",
     ],
-    estimated_impact: "medium",
-    estimated_effort: "easy", // If migrating, could be high
-    resources: ["https://www.thegreenwebfoundation.org/"],
+    estimated_impact: "high", // Impact is high for sustainability
+    estimated_effort: "easy", // If migrating, could be high, but choosing initially is easy
+    resources: ["https://www.thegreenwebfoundation.org/", "/hosting?filter=green"], // Added link to our hosting page
     created_at: new Date().toISOString(),
   },
+  // Add more mock recommendations as needed
 ]
 
 const categoryIcons = {
@@ -102,11 +103,8 @@ export default function RecommendationsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // In a real app, fetch recommendations from an API:
-    // e.g., fetch('/api/recommendations?analysisId=...')
-    // For now, using mock data
+    // In a real app, fetch recommendations from an API
     setTimeout(() => {
-      // Simulate API delay
       setRecommendations(mockRecommendations)
       setLoading(false)
     }, 1000)
@@ -158,70 +156,86 @@ export default function RecommendationsPage() {
           )}
 
           <div className="space-y-6">
-            {recommendations.map((rec) => (
-              <Card
-                key={rec.id}
-                className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center space-x-3">
-                      {categoryIcons[rec.category]}
-                      <CardTitle className="text-xl text-slate-800 dark:text-slate-200">{rec.title}</CardTitle>
+            {recommendations.map((rec) => {
+              const isGreenHostingRec =
+                rec.category === "sustainability" && rec.title.toLowerCase().includes("green hosting")
+              return (
+                <Card
+                  key={rec.id}
+                  className={cn(
+                    "bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow",
+                    isGreenHostingRec &&
+                      "border-green-500/50 dark:border-green-400/40 ring-2 ring-green-500/30 dark:ring-green-400/30 bg-green-50/30 dark:bg-green-900/20",
+                  )}
+                >
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center space-x-3">
+                        {categoryIcons[rec.category]}
+                        <CardTitle className="text-xl text-slate-800 dark:text-slate-200">{rec.title}</CardTitle>
+                      </div>
+                      <Badge className={cn("capitalize", priorityColors[rec.priority])}>{rec.priority}</Badge>
                     </div>
-                    <Badge className={cn("capitalize", priorityColors[rec.priority])}>{rec.priority}</Badge>
-                  </div>
-                  <CardDescription className="pt-1 text-slate-600 dark:text-slate-400">
-                    {rec.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="mb-4">
-                    <h4 className="font-medium text-sm mb-1 text-slate-700 dark:text-slate-300">
-                      Implementation Steps:
-                    </h4>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-slate-600 dark:text-slate-400">
-                      {rec.implementation_steps.map((step, i) => (
-                        <li key={i}>{step}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                    <div>
-                      <span className="font-medium text-slate-700 dark:text-slate-300">Impact: </span>
-                      <Badge variant="outline" className="capitalize border-slate-300 dark:border-slate-700">
-                        {rec.estimated_impact}
-                      </Badge>
-                    </div>
-                    <div>
-                      <span className="font-medium text-slate-700 dark:text-slate-300">Effort: </span>
-                      <Badge variant="outline" className="capitalize border-slate-300 dark:border-slate-700">
-                        {rec.estimated_effort}
-                      </Badge>
-                    </div>
-                  </div>
-                  {rec.resources && rec.resources.length > 0 && (
-                    <div>
-                      <h4 className="font-medium text-sm mb-1 text-slate-700 dark:text-slate-300">Resources:</h4>
-                      <ul className="space-y-1 text-sm">
-                        {rec.resources.map((link, i) => (
-                          <li key={i}>
-                            <a
-                              href={link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-brand-DEFAULT hover:underline dark:text-brand-light"
-                            >
-                              {link.length > 60 ? link.substring(0, 57) + "..." : link}
-                            </a>
-                          </li>
+                    <CardDescription className="pt-1 text-slate-600 dark:text-slate-400">
+                      {rec.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-4">
+                      <h4 className="font-medium text-sm mb-1 text-slate-700 dark:text-slate-300">
+                        Implementation Steps:
+                      </h4>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-slate-600 dark:text-slate-400">
+                        {rec.implementation_steps.map((step, i) => (
+                          <li key={i}>{step}</li>
                         ))}
                       </ul>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                      <div>
+                        <span className="font-medium text-slate-700 dark:text-slate-300">Impact: </span>
+                        <Badge variant="outline" className="capitalize border-slate-300 dark:border-slate-700">
+                          {rec.estimated_impact}
+                        </Badge>
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-700 dark:text-slate-300">Effort: </span>
+                        <Badge variant="outline" className="capitalize border-slate-300 dark:border-slate-700">
+                          {rec.estimated_effort}
+                        </Badge>
+                      </div>
+                    </div>
+                    {rec.resources && rec.resources.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="font-medium text-sm mb-1 text-slate-700 dark:text-slate-300">Resources:</h4>
+                        <ul className="space-y-1 text-sm">
+                          {rec.resources.map((link, i) => (
+                            <li key={i}>
+                              <Link
+                                href={link}
+                                target={link.startsWith("http") ? "_blank" : "_self"}
+                                rel={link.startsWith("http") ? "noopener noreferrer" : ""}
+                                className="text-brand-DEFAULT hover:underline dark:text-brand-light flex items-center"
+                              >
+                                {link.length > 60 ? link.substring(0, 57) + "..." : link}
+                                {link.startsWith("http") && <ExternalLink className="h-3 w-3 ml-1 opacity-70" />}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {isGreenHostingRec && (
+                      <Button asChild className="mt-2 bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto">
+                        <Link href="/hosting?filter=green&utm_source=recommendations">
+                          <Leaf className="h-4 w-4 mr-2" /> Explore Green Hosting Providers
+                        </Link>
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         </div>
       </main>

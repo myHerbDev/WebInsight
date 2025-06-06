@@ -171,6 +171,17 @@ body {
     background-size: 400% 400%;
     animation: gradientAnimation 10s ease infinite;
   }
+
+  /* Added animations */
+  .animate-pulse-glow-slow {
+    animation: pulse-glow-slow 3s infinite ease-in-out;
+  }
+  .animate-spin-slow {
+    animation: spin 3s linear infinite;
+  }
+  .animate-ping-slow {
+    animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
 }
 
 @keyframes gradientAnimation {
@@ -182,5 +193,28 @@ body {
   }
   100% {
     background-position: 0% 50%;
+  }
+}
+
+@keyframes pulse-glow-slow {
+  0%,
+  100% {
+    opacity: 0.8;
+    transform: scale(1);
+    filter: drop-shadow(0 0 8px hsl(var(--primary-gradient-middle) / 0.5));
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 15px hsl(var(--primary-gradient-middle) / 0.7));
+  }
+}
+
+@keyframes ping-slow {
+  /* For SparklesIcon in ActionButtonsBar */
+  75%,
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
   }
 }

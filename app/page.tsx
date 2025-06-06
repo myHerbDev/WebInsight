@@ -6,12 +6,13 @@ import { Header } from "@/components/header"
 import { ResultsSection } from "@/components/results-section"
 import { SignUpModal } from "@/components/sign-up-modal"
 import { toast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
 import type { WebsiteData } from "@/types/website-data"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, Sparkles } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { WebsiteForm } from "@/components/website-form"
 import { LoadingAnimation } from "@/components/loading-animation"
+import { SustainabilityQuote } from "@/components/sustainability-quote"
+import { ActionButtonsBar } from "@/components/action-buttons-bar"
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
@@ -28,28 +29,17 @@ export default function Home() {
     try {
       const response = await fetch("/api/analyze", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       })
-
       const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || data.message || "Failed to analyze website")
-      }
-
+      if (!response.ok) throw new Error(data.error || data.message || "Failed to analyze website")
       setWebsiteData(data)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An unknown error occurred."
       console.error("Error analyzing website:", err)
       setError(errorMessage)
-      toast({
-        title: "Analysis Error",
-        description: errorMessage,
-        variant: "destructive",
-      })
+      toast({ title: "Analysis Error", description: errorMessage, variant: "destructive" })
     } finally {
       setIsLoading(false)
     }
@@ -104,19 +94,40 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col text-foreground">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-8 sm:py-12">
-        <div className="max-w-4xl mx-auto">
-          <WebsiteForm onSubmit={handleAnalyzeWebsite} />
+      <main className="flex-1 flex flex-col items-center justify-center container mx-auto px-4 py-8 sm:py-12">
+        <div className="w-full max-w-4xl text-center">
+          {/* Main Page Hero Content */}
+          <div className="mb-8 sm:mb-12">
+            <div className="inline-block p-3 rounded-full bg-primary-gradient mb-5 shadow-lg animate-pulse-glow-slow">
+              <Sparkles className="h-10 w-10 sm:h-12 sm:w-12 text-white filter drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]" />
+            </div>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground tracking-tight">
+              Web<span className="text-transparent bg-clip-text bg-primary-gradient">InSight</span>
+            </h1>
+            <p className="mt-3 sm:mt-4 text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto">
+              AI-Powered Analysis for a Smarter, Greener Web.
+            </p>
+          </div>
+
+          <SustainabilityQuote />
+          <WebsiteForm onSubmit={handleAnalyzeWebsite} className="mb-8 sm:mb-10" />
+          <ActionButtonsBar />
+        </div>
+
+        {/* Analysis Results Section */}
+        <div className="w-full max-w-4xl mt-10 sm:mt-16">
           {isLoading && <LoadingAnimation />}
           {error && !isLoading && (
-            <Alert variant="destructive" className="mt-8 shadow-lg rounded-xl p-6">
+            <Alert variant="destructive" className="shadow-lg rounded-xl p-6">
               <AlertCircle className="h-5 w-5" />
               <AlertTitle className="font-semibold">Analysis Failed</AlertTitle>
               <AlertDescription>{error} Please check the URL or try a different website.</AlertDescription>
             </Alert>
           )}
           {websiteData && !isLoading && (
-            <div className="mt-12">
+            <div className="mt-0">
+              {" "}
+              {/* Adjusted margin */}
               <ResultsSection
                 data={websiteData}
                 onSignUpClick={handleSignUp}
@@ -129,7 +140,6 @@ export default function Home() {
         </div>
       </main>
       <Footer />
-      <Toaster /> {/* Add Toaster for shadcn/ui toasts */}
       {showSignUpModal && (
         <SignUpModal
           onClose={() => setShowSignUpModal(false)}
@@ -137,10 +147,7 @@ export default function Home() {
           onSignUpSuccess={(newUserId) => {
             setUserId(newUserId)
             setShowSignUpModal(false)
-            toast({
-              title: "Account Created",
-              description: "You've successfully signed up!",
-            })
+            toast({ title: "Account Created", description: "You've successfully signed up!" })
           }}
         />
       )}
