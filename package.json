@@ -1,15 +1,31 @@
 {
-  "name": "my-v0-project",
-  "version": "0.1.0",
+  "name": "WebInsight",
+  "version": "1.0.0",
   "private": true,
+  "description": "WebInSight allows users to analyze website performance and sustainability with AI.",
+  "author": "myHerbDev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/myHerbDev/WebInsight.git"
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
+
+},
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "jest",
+    "format": "prettier --write .",
+    "clean": "rimraf dist"
+  
   "dependencies": {
-    "@ai-sdk/groq": "latest",
+    "@ai-sdk/groq": "2.0.1",
     "@aws-sdk/credential-providers": "latest",
     "@hookform/resolvers": "^3.9.1",
     "@mongodb-js/zstd": "latest",
@@ -55,7 +71,7 @@
     "input-otp": "1.4.1",
     "kerberos": "latest",
     "lucide-react": "^0.454.0",
-    "mongodb": "latest",
+    "mongodb": "5.0.0"
     "mongodb-client-encryption": "latest",
     "next": "15.2.4",
     "next-themes": "latest",
@@ -73,12 +89,27 @@
     "vaul": "^0.9.6",
     "zod": "^3.24.1"
   },
-  "devDependencies": {
-    "@types/node": "^22",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "postcss": "^8.5",
+  "dependencies": {
+    "@ai-sdk/groq": "2.0.1",
+    "@radix-ui/react-accordion": "1.2.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5"
+    "typescript": "^5.1"
+
+ },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "eslint": "^8.47.0",
+    "prettier": "^2.8.0"
+  }
+}
+    
+    "repository": {
+  "type": "git",
+  "url": "https://github.com/myHerbDev/WebInsight.git"
+      "description": "WebInSight allows users to analyze website performance and sustainability with AI.",
+"author": "myHerbDev"
+}
   }
 }
