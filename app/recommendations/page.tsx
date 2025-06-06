@@ -371,7 +371,7 @@ export default function RecommendationsPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 page-transition">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8 magic-fade-in">
         {/* Header Section */}
@@ -390,10 +390,7 @@ export default function RecommendationsPage() {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap gap-3 justify-center mt-6">
-            <Button
-              onClick={handleExportRecommendations}
-              className="bg-primary-gradient hover:opacity-90 text-white shimmer"
-            >
+            <Button onClick={handleExportRecommendations} className="google-button text-white">
               <Download className="h-4 w-4 mr-2" />
               Export PDF Report
             </Button>
@@ -518,7 +515,7 @@ export default function RecommendationsPage() {
                 .map((rec, index) => (
                   <Card
                     key={index}
-                    className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 rounded-xl float-animation"
+                    className="glass-morphism card-hover-lift border border-slate-200/60 dark:border-slate-800/60 rounded-xl float-animation"
                   >
                     <CardHeader className="pb-4">
                       <div className="flex items-start justify-between">

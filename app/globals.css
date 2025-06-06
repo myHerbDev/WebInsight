@@ -104,7 +104,6 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
-    overflow-x: hidden;
   }
   /* Custom selection style */
   ::selection {
@@ -188,106 +187,7 @@ body {
     animation: gradientAnimation 10s ease infinite;
   }
 
-  /* Google-like particle effect background */
-  .particles-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: -1;
-    overflow: hidden;
-  }
-
-  .particle {
-    position: absolute;
-    background: linear-gradient(
-      45deg,
-      hsl(var(--primary-gradient-start) / 0.6),
-      hsl(var(--primary-gradient-middle) / 0.6),
-      hsl(var(--primary-gradient-end) / 0.6)
-    );
-    border-radius: 50%;
-    animation: float-particle 20s infinite linear;
-  }
-
-  .particle:nth-child(1) {
-    width: 4px;
-    height: 4px;
-    left: 10%;
-    animation-delay: 0s;
-  }
-  .particle:nth-child(2) {
-    width: 6px;
-    height: 6px;
-    left: 20%;
-    animation-delay: 2s;
-  }
-  .particle:nth-child(3) {
-    width: 3px;
-    height: 3px;
-    left: 30%;
-    animation-delay: 4s;
-  }
-  .particle:nth-child(4) {
-    width: 5px;
-    height: 5px;
-    left: 40%;
-    animation-delay: 6s;
-  }
-  .particle:nth-child(5) {
-    width: 4px;
-    height: 4px;
-    left: 50%;
-    animation-delay: 8s;
-  }
-  .particle:nth-child(6) {
-    width: 7px;
-    height: 7px;
-    left: 60%;
-    animation-delay: 10s;
-  }
-  .particle:nth-child(7) {
-    width: 3px;
-    height: 3px;
-    left: 70%;
-    animation-delay: 12s;
-  }
-  .particle:nth-child(8) {
-    width: 5px;
-    height: 5px;
-    left: 80%;
-    animation-delay: 14s;
-  }
-  .particle:nth-child(9) {
-    width: 4px;
-    height: 4px;
-    left: 90%;
-    animation-delay: 16s;
-  }
-  .particle:nth-child(10) {
-    width: 6px;
-    height: 6px;
-    left: 15%;
-    animation-delay: 18s;
-  }
-
-  /* Enhanced glass morphism effect */
-  .glass-card {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  }
-
-  .dark .glass-card {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  }
-
-  /* Enhanced animations */
+  /* Added animations */
   .animate-pulse-glow-slow {
     animation: pulse-glow-slow 3s infinite ease-in-out;
   }
@@ -308,7 +208,7 @@ body {
     animation: float 6s ease-in-out infinite;
   }
 
-  /* Enhanced shimmer effect for buttons and highlights */
+  /* Shimmer effect for buttons and highlights */
   .shimmer {
     position: relative;
     overflow: hidden;
@@ -321,78 +221,112 @@ body {
     left: -50%;
     width: 200%;
     height: 200%;
-    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.4), transparent);
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent);
     transform: rotate(30deg);
     animation: shimmer 3s infinite;
   }
 
-  /* Google-like search focus effect */
-  .search-focus {
+  /* Enhanced Google-like design elements */
+  .glass-morphism {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .dark .glass-morphism {
+    background: rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Enhanced card hover effects */
+  .card-hover-lift {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  .search-focus:focus-within {
+  .card-hover-lift:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Google-like button styles */
+  .google-button {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    transition: all 0.3s ease;
+  }
+
+  .google-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.4);
+  }
+
+  .google-button::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .google-button:hover::before {
+    left: 100%;
   }
 
   /* Smooth page transitions */
   .page-transition {
-    animation: pageSlideIn 0.6s ease-out forwards;
+    animation: fadeInUp 0.6s ease-out;
   }
 
-  /* Enhanced hover effects */
-  .hover-lift {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  @keyframes fadeInUp {
+    0% {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
-  .hover-lift:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  /* Enhanced loading states */
+  .skeleton-loader {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
   }
 
-  /* Gradient text effect */
-  .gradient-text {
-    background: linear-gradient(
-      135deg,
-      hsl(var(--primary-gradient-start)),
-      hsl(var(--primary-gradient-middle)),
-      hsl(var(--primary-gradient-end))
-    );
-    background-size: 200% 200%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: gradientShift 8s ease infinite;
+  @keyframes loading {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
   }
-}
 
-@keyframes float-particle {
-  0% {
-    transform: translateY(100vh) rotate(0deg);
-    opacity: 0;
+  /* Google-like search focus */
+  .search-focus {
+    transition: all 0.3s ease;
   }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-100vh) rotate(360deg);
-    opacity: 0;
+
+  .search-focus:focus {
+    transform: scale(1.02);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   }
 }
 
 @keyframes gradientAnimation {
-  0% {
+  0%,
+  100% {
     background-position: 0% 50%;
   }
   50% {
     background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
   }
 }
 
@@ -441,17 +375,6 @@ body {
   }
 }
 
-@keyframes pageSlideIn {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes float {
   0%,
   100% {
@@ -468,81 +391,5 @@ body {
   }
   100% {
     transform: translateX(150%) rotate(30deg);
-  }
-}
-
-/* Enhanced responsive design improvements */
-@media (max-width: 1024px) {
-  .particle {
-    width: 3px !important;
-    height: 3px !important;
-    animation-duration: 12s !important;
-  }
-}
-
-@media (max-width: 768px) {
-  .particle {
-    display: none; /* Hide particles on mobile for performance */
-  }
-
-  .glass-card {
-    backdrop-filter: blur(10px); /* Reduce blur on mobile for performance */
-  }
-
-  .shimmer::after {
-    animation-duration: 2s; /* Faster shimmer on mobile */
-  }
-
-  .float-animation {
-    animation: none; /* Disable float animation on mobile */
-  }
-
-  .hover-lift:hover {
-    transform: none; /* Disable hover lift on mobile */
-  }
-}
-
-@media (max-width: 640px) {
-  .bg-animated-gradient {
-    background-size: 200% 200%; /* Smaller gradient size on mobile */
-    animation-duration: 8s; /* Faster animation on mobile */
-  }
-
-  .gradient-text {
-    background-size: 150% 150%; /* Optimize gradient text for mobile */
-  }
-}
-
-/* Touch-friendly improvements */
-@media (hover: none) and (pointer: coarse) {
-  .hover-lift:hover {
-    transform: none;
-  }
-
-  .shimmer::after {
-    display: none; /* Disable shimmer on touch devices */
-  }
-
-  .group:hover .bg-animated-gradient {
-    opacity: 0.1; /* Reduce hover effects on touch */
-  }
-}
-
-/* Tablet specific optimizations */
-@media (min-width: 768px) and (max-width: 1024px) {
-  .particle {
-    animation-duration: 15s;
-  }
-
-  .glass-card {
-    backdrop-filter: blur(15px);
-  }
-}
-
-/* Print styles */
-@media print {
-  .particles-bg,
-  .particle {
-    display: none;
   }
 }

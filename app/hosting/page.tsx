@@ -36,7 +36,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { cn } from "@/lib/utils"
 import { useSearchParams } from "next/navigation"
 
-// Static data for hosting providers - optimized for instant loading
+// Static data for hosting providers
 const STATIC_HOSTING_PROVIDERS = [
   {
     id: 1,
@@ -371,6 +371,9 @@ const STATIC_HOSTING_PROVIDERS = [
   },
 ]
 
+// Add this after the STATIC_HOSTING_PROVIDERS array
+console.log(`Loaded ${STATIC_HOSTING_PROVIDERS.length} hosting providers`)
+
 interface HostingProvider {
   id: number
   name: string
@@ -396,7 +399,7 @@ interface HostingProvider {
 
 const ITEMS_PER_PAGE = 6
 
-// Update the HostingFilterBar for mobile optimization
+// Helper component for the refined filter bar
 const HostingFilterBar = ({
   searchTerm,
   setSearchTerm,
@@ -425,8 +428,8 @@ const HostingFilterBar = ({
   totalPages: number
 }) => {
   return (
-    <Card className="mb-6 sm:mb-8 p-3 sm:p-4 md:p-6 shadow-2xl border-slate-200/60 dark:border-slate-800/60 glass-card sticky top-[calc(var(--header-height,64px)+0.5rem)] sm:top-[calc(var(--header-height,64px)+1rem)] z-30 rounded-xl sm:rounded-2xl hover-lift mx-4 sm:mx-0">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 items-end">
+    <Card className="mb-8 p-4 sm:p-6 shadow-xl border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-[calc(var(--header-height,64px)+1rem)] z-30 rounded-xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
         <div className="relative lg:col-span-1">
           <label
             htmlFor="search-providers"
@@ -436,12 +439,12 @@ const HostingFilterBar = ({
           </label>
           <Input
             id="search-providers"
-            placeholder="Search by name..."
+            placeholder="Search by name, description..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-9 sm:h-10 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60 focus:ring-primary-gradient-start focus:border-primary-gradient-start rounded-lg sm:rounded-xl pl-7 sm:pl-8 transition-all duration-300 text-sm sm:text-base"
+            className="h-10 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60 focus:ring-primary-gradient-start focus:border-primary-gradient-start rounded-lg pl-8"
           />
-          <Search className="absolute left-2 sm:left-2.5 top-[calc(50%+2px)] transform -translate-y-1/2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
+          <Search className="absolute left-2.5 top-[calc(50%+2px)] transform -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
         </div>
         <div>
           <label htmlFor="sort-by" className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1.5">
@@ -451,7 +454,7 @@ const HostingFilterBar = ({
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger
                 id="sort-by"
-                className="flex-grow h-9 sm:h-10 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60 rounded-lg sm:rounded-xl text-sm sm:text-base"
+                className="flex-grow h-10 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60 rounded-lg"
               >
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
@@ -467,14 +470,10 @@ const HostingFilterBar = ({
               variant="outline"
               size="icon"
               onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-              className="h-9 w-9 sm:h-10 sm:w-10 border-slate-300/60 dark:border-slate-700/60 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-lg sm:rounded-xl transition-all duration-300"
+              className="h-10 w-10 border-slate-300/60 dark:border-slate-700/60 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-lg"
               aria-label={sortOrder === "asc" ? "Sort Descending" : "Sort Ascending"}
             >
-              {sortOrder === "asc" ? (
-                <SortAsc className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              ) : (
-                <SortDesc className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              )}
+              {sortOrder === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
             </Button>
           </div>
         </div>
@@ -485,7 +484,7 @@ const HostingFilterBar = ({
           <Select value={filterTier} onValueChange={setFilterTier}>
             <SelectTrigger
               id="filter-tier"
-              className="h-9 sm:h-10 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60 rounded-lg sm:rounded-xl text-sm sm:text-base"
+              className="h-10 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60 rounded-lg"
             >
               <SelectValue placeholder="Filter by tier" />
             </SelectTrigger>
@@ -499,7 +498,7 @@ const HostingFilterBar = ({
           </Select>
         </div>
       </div>
-      <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-slate-200/60 dark:border-slate-700/60 text-center">
+      <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-700/60 text-center">
         <p className="text-xs text-slate-500 dark:text-slate-400">
           Showing {filteredCount} of {totalProviders} providers. Page {currentPage} of {totalPages}.
         </p>
@@ -509,7 +508,7 @@ const HostingFilterBar = ({
 }
 
 export default function HostingProvidersPage() {
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParams() // Hook for accessing URL search parameters
   const initialViewFromQuery = searchParams.get("view")
 
   const [searchTerm, setSearchTerm] = useState("")
@@ -518,6 +517,7 @@ export default function HostingProvidersPage() {
   const [filterTier, setFilterTier] = useState("all")
   const [activeTab, setActiveTab] = useState(initialViewFromQuery === "green" ? "green" : "all")
   const [currentPage, setCurrentPage] = useState(1)
+  const [isLoading, setIsLoading] = useState(false)
 
   const { greenProviders, lessGreenProviders, paginatedProviders, totalPages, totalFilteredCount } = useMemo(() => {
     let tempProviders = [...STATIC_HOSTING_PROVIDERS]
@@ -535,7 +535,7 @@ export default function HostingProvidersPage() {
       tempProviders = tempProviders.filter((provider) => provider.pricing_tier === filterTier)
     }
 
-    // Enhanced sorting logic
+    // Sorting logic
     tempProviders.sort((a, b) => {
       let aValue = a[sortBy as keyof HostingProvider]
       let bValue = b[sortBy as keyof HostingProvider]
@@ -597,19 +597,18 @@ export default function HostingProvidersPage() {
       greenProviders: green,
       lessGreenProviders: lessGreen,
       paginatedProviders: paginated,
-      totalPages: calculatedTotalPages > 0 ? calculatedTotalPages : 1,
+      totalPages: calculatedTotalPages > 0 ? calculatedTotalPages : 1, // Ensure totalPages is at least 1
       totalFilteredCount: count,
     }
   }, [searchTerm, sortBy, sortOrder, filterTier, activeTab, currentPage])
 
-  // Update the ProviderCard for mobile optimization
   const ProviderCard = ({ provider }: { provider: HostingProvider }) => {
     const isGreen = provider.sustainability_score >= 75 || provider.carbon_neutral
     return (
       <Card
         className={cn(
-          "group relative overflow-hidden transition-all duration-500 ease-out hover:shadow-2xl flex flex-col rounded-xl sm:rounded-2xl float-animation hover-lift",
-          "glass-card border-2",
+          "group relative overflow-hidden transition-all duration-300 ease-out hover:shadow-2xl flex flex-col rounded-xl float-animation card-hover-lift", // Added float-animation card-hover-lift
+          "bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border glass-morphism", // Added glass-morphism
           isGreen
             ? "border-green-400/50 hover:border-green-500/80"
             : "border-slate-200/60 dark:border-slate-800/60 hover:border-primary-gradient-middle/50",
@@ -624,27 +623,27 @@ export default function HostingProvidersPage() {
         {provider.rank && (
           <Badge
             variant="secondary"
-            className="absolute top-2 sm:top-3 left-2 sm:left-3 z-20 bg-primary-gradient text-white px-2 sm:px-2.5 py-0.5 sm:py-1 text-xs font-bold rounded-lg sm:rounded-xl shimmer"
+            className="absolute top-3 left-3 z-20 bg-primary-gradient text-white px-2.5 py-1 text-xs font-bold rounded-md shimmer" // Added shimmer
           >
             Rank #{provider.rank}
           </Badge>
         )}
         {isGreen && (
-          <div className="absolute top-2 right-2 z-20 p-1 sm:p-1.5 bg-green-500/10 dark:bg-green-400/10 rounded-full ring-1 ring-green-500/30">
-            <Leaf className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400" />
+          <div className="absolute top-2 right-2 z-20 p-1.5 bg-green-500/10 dark:bg-green-400/10 rounded-full ring-1 ring-green-500/30">
+            <Leaf className="h-5 w-5 text-green-600 dark:text-green-400" />
           </div>
         )}
 
-        <CardHeader className="pb-2 sm:pb-3 relative z-10 p-3 sm:p-6">
+        <CardHeader className="pb-3 relative z-10">
           <div className="flex items-start justify-between">
-            <div className="flex-1 pr-6 sm:pr-8">
-              <CardTitle className="text-lg sm:text-xl font-semibold text-slate-800 dark:text-slate-100 group-hover:text-primary-gradient-middle transition-colors">
+            <div className="flex-1 pr-8">
+              <CardTitle className="text-xl font-semibold text-slate-800 dark:text-slate-100 group-hover:text-primary-gradient-middle transition-colors">
                 {provider.name}
               </CardTitle>
               {provider.average_rating !== undefined && provider.reviews_count !== undefined && (
-                <div className="flex items-center mt-1 sm:mt-1.5">
+                <div className="flex items-center mt-1.5">
                   {renderStars(provider.average_rating)}
-                  <span className="ml-1.5 sm:ml-2 text-xs text-slate-500 dark:text-slate-400">
+                  <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">
                     ({provider.reviews_count} reviews)
                   </span>
                 </div>
@@ -654,7 +653,7 @@ export default function HostingProvidersPage() {
               variant="ghost"
               size="icon"
               asChild
-              className="text-slate-500 hover:text-primary-gradient-middle dark:text-slate-400 dark:hover:text-primary-gradient-middle -mt-1 -mr-1 transition-colors z-20 rounded-full h-8 w-8 sm:h-10 sm:w-10"
+              className="text-slate-500 hover:text-primary-gradient-middle dark:text-slate-400 dark:hover:text-primary-gradient-middle -mt-1 -mr-1 transition-colors z-20 rounded-full"
             >
               <a
                 href={provider.website}
@@ -662,106 +661,88 @@ export default function HostingProvidersPage() {
                 rel="noopener noreferrer"
                 aria-label={`Visit ${provider.name} website`}
               >
-                <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <ExternalLink className="h-4 w-4" />
               </a>
             </Button>
           </div>
           {provider.description && (
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5 sm:mt-2 leading-relaxed line-clamp-2">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed line-clamp-2">
               {provider.description}
             </p>
           )}
         </CardHeader>
 
-        <CardContent className="space-y-2 sm:space-y-3 text-sm flex-grow relative z-10 pt-1 sm:pt-2 p-3 sm:p-6">
-          {/* Rest of the card content with responsive adjustments */}
-          <div className="grid grid-cols-2 gap-x-3 sm:gap-x-4 gap-y-1.5 sm:gap-y-2 text-xs">
+        <CardContent className="space-y-3 text-sm flex-grow relative z-10 pt-2">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
             <div className="flex items-center" title="Sustainability Score">
-              <BarChart3 className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 text-green-500 shrink-0" />
-              <span className="text-xs">
-                Sustainability: <span className="font-semibold ml-0.5 sm:ml-1">{provider.sustainability_score}%</span>
-              </span>
+              <BarChart3 className="h-3.5 w-3.5 mr-1.5 text-green-500 shrink-0" />
+              Sustainability: <span className="font-semibold ml-1">{provider.sustainability_score}%</span>
             </div>
             <div className="flex items-center" title="Performance Rating">
-              <Zap className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 text-blue-500 shrink-0" />
-              <span className="text-xs">
-                Performance: <span className="font-semibold ml-0.5 sm:ml-1">{provider.performance_rating}%</span>
-              </span>
+              <Zap className="h-3.5 w-3.5 mr-1.5 text-blue-500 shrink-0" />
+              Performance: <span className="font-semibold ml-1">{provider.performance_rating}%</span>
             </div>
             <div className="flex items-center" title="Renewable Energy">
-              <Leaf className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 text-emerald-500 shrink-0" />
-              <span className="text-xs">
-                Renewable: <span className="font-semibold ml-0.5 sm:ml-1">{provider.renewable_energy_percentage}%</span>
-              </span>
+              <Leaf className="h-3.5 w-3.5 mr-1.5 text-emerald-500 shrink-0" />
+              Renewable: <span className="font-semibold ml-1">{provider.renewable_energy_percentage}%</span>
             </div>
             <div className="flex items-center" title="Uptime Guarantee">
-              <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 text-purple-500 shrink-0" />
-              <span className="text-xs">
-                Uptime: <span className="font-semibold ml-0.5 sm:ml-1">{provider.uptime_guarantee}%</span>
-              </span>
+              <Shield className="h-3.5 w-3.5 mr-1.5 text-purple-500 shrink-0" />
+              Uptime: <span className="font-semibold ml-1">{provider.uptime_guarantee}%</span>
             </div>
           </div>
 
           <div className="border-t border-slate-200/60 dark:border-slate-700/60 my-2" />
 
-          <div className="grid grid-cols-2 gap-x-3 sm:gap-x-4 gap-y-1 sm:gap-y-1.5 text-xs">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
             <div className="flex items-center" title="Infrastructure Type">
               {provider.infrastructure_type === "cloud" ? (
-                <Cloud className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 text-sky-500 shrink-0" />
+                <Cloud className="h-3.5 w-3.5 mr-1.5 text-sky-500 shrink-0" />
               ) : (
-                <Server className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 text-slate-500 shrink-0" />
+                <Server className="h-3.5 w-3.5 mr-1.5 text-slate-500 shrink-0" />
               )}
-              <span className="text-xs">
-                Infra:{" "}
-                <span className="font-semibold ml-0.5 sm:ml-1 capitalize">{provider.infrastructure_type || "N/A"}</span>
-              </span>
+              Infra: <span className="font-semibold ml-1 capitalize">{provider.infrastructure_type || "N/A"}</span>
             </div>
             <div className="flex items-center" title="CDN Availability">
-              <NetworkIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 text-orange-500 shrink-0" />
-              <span className="text-xs">
-                CDN: <span className="font-semibold ml-0.5 sm:ml-1">{provider.cdn_available ? "Yes" : "No"}</span>
-              </span>
+              <NetworkIcon className="h-3.5 w-3.5 mr-1.5 text-orange-500 shrink-0" />
+              CDN: <span className="font-semibold ml-1">{provider.cdn_available ? "Yes" : "No"}</span>
             </div>
             <div className="flex items-center" title="SSL Support">
-              <Lock className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 text-red-500 shrink-0" />
-              <span className="text-xs">
-                SSL: <span className="font-semibold ml-0.5 sm:ml-1 capitalize">{provider.ssl_support || "N/A"}</span>
-              </span>
+              <Lock className="h-3.5 w-3.5 mr-1.5 text-red-500 shrink-0" />
+              SSL: <span className="font-semibold ml-1 capitalize">{provider.ssl_support || "N/A"}</span>
             </div>
             <div className="flex items-center" title="Carbon Neutral">
-              <TreePine className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 text-lime-600 shrink-0" />
-              <span className="text-xs">
-                Neutral: <span className="font-semibold ml-0.5 sm:ml-1">{provider.carbon_neutral ? "Yes" : "No"}</span>
-              </span>
+              <TreePine className="h-3.5 w-3.5 mr-1.5 text-lime-600 shrink-0" />
+              Neutral: <span className="font-semibold ml-1">{provider.carbon_neutral ? "Yes" : "No"}</span>
             </div>
           </div>
 
           {provider.data_center_locations && provider.data_center_locations.length > 0 && (
-            <div className="flex items-start text-xs mt-1 sm:mt-2" title="Data Center Locations">
-              <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 text-cyan-500 shrink-0 mt-0.5" />
+            <div className="flex items-start text-xs mt-2" title="Data Center Locations">
+              <Globe className="h-3.5 w-3.5 mr-1.5 text-cyan-500 shrink-0 mt-0.5" />
               Locations:{" "}
-              <span className="ml-0.5 sm:ml-1 text-slate-600 dark:text-slate-400 line-clamp-1">
+              <span className="ml-1 text-slate-600 dark:text-slate-400 line-clamp-1">
                 {provider.data_center_locations.join(", ")}
               </span>
             </div>
           )}
           {provider.green_certifications && provider.green_certifications.length > 0 && (
-            <div className="flex items-start text-xs mt-0.5 sm:mt-1" title="Green Certifications">
-              <Award className="h-3 w-3 sm:h-3.5 sm:w-3.5 mr-1 sm:mr-1.5 text-yellow-500 shrink-0 mt-0.5" />
+            <div className="flex items-start text-xs mt-1" title="Green Certifications">
+              <Award className="h-3.5 w-3.5 mr-1.5 text-yellow-500 shrink-0 mt-0.5" />
               Certs:{" "}
-              <span className="ml-0.5 sm:ml-1 text-slate-600 dark:text-slate-400 line-clamp-1">
+              <span className="ml-1 text-slate-600 dark:text-slate-400 line-clamp-1">
                 {provider.green_certifications.join(", ")}
               </span>
             </div>
           )}
         </CardContent>
 
-        <div className="p-3 sm:p-4 pt-2 sm:pt-3 mt-auto border-t border-slate-100/60 dark:border-slate-800/60 relative z-10">
-          <div className="flex flex-col sm:flex-row gap-2">
+        <div className="p-4 pt-3 mt-auto border-t border-slate-100/60 dark:border-slate-800/60 relative z-10">
+          <div className="flex gap-2">
             <Button
               asChild
               size="sm"
-              className="flex-1 bg-primary-gradient hover:opacity-90 text-white dark:text-primary-foreground transition-all duration-300 rounded-lg sm:rounded-xl shimmer text-sm"
+              className="flex-1 google-button text-white dark:text-primary-foreground transition-opacity rounded-md" // Changed to google-button
             >
               <Link href={`/hosting/${provider.id}`}>View Details</Link>
             </Button>
@@ -769,7 +750,7 @@ export default function HostingProvidersPage() {
               asChild
               variant="outline"
               size="sm"
-              className="border-primary-gradient-middle/30 text-primary-gradient-middle hover:bg-primary-gradient-middle/10 rounded-lg sm:rounded-xl transition-all duration-300 text-sm"
+              className="border-primary-gradient-middle/30 text-primary-gradient-middle hover:bg-primary-gradient-middle/10 rounded-md"
             >
               <Link href={`/compare?providers=${provider.id}`}>Compare</Link>
             </Button>
@@ -840,18 +821,13 @@ export default function HostingProvidersPage() {
           onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
           disabled={currentPage === 1}
           aria-label="Previous Page"
-          className="rounded-xl hover-lift transition-all duration-300"
+          className="rounded-lg"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         {startPage > 1 && (
           <>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage(1)}
-              className="rounded-xl hover-lift transition-all duration-300"
-            >
+            <Button variant="outline" size="icon" onClick={() => setCurrentPage(1)} className="rounded-lg">
               1
             </Button>
             {startPage > 2 && <span className="text-muted-foreground">...</span>}
@@ -864,10 +840,7 @@ export default function HostingProvidersPage() {
             size="icon"
             onClick={() => setCurrentPage(pageNumber)}
             aria-label={`Go to page ${pageNumber}`}
-            className={cn(
-              "rounded-xl hover-lift transition-all duration-300",
-              currentPage === pageNumber && "bg-primary-gradient text-white shimmer",
-            )}
+            className={cn("rounded-lg", currentPage === pageNumber && "bg-primary-gradient text-white shimmer")} // Added shimmer
           >
             {pageNumber}
           </Button>
@@ -875,12 +848,7 @@ export default function HostingProvidersPage() {
         {endPage < totalPages && (
           <>
             {endPage < totalPages - 1 && <span className="text-muted-foreground">...</span>}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setCurrentPage(totalPages)}
-              className="rounded-xl hover-lift transition-all duration-300"
-            >
+            <Button variant="outline" size="icon" onClick={() => setCurrentPage(totalPages)} className="rounded-lg">
               {totalPages}
             </Button>
           </>
@@ -891,7 +859,7 @@ export default function HostingProvidersPage() {
           onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
           disabled={currentPage === totalPages}
           aria-label="Next Page"
-          className="rounded-xl hover-lift transition-all duration-300"
+          className="rounded-lg"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -901,58 +869,59 @@ export default function HostingProvidersPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 page-transition">
+      {/* Quick verification - can be removed later */}
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8 magic-fade-in">
-        <div className="mb-8 sm:mb-10 text-center px-4">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold gradient-text mb-3 sm:mb-4">
+        {" "}
+        {/* Added magic-fade-in */}
+        <div className="mb-10 text-center">
+          <h1 className="text-4xl sm:text-5xl font-bold bg-primary-gradient bg-clip-text text-transparent mb-4">
             Green Hosting Providers Catalog
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 max-w-3xl mx-auto text-base sm:text-lg px-2">
+          <p className="text-slate-600 dark:text-slate-400 max-w-3xl mx-auto text-lg">
             Discover hosting providers committed to sustainability. Compare environmental impact, performance, and
             features to make informed decisions for responsible web hosting.
           </p>
         </div>
-
-        {/* Enhanced Feature Highlights */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-10 px-4 sm:px-0">
-          <Card className="glass-card rounded-xl sm:rounded-2xl shimmer hover-lift">
-            <CardContent className="p-4 sm:p-6 flex flex-col items-center text-center">
-              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-3 sm:mb-4">
-                <Leaf className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 dark:text-green-400" />
+        {/* Feature Highlights */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <Card className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 rounded-xl shimmer">
+            <CardContent className="p-6 flex flex-col items-center text-center">
+              <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
+                <Leaf className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
-              <h3 className="text-base sm:text-lg font-semibold mb-2">Eco-Friendly Options</h3>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              <h3 className="text-lg font-semibold mb-2">Eco-Friendly Options</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Find hosting providers that use renewable energy and implement sustainable practices to reduce carbon
                 footprint.
               </p>
             </CardContent>
           </Card>
 
-          <Card className="glass-card rounded-xl sm:rounded-2xl shimmer hover-lift">
-            <CardContent className="p-4 sm:p-6 flex flex-col items-center text-center">
-              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-3 sm:mb-4">
-                <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 dark:text-purple-400" />
+          <Card className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 rounded-xl shimmer">
+            <CardContent className="p-6 flex flex-col items-center text-center">
+              <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
+                <Zap className="h-6 w-6 text-purple-600 dark:text-purple-400" />
               </div>
-              <h3 className="text-base sm:text-lg font-semibold mb-2">Performance Metrics</h3>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              <h3 className="text-lg font-semibold mb-2">Performance Metrics</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Compare speed, uptime guarantees, and reliability metrics to ensure your website performs at its best.
               </p>
             </CardContent>
           </Card>
 
-          <Card className="glass-card rounded-xl sm:rounded-2xl shimmer hover-lift">
-            <CardContent className="p-4 sm:p-6 flex flex-col items-center text-center">
-              <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-3 sm:mb-4">
-                <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
+          <Card className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 rounded-xl shimmer">
+            <CardContent className="p-6 flex flex-col items-center text-center">
+              <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4">
+                <Shield className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <h3 className="text-base sm:text-lg font-semibold mb-2">Security Features</h3>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              <h3 className="text-lg font-semibold mb-2">Security Features</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Evaluate security offerings including SSL certificates, DDoS protection, and backup solutions.
               </p>
             </CardContent>
           </Card>
         </div>
-
         <HostingFilterBar
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -967,36 +936,31 @@ export default function HostingProvidersPage() {
           currentPage={currentPage}
           totalPages={totalPages}
         />
-
-        {/* Update the Tabs component for mobile */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6 sm:mb-8 mt-6 sm:mt-8 px-4 sm:px-0">
-          <TabsList className="grid w-full grid-cols-3 glass-card rounded-xl sm:rounded-2xl p-1 h-auto">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8 mt-8">
+          <TabsList className="grid w-full grid-cols-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-lg p-1">
             <TabsTrigger
               value="all"
-              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-lg sm:rounded-xl data-[state=active]:shadow-lg transition-all duration-300 text-xs sm:text-sm py-2 sm:py-3"
+              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-md data-[state=active]:shadow-lg transition-all"
             >
-              <span className="hidden sm:inline">All ({STATIC_HOSTING_PROVIDERS.length})</span>
-              <span className="sm:hidden">All</span>
+              All ({STATIC_HOSTING_PROVIDERS.length})
             </TabsTrigger>
             <TabsTrigger
               value="green"
-              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-lg sm:rounded-xl data-[state=active]:shadow-lg transition-all duration-300 text-xs sm:text-sm py-2 sm:py-3"
+              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-md data-[state=active]:shadow-lg transition-all"
             >
-              <Leaf className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-              <span className="hidden sm:inline">Green ({greenProviders.length})</span>
-              <span className="sm:hidden">Green</span>
+              <Leaf className="h-4 w-4 mr-1" />
+              Green ({greenProviders.length})
             </TabsTrigger>
             <TabsTrigger
               value="less-green"
-              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-lg sm:rounded-xl data-[state=active]:shadow-lg transition-all duration-300 text-xs sm:text-sm py-2 sm:py-3"
+              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-md data-[state=active]:shadow-lg transition-all"
             >
-              <span className="hidden sm:inline">Standard ({lessGreenProviders.length})</span>
-              <span className="sm:hidden">Standard</span>
+              Standard ({lessGreenProviders.length})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="mt-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {paginatedProviders.map((provider) => (
                 <ProviderCard key={provider.id} provider={provider} />
               ))}
@@ -1010,7 +974,7 @@ export default function HostingProvidersPage() {
           </TabsContent>
 
           <TabsContent value="green" className="mt-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {paginatedProviders.map((provider) => (
                 <ProviderCard key={provider.id} provider={provider} />
               ))}
@@ -1026,7 +990,7 @@ export default function HostingProvidersPage() {
           </TabsContent>
 
           <TabsContent value="less-green" className="mt-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-4 sm:px-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {paginatedProviders.map((provider) => (
                 <ProviderCard key={provider.id} provider={provider} />
               ))}
