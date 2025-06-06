@@ -6,7 +6,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { FileText, FileType, Loader2, MessageSquare, Newspaper, Search, CheckCircle, AlertCircle } from "lucide-react"
+import {
+  FileText,
+  FileType,
+  Loader2,
+  MessageSquare,
+  Newspaper,
+  Search,
+  CheckCircle,
+  AlertCircle,
+  Printer,
+} from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 
 interface ContentTypeGeneratorProps {
@@ -22,6 +32,8 @@ export function ContentTypeGenerator({ analysisId, tone, onSignUpClick }: Conten
   const [generatedContentId, setGeneratedContentId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  // Add new state for PDF export loading
+  // const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   const contentTypes = [
     {
@@ -162,6 +174,57 @@ export function ContentTypeGenerator({ analysisId, tone, onSignUpClick }: Conten
     }
   }
 
+  const handleExportPdf = async () => {
+    // setIsExportingPdf(true); // Add this state if you want a separate loading indicator
+    if (!generatedContent) {
+      toast({ title: "No Content", description: "Please generate content first.", variant: "destructive" })
+      // setIsExportingPdf(false);
+      return
+    }
+
+    try {
+      const response = await fetch("/api/export-ai-content-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          markdownContent: generatedContent,
+          title: `${selectedContentType?.label || "Generated"} Content - WebInSight Export`,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || errorData.message || "Failed to prepare PDF content")
+      }
+
+      // The API now returns HTML with Content-Disposition: attachment
+      // This will trigger a download of the HTML file.
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      const filename =
+        response.headers.get("content-disposition")?.split("filename=")[1]?.replace(/"/g, "") ||
+        `${currentType}_export.html`
+      link.href = url
+      link.setAttribute("download", filename)
+      document.body.appendChild(link)
+      link.click()
+      link.parentNode?.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      toast({
+        title: "HTML File Downloaded",
+        description: "Your content has been downloaded as an HTML file. Open it and print to PDF (Ctrl+P or Cmd+P).",
+      })
+    } catch (error) {
+      console.error("Error exporting to PDF:", error)
+      const message = error instanceof Error ? error.message : "Failed to export content for PDF."
+      toast({ title: "PDF Export Failed", description: message, variant: "destructive" })
+    } finally {
+      // setIsExportingPdf(false);
+    }
+  }
+
   const selectedContentType = contentTypes.find((ct) => ct.id === currentType)
 
   return (
@@ -249,12 +312,15 @@ export function ContentTypeGenerator({ analysisId, tone, onSignUpClick }: Conten
 
               {/* Action Buttons */}
               {generatedContent && (
-                <div className="flex justify-end space-x-2 pt-4 border-t">
+                <div className="flex flex-wrap justify-end space-x-2 pt-4 border-t">
                   <Button variant="outline" size="sm" onClick={handleCopyToClipboard}>
                     Copy to Clipboard
                   </Button>
                   <Button variant="outline" size="sm" onClick={handleExport}>
                     Export as File
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleExportPdf}>
+                    <Printer className="h-4 w-4 mr-2" /> Export for PDF
                   </Button>
                   <Button size="sm" onClick={onSignUpClick} className="bg-purple-600 hover:bg-purple-700">
                     Save & Get More Features

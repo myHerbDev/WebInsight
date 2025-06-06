@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss"
+import { fontFamily } from "tailwindcss/defaultTheme"
 
 const config = {
   darkMode: ["class"],
@@ -19,43 +20,52 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-inter)", ...fontFamily.sans],
+      },
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        border: "hsl(var(--border))", // e.g., 214 31.8% 91.4%
+        input: "hsl(var(--input))", // e.g., 214 31.8% 91.4%
+        ring: "hsl(var(--ring))", // e.g., 215 20.2% 65.1%
+        background: "hsl(var(--background))", // e.g., 0 0% 100%
+        foreground: "hsl(var(--foreground))", // e.g., 222.2 47.4% 11.2%
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "hsl(var(--primary))", // e.g., 222.2 47.4% 11.2%
+          foreground: "hsl(var(--primary-foreground))", // e.g., 210 40% 98%
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: "hsl(var(--secondary))", // e.g., 210 40% 96.1%
+          foreground: "hsl(var(--secondary-foreground))", // e.g., 222.2 47.4% 11.2%
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: "hsl(var(--destructive))", // e.g., 0 84.2% 60.2%
+          foreground: "hsl(var(--destructive-foreground))", // e.g., 210 40% 98%
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: "hsl(var(--muted))", // e.g., 210 40% 96.1%
+          foreground: "hsl(var(--muted-foreground))", // e.g., 215.4 16.3% 46.9%
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: "hsl(var(--accent))", // e.g., 210 40% 96.1%
+          foreground: "hsl(var(--accent-foreground))", // e.g., 222.2 47.4% 11.2%
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: "hsl(var(--popover))", // e.g., 0 0% 100%
+          foreground: "hsl(var(--popover-foreground))", // e.g., 222.2 47.4% 11.2%
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "hsl(var(--card))", // e.g., 0 0% 100%
+          foreground: "hsl(var(--card-foreground))", // e.g., 222.2 47.4% 11.2%
+        },
+        // Minimalistic accent colors
+        brand: {
+          DEFAULT: "hsl(210, 90%, 50%)", // A clean blue
+          light: "hsl(210, 90%, 95%)",
+          dark: "hsl(210, 90%, 40%)",
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
+        lg: "var(--radius)", // e.g., 0.5rem
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
@@ -72,16 +82,12 @@ const config = {
           from: { transform: "rotate(0deg)" },
           to: { transform: "rotate(360deg)" },
         },
-        reverse: {
-          from: { transform: "rotate(360deg)" },
-          to: { transform: "rotate(0deg)" },
-        },
+        // Removed 'reverse' keyframe as it's not used by the simplified loader
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        spin: "spin 3s linear infinite",
-        reverse: "reverse 4s linear infinite",
+        spin: "spin 1s linear infinite", // Simplified spin
       },
     },
   },
