@@ -371,6 +371,9 @@ const STATIC_HOSTING_PROVIDERS = [
   },
 ]
 
+// Add this after the STATIC_HOSTING_PROVIDERS array
+console.log(`Loaded ${STATIC_HOSTING_PROVIDERS.length} hosting providers`)
+
 interface HostingProvider {
   id: number
   name: string
@@ -514,6 +517,7 @@ export default function HostingProvidersPage() {
   const [filterTier, setFilterTier] = useState("all")
   const [activeTab, setActiveTab] = useState(initialViewFromQuery === "green" ? "green" : "all")
   const [currentPage, setCurrentPage] = useState(1)
+  const [isLoading, setIsLoading] = useState(false)
 
   const { greenProviders, lessGreenProviders, paginatedProviders, totalPages, totalFilteredCount } = useMemo(() => {
     let tempProviders = [...STATIC_HOSTING_PROVIDERS]
@@ -865,6 +869,10 @@ export default function HostingProvidersPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      {/* Quick verification - can be removed later */}
+      <div className="fixed top-20 right-4 z-50 bg-green-500 text-white px-3 py-1 rounded-md text-sm">
+        ✅ {STATIC_HOSTING_PROVIDERS.length} providers loaded
+      </div>
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8 magic-fade-in">
         {" "}
