@@ -83,5 +83,3 @@ INSERT INTO website_analyzer.hosting_providers (
  '["Energy Efficient Infrastructure"]',
  '["Global - 25+ locations"]', 'budget', 85,
  '["DDoS Protection", "Private Networking", "Snapshots", "Firewalls"]', 99.9, 80);
-
-console.log('Hosting providers catalog populated successfully!');
