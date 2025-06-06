@@ -6,11 +6,12 @@ import { Header } from "@/components/header"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { ResultsSection } from "@/components/results-section"
 import { SignUpModal } from "@/components/sign-up-modal"
-import { WebsiteForm } from "@/components/website-form"
-import { toast, Toaster } from "@/components/ui/use-toast" // Ensure Toaster is imported
+import { toast } from "@/components/ui/use-toast"
+import { Toaster } from "@/components/ui/toaster"
 import type { WebsiteData } from "@/types/website-data"
 import { AlertCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import WebsiteForm from "@/components/website-form" // Declare the WebsiteForm variable
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
