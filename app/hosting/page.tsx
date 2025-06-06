@@ -36,6 +36,7 @@ import { Footer } from "@/components/footer"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { Toaster } from "@/components/ui/toaster"
 import { cn } from "@/lib/utils"
+import { useSearchParams } from "next/navigation"
 
 interface HostingProvider {
   id: number
@@ -63,6 +64,9 @@ interface HostingProvider {
 const ITEMS_PER_PAGE = 15
 
 export default function HostingProvidersPage() {
+  const searchParams = useSearchParams()
+  const initialViewFromQuery = searchParams.get("view")
+  const [activeTab, setActiveTab] = useState(initialViewFromQuery === "green" ? "green" : "all")
   const [providers, setProviders] = useState<HostingProvider[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -70,7 +74,6 @@ export default function HostingProvidersPage() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc") // Rank ascending
   const [filterTier, setFilterTier] = useState("all")
   const [apiError, setApiError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
 
   const fetchProviders = useCallback(async () => {
