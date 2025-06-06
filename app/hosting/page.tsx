@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Search,
   Leaf,
@@ -31,6 +31,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
 import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
+import { Toaster } from "@/components/ui/toaster"
 import { cn } from "@/lib/utils"
 import { useSearchParams } from "next/navigation"
 
@@ -864,7 +866,9 @@ export default function HostingProvidersPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-8 magic-fade-in"> {/* Added magic-fade-in */}
+      <main className="flex-1 container mx-auto px-4 py-8 magic-fade-in">
+        {" "}
+        {/* Added magic-fade-in */}
         <div className="mb-10 text-center">
           <h1 className="text-4xl sm:text-5xl font-bold bg-primary-gradient bg-clip-text text-transparent mb-4">
             Green Hosting Providers Catalog
@@ -874,7 +878,6 @@ export default function HostingProvidersPage() {
             features to make informed decisions for responsible web hosting.
           </p>
         </div>
-
         {/* Feature Highlights */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <Card className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 rounded-xl shimmer">
@@ -884,11 +887,12 @@ export default function HostingProvidersPage() {
               </div>
               <h3 className="text-lg font-semibold mb-2">Eco-Friendly Options</h3>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Find hosting providers that use renewable energy and implement sustainable practices to reduce carbon footprint.
+                Find hosting providers that use renewable energy and implement sustainable practices to reduce carbon
+                footprint.
               </p>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 rounded-xl shimmer">
             <CardContent className="p-6 flex flex-col items-center text-center">
               <div className="h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mb-4">
@@ -900,7 +904,7 @@ export default function HostingProvidersPage() {
               </p>
             </CardContent>
           </Card>
-          
+
           <Card className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200/60 dark:border-slate-800/60 rounded-xl shimmer">
             <CardContent className="p-6 flex flex-col items-center text-center">
               <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mb-4">
@@ -913,7 +917,6 @@ export default function HostingProvidersPage() {
             </CardContent>
           </Card>
         </div>
-
         <HostingFilterBar
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
@@ -928,7 +931,6 @@ export default function HostingProvidersPage() {
           currentPage={currentPage}
           totalPages={totalPages}
         />
-
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8 mt-8">
           <TabsList className="grid w-full grid-cols-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-lg p-1">
             <TabsTrigger
@@ -941,4 +943,66 @@ export default function HostingProvidersPage() {
               value="green"
               className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-md data-[state=active]:shadow-lg transition-all"
             >
-              \
+              <Leaf className="h-4 w-4 mr-1" />
+              Green ({greenProviders.length})
+            </TabsTrigger>
+            <TabsTrigger
+              value="less-green"
+              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-md data-[state=active]:shadow-lg transition-all"
+            >
+              Standard ({lessGreenProviders.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="all" className="mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedProviders.map((provider) => (
+                <ProviderCard key={provider.id} provider={provider} />
+              ))}
+            </div>
+            {paginatedProviders.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-slate-500 dark:text-slate-400">No hosting providers found matching your criteria.</p>
+              </div>
+            )}
+            <PaginationControls />
+          </TabsContent>
+
+          <TabsContent value="green" className="mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedProviders.map((provider) => (
+                <ProviderCard key={provider.id} provider={provider} />
+              ))}
+            </div>
+            {paginatedProviders.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-slate-500 dark:text-slate-400">
+                  No green hosting providers found matching your criteria.
+                </p>
+              </div>
+            )}
+            <PaginationControls />
+          </TabsContent>
+
+          <TabsContent value="less-green" className="mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedProviders.map((provider) => (
+                <ProviderCard key={provider.id} provider={provider} />
+              ))}
+            </div>
+            {paginatedProviders.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-slate-500 dark:text-slate-400">
+                  No standard hosting providers found matching your criteria.
+                </p>
+              </div>
+            )}
+            <PaginationControls />
+          </TabsContent>
+        </Tabs>
+      </main>
+      <Footer />
+      <Toaster />
+    </div>
+  )
+}
