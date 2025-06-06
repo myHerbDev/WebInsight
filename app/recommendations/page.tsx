@@ -7,7 +7,7 @@ import { Footer } from "@/components/footer"
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Lightbulb, AlertTriangle, Zap, Shield, Leaf } from "lucide-react"
+import { Lightbulb, AlertTriangle, Zap, Shield, Leaf, FileText, Search, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 

@@ -1,25 +1,43 @@
 import { NextResponse } from "next/server"
-// Ensure 'marked' is available in your project. If not, you might need to add it.
-// For Next.js, if 'marked' isn't pre-installed, this might be an issue.
-// A simpler approach might be to assume content is already HTML or use a very basic Markdown to HTML.
-// For this example, let's assume 'marked' can be imported.
-// If not, the client should send HTML, or a simpler parser should be used.
-let marked: any
-try {
-  marked = require("marked")
-} catch (e) {
-  console.warn("marked library not found, PDF export might not support full Markdown.")
-  // Basic fallback for Markdown to HTML if marked is not available
-  marked = (md: string) => {
-    return md
+
+// Basic Markdown to HTML conversion
+const basicMarkdownToHtml = (md: string): string => {
+  return (
+    md
       .replace(/^# (.*$)/gim, "<h1>$1</h1>")
       .replace(/^## (.*$)/gim, "<h2>$1</h2>")
       .replace(/^### (.*$)/gim, "<h3>$1</h3>")
       .replace(/\*\*(.*)\*\*/gim, "<strong>$1</strong>")
       .replace(/\*(.*)\*/gim, "<em>$1</em>")
-      .replace(/\[(.*?)\]$$(.*?)$$/gim, '<a href="$2">$1</a>')
-      .replace(/\n/gim, "<br>")
-  }
+      .replace(/!\[(.*?)\]$$(.*?)$$/gim, '<img alt="$1" src="$2">') // Basic image support
+      .replace(/\[(.*?)\]$$(.*?)$$/gim, '<a href="$2">$1</a>') // Basic link support
+      .replace(/`([^`]+)`/gim, "<code>$1</code>") // Inline code
+      // Handle paragraphs by splitting by double newlines, then wrapping non-empty lines
+      .split(/\n\s*\n/)
+      .map((paragraph) => {
+        const trimmed = paragraph.trim()
+        if (!trimmed) return ""
+        // Avoid wrapping if it's already a block element (heuristic)
+        if (
+          trimmed.startsWith("<h") ||
+          trimmed.startsWith("<ul") ||
+          trimmed.startsWith("<ol") ||
+          trimmed.startsWith("<pre") ||
+          trimmed.startsWith("<blockquote") ||
+          trimmed.startsWith("<table")
+        ) {
+          return trimmed.replace(/\n/g, "<br />") // Convert single newlines within these blocks to <br>
+        }
+        return `<p>${trimmed.replace(/\n/g, "<br />")}</p>`
+      })
+      .join("")
+      // Basic unordered list
+      .replace(/^\s*-\s+(.*)/gim, "<ul><li>$1</li></ul>")
+      .replace(/<\/ul>\s*<ul>/gim, "") // Merge adjacent lists
+      // Basic ordered list
+      .replace(/^\s*\d+\.\s+(.*)/gim, "<ol><li>$1</li></ol>")
+      .replace(/<\/ol>\s*<ol>/gim, "")
+  ) // Merge adjacent lists
 }
 
 export async function POST(request: Request) {
@@ -32,7 +50,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Markdown content is required" }, { status: 400 })
     }
 
-    const htmlContent = marked ? marked(markdownContent) : markdownContent.replace(/\n/g, "<br>")
+    const htmlContent = basicMarkdownToHtml(markdownContent)
 
     const pdfHtml = `
       <!DOCTYPE html>
