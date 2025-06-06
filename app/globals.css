@@ -3,101 +3,255 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 250, 250, 250;
-  --background-end-rgb: 255, 255, 255;
+  /* Futuristic color palette */
+  --primary-hue: 230;
+  --accent-hue: 280;
+  --success-hue: 160;
+  --warning-hue: 35;
+  --error-hue: 0;
 
-  /* Google-style gradient colors */
-  --blue-rgb: 66, 133, 244;
-  --red-rgb: 234, 67, 53;
-  --yellow-rgb: 251, 188, 5;
-  --green-rgb: 52, 168, 83;
+  /* Light theme */
+  --background: 0 0% 100%;
+  --foreground: var(--primary-hue) 15% 20%;
 
-  /* Magic gradient colors */
-  --magic-1: 103, 58, 183;
-  --magic-2: 63, 81, 181;
-  --magic-3: 33, 150, 243;
-  --magic-4: 0, 188, 212;
+  --card: 0 0% 100%;
+  --card-foreground: var(--primary-hue) 15% 20%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: var(--primary-hue) 15% 20%;
+
+  --primary: var(--primary-hue) 80% 60%;
+  --primary-foreground: var(--primary-hue) 5% 98%;
+
+  --secondary: var(--primary-hue) 30% 96%;
+  --secondary-foreground: var(--primary-hue) 40% 30%;
+
+  --muted: var(--primary-hue) 30% 96%;
+  --muted-foreground: var(--primary-hue) 20% 50%;
+
+  --accent: var(--accent-hue) 80% 60%;
+  --accent-foreground: var(--accent-hue) 5% 98%;
+
+  --success: var(--success-hue) 80% 40%;
+  --warning: var(--warning-hue) 80% 50%;
+  --error: var(--error-hue) 80% 60%;
+
+  --border: var(--primary-hue) 20% 90%;
+  --input: var(--primary-hue) 20% 90%;
+  --ring: var(--primary-hue) 80% 60%;
+
+  --radius: 1rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 10, 10, 10;
-    --background-end-rgb: 30, 30, 30;
+.dark {
+  /* Dark theme */
+  --background: var(--primary-hue) 25% 8%;
+  --foreground: var(--primary-hue) 5% 95%;
+
+  --card: var(--primary-hue) 20% 12%;
+  --card-foreground: var(--primary-hue) 5% 95%;
+
+  --popover: var(--primary-hue) 20% 12%;
+  --popover-foreground: var(--primary-hue) 5% 95%;
+
+  --primary: var(--primary-hue) 80% 60%;
+  --primary-foreground: var(--primary-hue) 5% 98%;
+
+  --secondary: var(--primary-hue) 20% 20%;
+  --secondary-foreground: var(--primary-hue) 5% 95%;
+
+  --muted: var(--primary-hue) 20% 20%;
+  --muted-foreground: var(--primary-hue) 10% 70%;
+
+  --accent: var(--accent-hue) 70% 55%;
+  --accent-foreground: var(--accent-hue) 5% 98%;
+
+  --border: var(--primary-hue) 20% 25%;
+  --input: var(--primary-hue) 20% 25%;
+  --ring: var(--primary-hue) 80% 60%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
-}
-
-/* Google-style minimalist design */
-.google-card {
-  @apply bg-white dark:bg-gray-900 rounded-xl shadow-md border border-gray-100 dark:border-gray-800 p-6;
+/* Futuristic Components */
+.futuristic-card {
+  @apply rounded-2xl bg-gradient-to-br from-white/80 to-white/30 dark:from-slate-800/80 dark:to-slate-800/30;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025), inset 0 0 0 1px
+    rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
 }
 
-.google-card:hover {
-  @apply shadow-lg;
-  transform: translateY(-2px);
+.dark .futuristic-card {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1), inset 0 0 0 1px
+    rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.google-button {
-  @apply rounded-full px-6 py-2 font-medium text-white;
-  background: linear-gradient(135deg, rgb(var(--blue-rgb)), rgb(var(--magic-2)));
+.futuristic-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), inset 0 0 0 1px
+    rgba(255, 255, 255, 0.2);
+}
+
+.dark .futuristic-card:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2), inset 0 0 0 1px
+    rgba(255, 255, 255, 0.1);
+}
+
+.futuristic-input {
+  @apply rounded-full bg-white/70 dark:bg-slate-800/70 border-0 px-6 py-4 text-base;
+  backdrop-filter: blur(12px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
 }
 
-.google-button:hover {
-  @apply shadow-lg;
+.dark .futuristic-input {
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.futuristic-input:focus {
+  @apply outline-none ring-2 ring-primary/30;
+  box-shadow: 0 0 0 2px rgba(var(--primary), 0.2), 0 0 15px rgba(var(--primary), 0.15);
   transform: translateY(-1px);
 }
 
-.google-button::after {
+.futuristic-button {
+  @apply rounded-full font-medium relative overflow-hidden;
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(calc(var(--primary-hue) + 20), 100%, 65%) 100%);
+  box-shadow: 0 4px 12px rgba(var(--primary), 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  transition: all 0.3s ease;
+}
+
+.futuristic-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(var(--primary), 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.futuristic-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px rgba(var(--primary), 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.futuristic-button::after {
   content: "";
   position: absolute;
   top: -50%;
   left: -50%;
   width: 200%;
   height: 200%;
-  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
   transform: rotate(30deg);
   animation: shimmer 3s infinite;
 }
 
-/* Magic gradient text */
-.magic-text {
-  @apply font-bold;
-  background: linear-gradient(
-    135deg,
-    rgb(var(--magic-1)),
-    rgb(var(--magic-2)),
-    rgb(var(--magic-3)),
-    rgb(var(--magic-4))
+/* Futuristic Background */
+.futuristic-bg {
+  background: radial-gradient(
+    circle at top right,
+    hsl(calc(var(--primary-hue) + 20), 100%, 97%),
+    hsl(var(--primary-hue), 100%, 98%)
   );
-  background-size: 300% 300%;
-  animation: gradientShift 6s ease infinite;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  position: relative;
+  overflow: hidden;
 }
 
-/* Google-style search input */
-.google-search {
-  @apply w-full px-6 py-4 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm;
-  transition: all 0.3s ease;
+.dark .futuristic-bg {
+  background: radial-gradient(
+    circle at top right,
+    hsl(calc(var(--primary-hue) + 20), 30%, 15%),
+    hsl(var(--primary-hue), 30%, 10%)
+  );
 }
 
-.google-search:focus {
-  @apply outline-none shadow-md border-blue-300 dark:border-blue-500;
-  box-shadow: 0 0 0 2px rgba(var(--blue-rgb), 0.2);
+.futuristic-bg::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  background: linear-gradient(135deg, hsla(var(--primary), 0.1) 0%, hsla(var(--accent), 0.1) 100%);
+  z-index: 0;
 }
 
-/* Animations */
+/* Grid Pattern */
+.grid-pattern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(to right, rgba(var(--primary), 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(var(--primary), 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  z-index: 0;
+}
+
+.dark .grid-pattern {
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+}
+
+/* Floating Orbs */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  z-index: 0;
+  opacity: 0.5;
+}
+
+.orb-1 {
+  background: radial-gradient(circle, hsla(var(--primary), 0.4) 0%, hsla(var(--primary), 0) 70%);
+  width: 500px;
+  height: 500px;
+  top: -100px;
+  right: -100px;
+  animation: float 20s infinite alternate ease-in-out;
+}
+
+.orb-2 {
+  background: radial-gradient(circle, hsla(var(--accent), 0.3) 0%, hsla(var(--accent), 0) 70%);
+  width: 400px;
+  height: 400px;
+  bottom: -100px;
+  left: -100px;
+  animation: float 15s infinite alternate-reverse ease-in-out;
+}
+
+.orb-3 {
+  background: radial-gradient(circle, hsla(var(--success), 0.2) 0%, hsla(var(--success), 0) 70%);
+  width: 300px;
+  height: 300px;
+  top: 40%;
+  left: 25%;
+  animation: float 25s infinite alternate ease-in-out;
+}
+
+@keyframes float {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(40px, 40px);
+  }
+}
+
 @keyframes shimmer {
   0% {
     transform: translateX(-150%) rotate(30deg);
@@ -107,56 +261,142 @@ body {
   }
 }
 
-@keyframes gradientShift {
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
+/* Futuristic Loader */
+.futuristic-loader {
+  position: relative;
+  width: 100px;
+  height: 100px;
 }
 
-/* Particle animation */
-.particle {
+.loader-ring {
   position: absolute;
   border-radius: 50%;
-  opacity: 0.6;
-  pointer-events: none;
+  border: 4px solid transparent;
 }
 
-.particle-1 {
-  background: rgba(var(--blue-rgb), 0.7);
-  animation: float 8s infinite ease-in-out;
+.loader-ring-1 {
+  width: 100%;
+  height: 100%;
+  border-top-color: hsl(var(--primary));
+  animation: spin 2s linear infinite;
 }
 
-.particle-2 {
-  background: rgba(var(--red-rgb), 0.7);
-  animation: float 12s infinite ease-in-out;
+.loader-ring-2 {
+  width: 80%;
+  height: 80%;
+  top: 10%;
+  left: 10%;
+  border-right-color: hsl(var(--accent));
+  animation: spin 1.5s linear infinite reverse;
 }
 
-.particle-3 {
-  background: rgba(var(--yellow-rgb), 0.7);
-  animation: float 10s infinite ease-in-out;
+.loader-ring-3 {
+  width: 60%;
+  height: 60%;
+  top: 20%;
+  left: 20%;
+  border-bottom-color: hsl(var(--success));
+  animation: spin 1s linear infinite;
 }
 
-.particle-4 {
-  background: rgba(var(--green-rgb), 0.7);
-  animation: float 14s infinite ease-in-out;
+.loader-core {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 40px;
+  left: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+  animation: pulse 1.5s ease-in-out infinite alternate;
 }
 
-@keyframes float {
-  0%,
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
   100% {
-    transform: translateY(0) translateX(0);
+    transform: rotate(360deg);
   }
-  25% {
-    transform: translateY(-20px) translateX(10px);
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
   }
-  50% {
-    transform: translateY(0) translateX(20px);
+  100% {
+    transform: scale(1.2);
+    opacity: 1;
   }
-  75% {
-    transform: translateY(20px) translateX(10px);
-  }
+}
+
+/* Futuristic Text */
+.gradient-text {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: relative;
+  display: inline-block;
+}
+
+.gradient-text::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: -1;
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: blur(8px);
+  opacity: 0.5;
+}
+
+/* Futuristic Nav */
+.futuristic-nav-item {
+  @apply rounded-full px-4 py-2 text-sm font-medium transition-all duration-300 relative;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+.futuristic-nav-item.active {
+  background: linear-gradient(135deg, hsla(var(--primary), 0.2) 0%, hsla(var(--accent), 0.2) 100%);
+  box-shadow: 0 4px 12px rgba(var(--primary), 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+.futuristic-nav-item.active::before {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 25%;
+  width: 50%;
+  height: 2px;
+  background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)));
+  border-radius: 2px;
+}
+
+/* Futuristic Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, hsl(var(--primary)), hsl(var(--accent)));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, hsl(var(--primary)), hsl(calc(var(--accent-hue) + 20), 80%, 60%));
 }

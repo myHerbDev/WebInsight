@@ -9,7 +9,7 @@ import { ResultsSection } from "@/components/results-section"
 import { SignUpModal } from "@/components/sign-up-modal"
 import { toast } from "@/components/ui/use-toast"
 import type { WebsiteData } from "@/types/website-data"
-import { AlertCircle, Search } from "lucide-react"
+import { AlertCircle, Search, Globe, Zap, Shield } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { Logo } from "@/components/logo"
@@ -100,76 +100,89 @@ export default function Home() {
     setShowSignUpModal(true)
   }
 
-  // Google-style particles
-  const particles = [
-    { size: 20, top: "10%", left: "5%", className: "particle particle-1" },
-    { size: 15, top: "20%", left: "80%", className: "particle particle-2" },
-    { size: 25, top: "70%", left: "15%", className: "particle particle-3" },
-    { size: 12, top: "60%", left: "75%", className: "particle particle-4" },
-    { size: 18, top: "40%", left: "30%", className: "particle particle-1" },
-    { size: 22, top: "30%", left: "60%", className: "particle particle-3" },
-  ]
-
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Google-style particles */}
-      {particles.map((particle, i) => (
-        <div
-          key={i}
-          className={particle.className}
-          style={{
-            width: particle.size,
-            height: particle.size,
-            top: particle.top,
-            left: particle.left,
-          }}
-        />
-      ))}
+    <div className="min-h-screen flex flex-col futuristic-bg">
+      {/* Background elements */}
+      <div className="grid-pattern"></div>
+      <div className="orb orb-1"></div>
+      <div className="orb orb-2"></div>
+      <div className="orb orb-3"></div>
 
       <Header />
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 sm:py-20">
+
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 sm:py-20 relative z-10">
         <div className="w-full max-w-3xl text-center mb-12">
-          {/* Google-style minimalist logo */}
+          {/* Futuristic logo */}
           <div className="flex justify-center mb-8">
-            <Logo size="lg" showText={false} />
+            <Logo size="lg" />
           </div>
 
-          {/* Google-style heading */}
           <h1 className="text-5xl sm:text-6xl font-bold mb-6">
-            Web<span className="magic-text">InSight</span>
+            Discover Your Website's
+            <span className="gradient-text block mt-2" data-text="Full Potential">
+              Full Potential
+            </span>
           </h1>
 
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-10">AI-Powered Website Analysis & Optimization</p>
+          <p className="text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto">
+            AI-powered analysis for performance, SEO, and sustainability optimization
+          </p>
 
-          {/* Google-style search form */}
-          <form onSubmit={handleAnalyzeWebsite} className="relative mb-8">
+          {/* Futuristic search form */}
+          <form onSubmit={handleAnalyzeWebsite} className="relative mb-12 max-w-2xl mx-auto">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-600/20 rounded-full blur-xl -z-10"></div>
             <input
               type="text"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="Enter website URL (e.g., example.com)"
-              className="google-search"
+              className="futuristic-input w-full pr-16"
               aria-label="Website URL"
             />
             <button
               type="submit"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 google-button h-12 w-12 flex items-center justify-center rounded-full p-0"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 futuristic-button h-12 w-12 flex items-center justify-center p-0"
               aria-label="Analyze Website"
               disabled={!url.trim()}
             >
-              <Search className="h-5 w-5" />
+              <Search className="h-5 w-5 text-white" />
             </button>
           </form>
 
-          {/* Features list */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+          {/* Feature cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[
-              { title: "Performance", description: "Analyze loading speed & core metrics" },
-              { title: "SEO", description: "Discover optimization opportunities" },
-              { title: "Sustainability", description: "Measure environmental impact" },
+              {
+                icon: Zap,
+                title: "Performance",
+                description: "Analyze loading speed, core web vitals & user experience metrics",
+                gradient: "from-blue-500 to-cyan-400",
+              },
+              {
+                icon: Globe,
+                title: "SEO",
+                description: "Discover optimization opportunities to improve search rankings",
+                gradient: "from-purple-500 to-pink-500",
+              },
+              {
+                icon: Shield,
+                title: "Sustainability",
+                description: "Measure environmental impact and find greener alternatives",
+                gradient: "from-green-500 to-emerald-400",
+              },
             ].map((feature, i) => (
-              <div key={i} className="google-card">
-                <h3 className="text-lg font-medium mb-2">{feature.title}</h3>
+              <div key={i} className="futuristic-card p-6 group">
+                <div className="mb-4 relative">
+                  <div
+                    className={`absolute inset-0 rounded-full bg-gradient-to-br ${feature.gradient} opacity-20 blur-lg group-hover:opacity-30 transition-opacity`}
+                  ></div>
+                  <div
+                    className={`h-12 w-12 rounded-full bg-gradient-to-br ${feature.gradient} flex items-center justify-center`}
+                  >
+                    <feature.icon className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">{feature.description}</p>
               </div>
             ))}
@@ -199,7 +212,9 @@ export default function Home() {
           )}
         </div>
       </main>
+
       <Footer />
+
       {showSignUpModal && (
         <SignUpModal
           onClose={() => setShowSignUpModal(false)}
