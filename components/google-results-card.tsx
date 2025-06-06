@@ -6,17 +6,19 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ExternalLink, Share2, Bookmark, TrendingUp, TrendingDown, Minus } from "lucide-react"
 import type { ReactNode } from "react"
+import type { WebsiteData } from "@/types/website-data"
 
 interface GoogleResultsCardProps {
-  title: string
-  url: string
-  description: string
+  title?: string
+  url?: string
+  description?: string
   score?: number
   scoreLabel?: string
   children?: ReactNode
   onShare?: () => void
   onBookmark?: () => void
   className?: string
+  analysisData?: WebsiteData | null
 }
 
 export function GoogleResultsCard({
@@ -29,20 +31,30 @@ export function GoogleResultsCard({
   onShare,
   onBookmark,
   className = "",
+  analysisData,
 }: GoogleResultsCardProps) {
-  const getScoreColor = (score: number) => {
+  // Use data from analysisData if provided
+  const displayTitle = analysisData?.title || title || "Website Analysis"
+  const displayUrl = analysisData?.url || url || "#"
+  const displayDescription = analysisData?.description || description || "No description available"
+  const displayScore = analysisData?.performance_score !== undefined ? analysisData.performance_score : score
+
+  const getScoreColor = (score?: number) => {
+    if (!score && score !== 0) return "text-gray-600"
     if (score >= 80) return "text-green-600"
     if (score >= 60) return "text-yellow-600"
     return "text-red-600"
   }
 
-  const getScoreBadgeColor = (score: number) => {
+  const getScoreBadgeColor = (score?: number) => {
+    if (!score && score !== 0) return "bg-gray-50 text-gray-700 border-gray-200"
     if (score >= 80) return "bg-green-50 text-green-700 border-green-200"
     if (score >= 60) return "bg-yellow-50 text-yellow-700 border-yellow-200"
     return "bg-red-50 text-red-700 border-red-200"
   }
 
-  const getTrendIcon = (score: number) => {
+  const getTrendIcon = (score?: number) => {
+    if (!score && score !== 0) return <Minus className="h-4 w-4 text-gray-500" />
     if (score >= 80) return <TrendingUp className="h-4 w-4 text-green-500" />
     if (score >= 60) return <Minus className="h-4 w-4 text-yellow-500" />
     return <TrendingDown className="h-4 w-4 text-red-500" />
@@ -62,26 +74,26 @@ export function GoogleResultsCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-center space-x-2 mb-2">
                 <h3 className="text-xl font-medium text-blue-600 hover:text-blue-800 transition-colors duration-200 truncate">
-                  <a href={url} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                    {title}
+                  <a href={displayUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                    {displayTitle}
                   </a>
                 </h3>
                 <ExternalLink className="h-4 w-4 text-gray-400 flex-shrink-0" />
               </div>
 
               <div className="flex items-center space-x-2 mb-2">
-                <span className="text-sm text-green-700 font-medium">{url}</span>
-                {score !== undefined && (
+                <span className="text-sm text-green-700 font-medium">{displayUrl}</span>
+                {displayScore !== undefined && (
                   <div className="flex items-center space-x-1">
-                    {getTrendIcon(score)}
-                    <Badge variant="outline" className={getScoreBadgeColor(score)}>
-                      {scoreLabel || `${score}%`}
+                    {getTrendIcon(displayScore)}
+                    <Badge variant="outline" className={getScoreBadgeColor(displayScore)}>
+                      {scoreLabel || `${displayScore}%`}
                     </Badge>
                   </div>
                 )}
               </div>
 
-              <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">{description}</p>
+              <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">{displayDescription}</p>
             </div>
 
             {(onShare || onBookmark) && (

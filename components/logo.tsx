@@ -47,6 +47,27 @@ export function Logo({ size = "md", showText = true, className = "", animated = 
     xl: "w-8 h-8",
   }
 
+  const sizes = {
+    sm: "h-8",
+    md: "h-10",
+    lg: "h-12",
+    xl: "h-16",
+  }
+
+  const logoContent = (
+    <div className="flex items-center">
+      <div className={`${sizes[size]} aspect-square relative`}>
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-lg"></div>
+        <div className="absolute inset-1 bg-white dark:bg-gray-900 rounded-md flex items-center justify-center">
+          <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 font-bold text-xl">
+            W
+          </span>
+        </div>
+      </div>
+      <span className="ml-2 font-bold text-xl text-gray-900 dark:text-white">WebInSight</span>
+    </div>
+  )
+
   if (!isClient) {
     // Simple static version for SSR
     return (
@@ -73,6 +94,18 @@ export function Logo({ size = "md", showText = true, className = "", animated = 
   }
 
   // Enhanced animated version for client-side
+  if (animated) {
+    return (
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        {logoContent}
+      </motion.div>
+    )
+  }
+
   return (
     <div
       className={`flex items-center space-x-3 ${className}`}

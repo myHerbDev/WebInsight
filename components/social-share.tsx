@@ -37,11 +37,22 @@ export function SocialShare({ data, className = "" }: SocialShareProps) {
   const [isSharing, setIsSharing] = useState<string | null>(null)
   const [isExporting, setIsExporting] = useState(false)
 
+  // Add defensive checks for data
+  if (!data) {
+    return null
+  }
+
+  // Safely extract data with fallbacks
+  const title = data.title || data.url || "Website Analysis"
+  const url = data.url || ""
+  const summary = data.summary || "Website analysis results"
+  const analysisId = data._id || ""
+
   const shareData = {
-    title: data.title,
-    url: data.url,
-    summary: data.summary,
-    analysisUrl: `${typeof window !== "undefined" ? window.location.origin : ""}/analysis/${data._id}`,
+    title,
+    url,
+    summary,
+    analysisUrl: `${typeof window !== "undefined" ? window.location.origin : ""}/analysis/${analysisId}`,
   }
 
   const handleShare = async (platform: string) => {
@@ -131,14 +142,14 @@ export function SocialShare({ data, className = "" }: SocialShareProps) {
 
       // Create and download the file
       const blob = new Blob([result.content], { type: "text/html" })
-      const url = URL.createObjectURL(blob)
+      const fileUrl = URL.createObjectURL(blob)
       const a = document.createElement("a")
-      a.href = url
-      a.download = `${data.title.replace(/[^a-z0-9]/gi, "_")}_analysis.html`
+      a.href = fileUrl
+      a.download = `${title.replace(/[^a-z0-9]/gi, "_")}_analysis.html`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      URL.revokeObjectURL(fileUrl)
 
       toast({
         title: "Export Successful!",
@@ -206,17 +217,17 @@ export function SocialShare({ data, className = "" }: SocialShareProps) {
       <CardContent className="space-y-6">
         {/* Analysis Summary */}
         <div className="p-4 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg">
-          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{data.title}</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{data.url}</p>
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">{title}</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{url}</p>
           <div className="flex flex-wrap gap-2">
             <Badge variant="outline" className="bg-white/50 dark:bg-gray-800/50">
-              {data.sustainability_score}% Sustainability
+              {data.sustainability_score || 0}% Sustainability
             </Badge>
             <Badge variant="outline" className="bg-white/50 dark:bg-gray-800/50">
-              {data.performance_score}% Performance
+              {data.performance_score || 0}% Performance
             </Badge>
             <Badge variant="outline" className="bg-white/50 dark:bg-gray-800/50">
-              {data.security_score}% Security
+              {data.security_score || 0}% Security
             </Badge>
           </div>
         </div>
@@ -282,17 +293,17 @@ export function SocialShare({ data, className = "" }: SocialShareProps) {
             <Button
               variant="outline"
               onClick={() => {
-                const content = `Website Analysis Report\n\nWebsite: ${data.title}\nURL: ${data.url}\n\nSustainability Score: ${data.sustainability_score}%\nPerformance Score: ${data.performance_score}%\nSecurity Score: ${data.security_score}%\n\nSummary:\n${data.summary}\n\nKey Points:\n${data.key_points.map((point, i) => `${i + 1}. ${point}`).join("\n")}\n\nImprovements:\n${data.improvements.map((imp, i) => `${i + 1}. ${imp}`).join("\n")}`
+                const content = `Website Analysis Report\n\nWebsite: ${title}\nURL: ${url}\n\nSustainability Score: ${data.sustainability_score || 0}%\nPerformance Score: ${data.performance_score || 0}%\nSecurity Score: ${data.security_score || 0}%\n\nSummary:\n${summary}\n\nKey Points:\n${(data.key_points || []).map((point, i) => `${i + 1}. ${point}`).join("\n")}\n\nImprovements:\n${(data.improvements || []).map((imp, i) => `${i + 1}. ${imp}`).join("\n")}`
 
                 const blob = new Blob([content], { type: "text/plain" })
-                const url = URL.createObjectURL(blob)
+                const fileUrl = URL.createObjectURL(blob)
                 const a = document.createElement("a")
-                a.href = url
-                a.download = `${data.title.replace(/[^a-z0-9]/gi, "_")}_analysis.txt`
+                a.href = fileUrl
+                a.download = `${title.replace(/[^a-z0-9]/gi, "_")}_analysis.txt`
                 document.body.appendChild(a)
                 a.click()
                 document.body.removeChild(a)
-                URL.revokeObjectURL(url)
+                URL.revokeObjectURL(fileUrl)
 
                 toast({
                   title: "Text Report Downloaded",

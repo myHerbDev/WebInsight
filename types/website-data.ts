@@ -78,6 +78,7 @@ export interface WebsiteData {
     images?: number
     scripts?: number
   }
-  keyPoints?: string[]
+  key_points?: string[]
+  improvements?: string[]
   summary?: string
 }
