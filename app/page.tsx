@@ -1,181 +1,148 @@
 "use client"
 
 import { useState } from "react"
-import { WebsiteForm } from "@/components/website-form"
-import { ResultsSection } from "@/components/results-section"
-import { EnhancedAIGenerator } from "@/components/enhanced-ai-generator"
-import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { SignUpModal } from "@/components/sign-up-modal"
-import { LoginModal } from "@/components/login-modal"
+import { Header } from "@/components/header"
 import { LoadingAnimation } from "@/components/loading-animation"
+import { ResultsSection } from "@/components/results-section"
+import { SignUpModal } from "@/components/sign-up-modal"
+import { WebsiteForm } from "@/components/website-form"
 import { toast } from "@/components/ui/use-toast"
 import type { WebsiteData } from "@/types/website-data"
 
-export default function HomePage() {
+export default function Home() {
+  const [isLoading, setIsLoading] = useState(false)
   const [websiteData, setWebsiteData] = useState<WebsiteData | null>(null)
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [showSignUpModal, setShowSignUpModal] = useState(false)
-  const [showLoginModal, setShowLoginModal] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const handleAnalyze = async (url: string) => {
-    if (!url || !url.trim()) {
-      toast({
-        title: "Invalid URL",
-        description: "Please enter a valid website URL.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setIsAnalyzing(true)
-    setError(null)
+  const handleAnalyzeWebsite = async (url: string) => {
+    setIsLoading(true)
     setWebsiteData(null)
+    setError(null)
 
     try {
-      console.log("🚀 Starting website analysis for:", url)
-
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ url: url.trim() }),
+        body: JSON.stringify({ url }),
       })
 
-      console.log("📥 Response status:", response.status)
+      const data = await response.json()
 
       if (!response.ok) {
-        const errorText = await response.text()
-        console.error("❌ Analysis failed:", errorText)
-
-        let errorMessage = "Failed to analyze website"
-        try {
-          const errorData = JSON.parse(errorText)
-          errorMessage = errorData.error || errorMessage
-        } catch (e) {
-          // If JSON parsing fails, use the raw text
-          errorMessage = errorText || errorMessage
-        }
-
-        throw new Error(errorMessage)
+        throw new Error(data.error || "Failed to analyze website")
       }
 
-      const responseText = await response.text()
-      console.log("📄 Response text length:", responseText.length)
-
-      if (!responseText || responseText.trim().length === 0) {
-        throw new Error("Empty response from server")
-      }
-
-      let data
-      try {
-        data = JSON.parse(responseText)
-      } catch (parseError) {
-        console.error("❌ JSON parse error:", parseError)
-        console.error("❌ Response text:", responseText.substring(0, 500))
-        throw new Error("Invalid response format from server")
-      }
-
-      if (!data || typeof data !== "object") {
-        throw new Error("Invalid data format received")
-      }
-
-      console.log("✅ Analysis completed successfully")
       setWebsiteData(data)
-
+    } catch (error) {
+      console.error("Error analyzing website:", error)
+      setError("Failed to analyze the website. Please try again.")
       toast({
-        title: "Analysis Complete!",
-        description: `Successfully analyzed ${data.title || url}`,
-      })
-    } catch (error: any) {
-      console.error("💥 Analysis error:", error)
-      const errorMessage = error.message || "An unexpected error occurred"
-      setError(errorMessage)
-
-      toast({
-        title: "Analysis Failed",
-        description: errorMessage,
+        title: "Error",
+        description: "Failed to analyze the website. Please try again.",
         variant: "destructive",
       })
     } finally {
-      setIsAnalyzing(false)
+      setIsLoading(false)
     }
   }
 
-  const handleSignUpClick = () => {
+  const handleSaveAnalysis = async (type: "save" | "favorite") => {
+    if (!websiteData) return
+
+    try {
+      const response = await fetch("/api/user/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          analysisId: websiteData._id,
+          type: type === "favorite" ? "favorite" : "save",
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || `Failed to ${type} analysis`)
+      }
+
+      // If we got a userId back and don't have one yet, save it
+      if (data.userId && !userId) {
+        setUserId(data.userId)
+      }
+
+      toast({
+        title: "Success",
+        description: data.message || `${type === "favorite" ? "Added to favorites" : "Analysis saved"}`,
+      })
+    } catch (error) {
+      console.error(`Error ${type}ing analysis:`, error)
+      toast({
+        title: "Error",
+        description: `Failed to ${type} the analysis. Please try again.`,
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleSignUp = (tempUserId: string) => {
+    // If we have a userId from a temporary save, pass it to the modal
+    setUserId(tempUserId || userId)
     setShowSignUpModal(true)
   }
 
-  const handleLoginClick = () => {
-    setShowLoginModal(true)
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <Header onSignUpClick={handleSignUpClick} onLoginClick={handleLoginClick} />
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <Header />
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <WebsiteForm onSubmit={handleAnalyzeWebsite} />
 
-      <main className="container mx-auto px-4 py-8 space-y-12">
-        {/* Hero Section */}
-        <section className="text-center space-y-6 py-12">
-          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            WebInSight
-          </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Comprehensive website analysis with AI-powered insights. Analyze performance, sustainability, security, and
-            generate professional content.
-          </p>
-        </section>
+          {isLoading && <LoadingAnimation />}
 
-        {/* Website Analysis Form */}
-        <section className="max-w-2xl mx-auto">
-          <WebsiteForm onAnalyze={handleAnalyze} isLoading={isAnalyzing} />
-        </section>
-
-        {/* Loading State */}
-        {isAnalyzing && (
-          <section className="max-w-4xl mx-auto">
-            <div className="text-center py-12">
-              <LoadingAnimation />
-              <p className="text-gray-600 mt-4">Analyzing website...</p>
+          {error && !isLoading && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mt-6">
+              <p className="text-red-800 dark:text-red-300">{error}</p>
+              <p className="text-sm text-red-600 dark:text-red-400 mt-2">
+                Please check your URL and try again. If the problem persists, try a different website.
+              </p>
             </div>
-          </section>
-        )}
+          )}
 
-        {/* Error State */}
-        {error && !isAnalyzing && (
-          <section className="max-w-4xl mx-auto">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-              <h3 className="text-lg font-semibold text-red-800 mb-2">Analysis Failed</h3>
-              <p className="text-red-600">{error}</p>
-            </div>
-          </section>
-        )}
-
-        {/* Results Section */}
-        {websiteData && !isAnalyzing && (
-          <section className="max-w-6xl mx-auto space-y-8">
-            <ResultsSection data={websiteData} />
-          </section>
-        )}
-
-        {/* AI Content Generator */}
-        {websiteData && !isAnalyzing && (
-          <section className="max-w-6xl mx-auto">
-            <div className="bg-white rounded-xl shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">AI Content Generator</h2>
-              <EnhancedAIGenerator websiteData={websiteData} onSignUpClick={handleSignUpClick} />
-            </div>
-          </section>
-        )}
+          {websiteData && (
+            <ResultsSection
+              data={websiteData}
+              onSignUpClick={handleSignUp}
+              onSave={() => handleSaveAnalysis("save")}
+              onFavorite={() => handleSaveAnalysis("favorite")}
+              userId={userId}
+            />
+          )}
+        </div>
       </main>
-
       <Footer />
 
-      {/* Modals */}
-      <SignUpModal isOpen={showSignUpModal} onClose={() => setShowSignUpModal(false)} />
-      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+      {showSignUpModal && (
+        <SignUpModal
+          onClose={() => setShowSignUpModal(false)}
+          tempUserId={userId}
+          onSignUpSuccess={(newUserId) => {
+            setUserId(newUserId)
+            setShowSignUpModal(false)
+            toast({
+              title: "Success",
+              description: "Account created successfully!",
+            })
+          }}
+        />
+      )}
     </div>
   )
 }

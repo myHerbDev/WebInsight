@@ -1,74 +1,71 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { FileText, FileType, Loader2, MessageSquare, Newspaper, Search, CheckCircle, AlertCircle } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
-import { Copy, Download, FileText, Loader2, Sparkles, Wand2 } from "lucide-react"
-import { copyToClipboard } from "@/lib/share"
 
 interface ContentTypeGeneratorProps {
   analysisId: string
-  tone?: string
+  tone: string
   onSignUpClick: () => void
 }
 
-export function ContentTypeGenerator({ analysisId, tone = "professional", onSignUpClick }: ContentTypeGeneratorProps) {
-  const [selectedContentType, setSelectedContentType] = useState("blog-post")
-  const [selectedTone, setSelectedTone] = useState(tone)
+export function ContentTypeGenerator({ analysisId, tone, onSignUpClick }: ContentTypeGeneratorProps) {
+  const [generatedContent, setGeneratedContent] = useState("")
   const [isGenerating, setIsGenerating] = useState(false)
-  const [generatedContent, setGeneratedContent] = useState<string>("")
-  const [contentHistory, setContentHistory] = useState<Array<{ type: string; content: string; timestamp: Date }>>([])
-
-  // Load content from localStorage on component mount
-  useEffect(() => {
-    const saved = localStorage.getItem(`content-history-${analysisId}`)
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        setContentHistory(
-          parsed.map((item: any) => ({
-            ...item,
-            timestamp: new Date(item.timestamp),
-          })),
-        )
-      } catch (error) {
-        console.error("Error loading content history:", error)
-      }
-    }
-  }, [analysisId])
-
-  // Save content to localStorage whenever contentHistory changes
-  useEffect(() => {
-    if (contentHistory.length > 0) {
-      localStorage.setItem(`content-history-${analysisId}`, JSON.stringify(contentHistory))
-    }
-  }, [contentHistory, analysisId])
+  const [currentType, setCurrentType] = useState("research")
+  const [generatedContentId, setGeneratedContentId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
 
   const contentTypes = [
-    { value: "blog-post", label: "Blog Post", icon: FileText },
-    { value: "social-media", label: "Social Media Post", icon: Sparkles },
-    { value: "email-newsletter", label: "Email Newsletter", icon: FileText },
-    { value: "press-release", label: "Press Release", icon: FileText },
-    { value: "product-description", label: "Product Description", icon: FileText },
-    { value: "meta-description", label: "Meta Description", icon: FileText },
+    {
+      id: "research",
+      label: "Research",
+      icon: Search,
+      description: "Comprehensive research report with analysis and insights",
+    },
+    {
+      id: "document",
+      label: "Document",
+      icon: FileText,
+      description: "Formal document with structured findings",
+    },
+    {
+      id: "blog",
+      label: "Blog",
+      icon: FileType,
+      description: "Engaging blog post about the website analysis",
+    },
+    {
+      id: "marketing",
+      label: "Marketing",
+      icon: Newspaper,
+      description: "Marketing strategy and campaign recommendations",
+    },
+    {
+      id: "social",
+      label: "Social",
+      icon: MessageSquare,
+      description: "Social media content for multiple platforms",
+    },
   ]
 
-  const tones = [
-    { value: "professional", label: "Professional" },
-    { value: "casual", label: "Casual" },
-    { value: "enthusiastic", label: "Enthusiastic" },
-    { value: "technical", label: "Technical" },
-    { value: "friendly", label: "Friendly" },
-    { value: "authoritative", label: "Authoritative" },
-  ]
-
-  const handleGenerate = async () => {
+  const handleGenerate = async (type: string) => {
     setIsGenerating(true)
+    setGeneratedContent("")
+    setCurrentType(type)
+    setError(null)
+    setSuccess(null)
+
     try {
+      console.log(`Generating ${type} content for analysis ${analysisId}`)
+
       const response = await fetch("/api/generate-content", {
         method: "POST",
         headers: {
@@ -76,36 +73,39 @@ export function ContentTypeGenerator({ analysisId, tone = "professional", onSign
         },
         body: JSON.stringify({
           analysisId,
-          contentType: selectedContentType,
-          tone: selectedTone,
+          contentType: type,
+          tone,
         }),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to generate content")
-      }
-
       const data = await response.json()
-      setGeneratedContent(data.content)
 
-      // Add to history
-      const newHistoryItem = {
-        type: selectedContentType,
-        content: data.content,
-        timestamp: new Date(),
+      if (!response.ok) {
+        throw new Error(data.error || data.message || "Failed to generate content")
       }
-      setContentHistory((prev) => [newHistoryItem, ...prev.slice(0, 9)]) // Keep last 10 items
 
-      toast({
-        title: "Content Generated!",
-        description: `${contentTypes.find((t) => t.value === selectedContentType)?.label} has been generated successfully.`,
-      })
+      if (data.content) {
+        setGeneratedContent(data.content)
+        if (data.contentId) {
+          setGeneratedContentId(data.contentId)
+        }
+        setSuccess(`${type.charAt(0).toUpperCase() + type.slice(1)} content generated successfully!`)
+
+        toast({
+          title: "Content Generated",
+          description: `${type.charAt(0).toUpperCase() + type.slice(1)} content has been created successfully.`,
+        })
+      } else {
+        throw new Error("No content received from the server")
+      }
     } catch (error) {
       console.error("Error generating content:", error)
+      const errorMessage = error instanceof Error ? error.message : "Failed to generate content. Please try again."
+      setError(errorMessage)
+
       toast({
         title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Failed to generate content. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
@@ -113,194 +113,170 @@ export function ContentTypeGenerator({ analysisId, tone = "professional", onSign
     }
   }
 
-  const handleCopy = async (content: string) => {
-    const success = await copyToClipboard(content)
-    if (success) {
+  const handleCopyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(generatedContent)
       toast({
-        title: "Copied!",
-        description: "Content copied to clipboard.",
+        title: "Copied to clipboard",
+        description: "Content has been copied to your clipboard",
       })
-    } else {
+    } catch (error) {
+      console.error("Error copying to clipboard:", error)
       toast({
-        title: "Copy Failed",
-        description: "Failed to copy content to clipboard.",
+        title: "Error",
+        description: "Failed to copy to clipboard. Please try again.",
         variant: "destructive",
       })
     }
   }
 
-  const handleDownload = (content: string, type: string) => {
-    const blob = new Blob([content], { type: "text/plain" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `${type.replace("-", "_")}_${Date.now()}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+  const handleExport = async () => {
+    try {
+      // Create a downloadable file
+      const blob = new Blob([generatedContent], { type: "text/markdown" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `${currentType}_content_${new Date().toISOString().split("T")[0]}.md`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
 
-    toast({
-      title: "Downloaded!",
-      description: "Content saved as text file.",
-    })
+      toast({
+        title: "Export Successful",
+        description: "Content has been downloaded as a markdown file.",
+      })
+
+      // Prompt for sign up to enable more export features
+      setTimeout(() => {
+        onSignUpClick()
+      }, 2000)
+    } catch (error) {
+      console.error("Error exporting:", error)
+      toast({
+        title: "Error",
+        description: "Failed to export. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
+  const selectedContentType = contentTypes.find((ct) => ct.id === currentType)
+
   return (
-    <div className="space-y-6">
-      {/* Content Generation Controls */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Wand2 className="h-5 w-5 text-purple-500" />
-            <span>AI Content Generator</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Content Type</label>
-              <Select value={selectedContentType} onValueChange={setSelectedContentType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select content type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {contentTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          AI Content Generator
+        </CardTitle>
+        <CardDescription>
+          Generate different types of content based on the website analysis using advanced AI
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="research" value={currentType} onValueChange={setCurrentType}>
+          <TabsList className="grid grid-cols-5 mb-6">
+            {contentTypes.map((type) => {
+              const Icon = type.icon
+              return (
+                <TabsTrigger key={type.id} value={type.id} className="flex flex-col gap-1 h-auto py-3">
+                  <Icon className="h-4 w-4" />
+                  <span className="text-xs">{type.label}</span>
+                </TabsTrigger>
+              )
+            })}
+          </TabsList>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">Tone</label>
-              <Select value={selectedTone} onValueChange={setSelectedTone}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select tone" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tones.map((tone) => (
-                    <SelectItem key={tone.value} value={tone.value}>
-                      {tone.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <Button
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Generate Content
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* Generated Content Display */}
-      {generatedContent && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Generated Content</CardTitle>
-              <div className="flex space-x-2">
-                <Button variant="outline" size="sm" onClick={() => handleCopy(generatedContent)}>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleDownload(generatedContent, selectedContentType)}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download
+          {contentTypes.map((type) => (
+            <TabsContent key={type.id} value={type.id} className="space-y-4">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-medium capitalize">{type.label} Content</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{type.description}</p>
+                </div>
+                <Button onClick={() => handleGenerate(type.id)} disabled={isGenerating} className="ml-4">
+                  {isGenerating && currentType === type.id ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <type.icon className="h-4 w-4 mr-2" />
+                      Generate {type.label}
+                    </>
+                  )}
                 </Button>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-4">
-              <Badge variant="outline" className="mr-2">
-                {contentTypes.find((t) => t.value === selectedContentType)?.label}
-              </Badge>
-              <Badge variant="outline">{tones.find((t) => t.value === selectedTone)?.label} Tone</Badge>
-            </div>
-            <Textarea
-              value={generatedContent}
-              onChange={(e) => setGeneratedContent(e.target.value)}
-              className="min-h-[300px] font-mono text-sm"
-              placeholder="Generated content will appear here..."
-            />
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Content History */}
-      {contentHistory.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Content History</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {contentHistory.map((item, index) => (
-                <div key={index} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline">{contentTypes.find((t) => t.value === item.type)?.label}</Badge>
-                      <span className="text-sm text-gray-500">
-                        {item.timestamp.toLocaleDateString()} {item.timestamp.toLocaleTimeString()}
-                      </span>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" onClick={() => handleCopy(item.content)}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDownload(item.content, item.type)}>
-                        <Download className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => setGeneratedContent(item.content)}>
-                        Load
-                      </Button>
-                    </div>
+              {/* Status Messages */}
+              {error && currentType === type.id && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {success && currentType === type.id && (
+                <Alert>
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription>{success}</AlertDescription>
+                </Alert>
+              )}
+
+              {/* Loading State */}
+              {isGenerating && currentType === type.id && (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-purple-600" />
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Analyzing website data and generating {type.label.toLowerCase()} content...
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">This may take 10-30 seconds</p>
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3">
-                    {item.content.substring(0, 200)}...
-                  </p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              )}
 
-      {/* Sign Up Prompt */}
-      <Card className="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
-        <CardContent className="p-6 text-center">
-          <h3 className="text-lg font-semibold mb-2">Unlock More Features</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Sign up to save your generated content, access more content types, and get unlimited generations.
-          </p>
-          <Button onClick={onSignUpClick} className="bg-gradient-to-r from-purple-600 to-blue-600">
-            Sign Up Now
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+              {/* Content Display */}
+              <Textarea
+                value={generatedContent}
+                readOnly
+                placeholder={`Your generated ${type.label.toLowerCase()} content will appear here...`}
+                className="min-h-[400px] font-mono text-sm"
+              />
+
+              {/* Action Buttons */}
+              {generatedContent && (
+                <div className="flex justify-end space-x-2 pt-4 border-t">
+                  <Button variant="outline" size="sm" onClick={handleCopyToClipboard}>
+                    Copy to Clipboard
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleExport}>
+                    Export as File
+                  </Button>
+                  <Button size="sm" onClick={onSignUpClick} className="bg-purple-600 hover:bg-purple-700">
+                    Save & Get More Features
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+          ))}
+        </Tabs>
+
+        {/* Help Section */}
+        <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+          <h4 className="font-medium mb-2">Content Generation Tips:</h4>
+          <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+            <li>• Research reports provide comprehensive analysis with actionable insights</li>
+            <li>• Blog posts are engaging and shareable for content marketing</li>
+            <li>• Marketing content focuses on strategy and campaign recommendations</li>
+            <li>• Social media content is optimized for different platforms</li>
+            <li>• All content is based on real analysis data from your website</li>
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

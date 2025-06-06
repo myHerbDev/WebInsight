@@ -1,635 +1,687 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { sql, safeDbOperation, isNeonAvailable } from "@/lib/neon-db"
-import { safeJsonParse } from "@/lib/safe-json"
-import { safeAsyncOperation, validateRequired } from "@/lib/error-boundary"
+import { NextResponse } from "next/server"
+import { neon } from "@neondatabase/serverless"
+import * as cheerio from "cheerio"
+import { lookup } from "dns/promises"
 
-// Enhanced mock analysis with better sensitivity and realistic results
-async function analyzeWebsiteEnhanced(url: string) {
+const sql = neon(process.env.DATABASE_URL!)
+
+export async function POST(request: Request) {
   try {
-    // Simulate realistic analysis delay
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    const { url, userId } = await request.json()
 
-    const domain = new URL(url).hostname.toLowerCase()
+    if (!url) {
+      return NextResponse.json({ error: "URL is required" }, { status: 400 })
+    }
 
-    // Determine website category and adjust scores accordingly
-    const websiteProfile = getWebsiteProfile(domain)
+    // Normalize URL
+    let formattedUrl = url
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      formattedUrl = `https://${url}`
+    }
 
-    // Generate realistic scores based on website type
-    const baseScores = generateRealisticScores(websiteProfile)
-
-    // Fetch website title with proper error handling
-    let websiteTitle = websiteProfile.title
+    // Validate URL format
     try {
-      websiteTitle = await fetchWebsiteTitle(url, websiteProfile)
+      new URL(formattedUrl)
+    } catch {
+      return NextResponse.json({ error: "Invalid URL format" }, { status: 400 })
+    }
+
+    console.log(`Starting enhanced analysis of: ${formattedUrl}`)
+
+    // Get IP address and hosting information
+    let ipAddress = null
+    let hostingInfo = null
+    try {
+      const hostname = new URL(formattedUrl).hostname
+      const addresses = await lookup(hostname)
+      ipAddress = addresses.address
+
+      // Detect hosting provider based on IP ranges and reverse DNS
+      hostingInfo = await detectHostingProvider(ipAddress, hostname)
     } catch (error) {
-      console.warn("Failed to fetch website title, using fallback:", error)
-      websiteTitle = websiteProfile.title || formatDomainName(url)
+      console.error("Failed to get hosting info:", error)
     }
 
-    const mockData = {
-      _id: `analysis_${Date.now()}`,
-      url,
-      title: websiteTitle,
-      summary: generateContextualSummary(domain, websiteProfile, baseScores),
-      keyPoints: generateContextualKeyPoints(domain, websiteProfile, baseScores),
-      keywords: generateRelevantKeywords(websiteProfile),
-      sustainability: {
-        score: Math.round(baseScores.sustainability),
-        performance: Math.round(baseScores.performance),
-        scriptOptimization: Math.round(baseScores.scriptOptimization),
-        duplicateContent: Math.round(baseScores.duplicateContent),
-        improvements: generateContextualImprovements(websiteProfile, baseScores),
-      },
-      subdomains: generateRealisticSubdomains(domain, websiteProfile),
-      contentStats: generateRealisticContentStats(websiteProfile),
-      rawData: generateRealisticTechnicalData(websiteProfile),
-      // Backward compatibility fields
-      sustainability_score: Math.round(baseScores.sustainability),
-      performance_score: Math.round(baseScores.performance),
-      script_optimization_score: Math.round(baseScores.scriptOptimization),
-      content_quality_score: Math.round(baseScores.contentQuality),
-      security_score: Math.round(baseScores.security),
-      improvements: generateContextualImprovements(websiteProfile, baseScores),
-      hosting_provider_name: websiteProfile.hostingProvider,
-      ssl_certificate: baseScores.security > 70,
-      server_location: websiteProfile.serverLocation,
-      ip_address: generateRealisticIP(),
-    }
+    // Fetch the website content with enhanced headers
+    let html = ""
+    let response: Response
+    let securityHeaders: Record<string, string> = {}
 
-    return mockData
-  } catch (error) {
-    console.error("Error in analyzeWebsiteEnhanced:", error)
-    throw new Error(`Analysis failed: ${error.message}`)
-  }
-}
-
-async function fetchWebsiteTitle(url: string, websiteProfile: any): Promise<string> {
-  try {
-    // Try to fetch the actual website title with timeout and proper error handling
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 5000)
-
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; WebInsightBot/1.0; +https://webinsight.app)",
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-      },
-      signal: controller.signal,
-    })
-
-    clearTimeout(timeoutId)
-
-    if (!response.ok) {
-      console.warn(`Failed to fetch website: ${response.status}`)
-      return websiteProfile.title || formatDomainName(url)
-    }
-
-    const html = await response.text()
-
-    if (!html || html.trim().length === 0) {
-      console.warn("Empty HTML response")
-      return websiteProfile.title || formatDomainName(url)
-    }
-
-    // Extract title using regex patterns similar to how Google would
-    const titleMatch = html.match(/<title[^>]*>(.*?)<\/title>/is)
-    if (titleMatch && titleMatch[1]) {
-      const title = titleMatch[1]
-        .trim()
-        .replace(/\s+/g, " ")
-        .replace(/&nbsp;/g, " ")
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-
-      if (title.length > 3 && title.length < 100) {
-        return title
-      }
-    }
-
-    // Try to find the first H1 tag as fallback
-    const h1Match = html.match(/<h1[^>]*>(.*?)<\/h1>/is)
-    if (h1Match && h1Match[1]) {
-      const h1Text = h1Match[1]
-        .trim()
-        .replace(/<[^>]*>/g, " ")
-        .replace(/\s+/g, " ")
-        .replace(/&nbsp;/g, " ")
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-
-      if (h1Text.length > 3) {
-        return h1Text
-      }
-    }
-
-    return websiteProfile.title || formatDomainName(url)
-  } catch (error) {
-    console.warn("Error fetching website title:", error)
-    return websiteProfile.title || formatDomainName(url)
-  }
-}
-
-function formatDomainName(url: string): string {
-  try {
-    const domain = new URL(url).hostname
-    const siteName = domain.replace(/^www\./, "").split(".")[0]
-    return siteName.charAt(0).toUpperCase() + siteName.slice(1)
-  } catch (e) {
-    return "Website"
-  }
-}
-
-function getWebsiteProfile(domain: string) {
-  // Major websites with known characteristics
-  const knownSites = {
-    "google.com": {
-      category: "Search Engine",
-      title: "Google",
-      hostingProvider: "Google Cloud",
-      serverLocation: "United States",
-      expectedPerformance: 95,
-      expectedSecurity: 98,
-      expectedSustainability: 85,
-    },
-    "github.com": {
-      category: "Developer Platform",
-      title: "GitHub",
-      hostingProvider: "Microsoft Azure",
-      serverLocation: "United States",
-      expectedPerformance: 92,
-      expectedSecurity: 96,
-      expectedSustainability: 88,
-    },
-    "stackoverflow.com": {
-      category: "Q&A Platform",
-      title: "Stack Overflow",
-      hostingProvider: "Stack Exchange Network",
-      serverLocation: "United States",
-      expectedPerformance: 89,
-      expectedSecurity: 94,
-      expectedSustainability: 82,
-    },
-    "wikipedia.org": {
-      category: "Knowledge Base",
-      title: "Wikipedia",
-      hostingProvider: "Wikimedia Foundation",
-      serverLocation: "United States",
-      expectedPerformance: 87,
-      expectedSecurity: 91,
-      expectedSustainability: 90,
-    },
-    "youtube.com": {
-      category: "Video Platform",
-      title: "YouTube",
-      hostingProvider: "Google Cloud",
-      serverLocation: "United States",
-      expectedPerformance: 88,
-      expectedSecurity: 95,
-      expectedSustainability: 75,
-    },
-    "amazon.com": {
-      category: "E-commerce",
-      title: "Amazon",
-      hostingProvider: "Amazon Web Services",
-      serverLocation: "United States",
-      expectedPerformance: 91,
-      expectedSecurity: 97,
-      expectedSustainability: 78,
-    },
-    "facebook.com": {
-      category: "Social Media",
-      title: "Facebook",
-      hostingProvider: "Meta Infrastructure",
-      serverLocation: "United States",
-      expectedPerformance: 89,
-      expectedSecurity: 93,
-      expectedSustainability: 80,
-    },
-    "twitter.com": {
-      category: "Social Media",
-      title: "Twitter",
-      hostingProvider: "Twitter Infrastructure",
-      serverLocation: "United States",
-      expectedPerformance: 85,
-      expectedSecurity: 90,
-      expectedSustainability: 77,
-    },
-    "linkedin.com": {
-      category: "Professional Network",
-      title: "LinkedIn",
-      hostingProvider: "Microsoft Azure",
-      serverLocation: "United States",
-      expectedPerformance: 88,
-      expectedSecurity: 95,
-      expectedSustainability: 83,
-    },
-    "netflix.com": {
-      category: "Streaming Service",
-      title: "Netflix",
-      hostingProvider: "Amazon Web Services",
-      serverLocation: "United States",
-      expectedPerformance: 93,
-      expectedSecurity: 96,
-      expectedSustainability: 79,
-    },
-    "vercel.com": {
-      category: "Developer Platform",
-      title: "Vercel: Build and deploy the frontend with Next.js",
-      hostingProvider: "Vercel",
-      serverLocation: "United States",
-      expectedPerformance: 96,
-      expectedSecurity: 97,
-      expectedSustainability: 90,
-    },
-  }
-
-  // Check for exact matches first
-  if (knownSites[domain]) {
-    return knownSites[domain]
-  }
-
-  // Check for subdomain matches
-  const baseDomain = domain.replace(/^www\./, "")
-  if (knownSites[baseDomain]) {
-    return knownSites[baseDomain]
-  }
-
-  // Determine category based on domain patterns
-  let category = "Business Website"
-  let expectedPerformance = 75
-  let expectedSecurity = 80
-  let expectedSustainability = 70
-
-  if (domain.includes("shop") || domain.includes("store") || domain.includes("buy")) {
-    category = "E-commerce"
-    expectedPerformance = 82
-    expectedSecurity = 88
-    expectedSustainability = 75
-  } else if (domain.includes("blog") || domain.includes("news") || domain.includes("media")) {
-    category = "Content/Media"
-    expectedPerformance = 78
-    expectedSecurity = 85
-    expectedSustainability = 80
-  } else if (domain.includes("edu") || domain.includes("university") || domain.includes("school")) {
-    category = "Educational"
-    expectedPerformance = 76
-    expectedSecurity = 87
-    expectedSustainability = 85
-  } else if (domain.includes("gov") || domain.includes("government")) {
-    category = "Government"
-    expectedPerformance = 72
-    expectedSecurity = 92
-    expectedSustainability = 82
-  } else if (domain.includes("org") || domain.includes("nonprofit")) {
-    category = "Non-profit"
-    expectedPerformance = 74
-    expectedSecurity = 84
-    expectedSustainability = 88
-  }
-
-  return {
-    category,
-    title:
-      domain.replace("www.", "").split(".")[0].charAt(0).toUpperCase() +
-      domain.replace("www.", "").split(".")[0].slice(1),
-    hostingProvider: getRandomHostingProvider(),
-    serverLocation: getRandomServerLocation(),
-    expectedPerformance,
-    expectedSecurity,
-    expectedSustainability,
-  }
-}
-
-function generateRealisticScores(profile: any) {
-  // Add realistic variance to expected scores
-  const variance = 8 // ±8 points variance
-
-  return {
-    sustainability: Math.max(
-      60,
-      Math.min(100, profile.expectedSustainability + (Math.random() * variance * 2 - variance)),
-    ),
-    performance: Math.max(65, Math.min(100, profile.expectedPerformance + (Math.random() * variance * 2 - variance))),
-    scriptOptimization: Math.max(70, Math.min(100, 85 + (Math.random() * 20 - 10))),
-    duplicateContent: Math.max(75, Math.min(100, 88 + (Math.random() * 15 - 7))),
-    contentQuality: Math.max(70, Math.min(100, 82 + (Math.random() * 18 - 9))),
-    security: Math.max(70, Math.min(100, profile.expectedSecurity + (Math.random() * variance * 2 - variance))),
-  }
-}
-
-function generateContextualSummary(domain: string, profile: any, scores: any) {
-  const overallScore = Math.round((scores.sustainability + scores.performance + scores.security) / 3)
-
-  let performanceLevel = "excellent"
-  if (overallScore < 75) performanceLevel = "good"
-  if (overallScore < 65) performanceLevel = "moderate"
-
-  return `Comprehensive analysis of ${profile.title} (${profile.category}) reveals ${performanceLevel} performance with a ${Math.round(overallScore)}/100 overall score. The website demonstrates strong ${scores.security > 90 ? "security practices" : scores.performance > 90 ? "performance optimization" : "sustainability measures"} while showing opportunities for improvement in ${scores.sustainability < 80 ? "environmental impact" : scores.performance < 80 ? "loading speed" : "content optimization"}.`
-}
-
-function generateContextualKeyPoints(domain: string, profile: any, scores: any) {
-  const points = [
-    `${profile.title} operates as a ${profile.category.toLowerCase()} with ${scores.performance > 85 ? "excellent" : scores.performance > 75 ? "good" : "moderate"} performance metrics`,
-    `Security assessment shows ${scores.security > 90 ? "industry-leading" : scores.security > 80 ? "strong" : "adequate"} protection measures (${Math.round(scores.security)}/100)`,
-    `Sustainability score of ${Math.round(scores.sustainability)}/100 indicates ${scores.sustainability > 85 ? "excellent" : scores.sustainability > 75 ? "good" : "room for improvement in"} environmental practices`,
-    `Content optimization at ${Math.round(scores.contentQuality)}/100 with ${scores.scriptOptimization > 85 ? "well-optimized" : "opportunities for"} script management`,
-  ]
-
-  // Add category-specific insights
-  if (profile.category === "E-commerce") {
-    points.push("E-commerce optimization shows strong conversion potential with secure payment processing")
-  } else if (profile.category === "Content/Media") {
-    points.push("Content delivery and media optimization demonstrate effective audience engagement strategies")
-  } else if (profile.category === "Educational") {
-    points.push("Educational platform shows strong accessibility and knowledge sharing capabilities")
-  }
-
-  return points
-}
-
-function generateRelevantKeywords(profile: any) {
-  const baseKeywords = ["performance", "optimization", "security", "sustainability"]
-
-  const categoryKeywords = {
-    "Search Engine": ["search", "indexing", "algorithms", "data processing"],
-    "Developer Platform": ["development", "repositories", "collaboration", "version control"],
-    "E-commerce": ["shopping", "payments", "inventory", "customer experience"],
-    "Content/Media": ["content", "publishing", "media", "engagement"],
-    Educational: ["learning", "education", "knowledge", "academic"],
-    "Social Media": ["social", "networking", "communication", "community"],
-    "Business Website": ["business", "services", "corporate", "professional"],
-  }
-
-  return [...baseKeywords, ...(categoryKeywords[profile.category] || categoryKeywords["Business Website"])]
-}
-
-function generateContextualImprovements(profile: any, scores: any) {
-  const improvements = []
-
-  if (scores.performance < 85) {
-    improvements.push("Implement advanced caching strategies to improve page load times")
-    improvements.push("Optimize image compression and implement next-gen formats (WebP, AVIF)")
-  }
-
-  if (scores.sustainability < 80) {
-    improvements.push("Migrate to green hosting providers with renewable energy sources")
-    improvements.push("Implement efficient code practices to reduce server resource consumption")
-  }
-
-  if (scores.security < 90) {
-    improvements.push("Enhance security headers and implement Content Security Policy (CSP)")
-    improvements.push("Regular security audits and vulnerability assessments")
-  }
-
-  if (scores.scriptOptimization < 85) {
-    improvements.push("Bundle and minify JavaScript files to reduce load times")
-    improvements.push("Implement lazy loading for non-critical resources")
-  }
-
-  // Category-specific improvements
-  if (profile.category === "E-commerce") {
-    improvements.push("Optimize checkout process and implement progressive web app features")
-  } else if (profile.category === "Content/Media") {
-    improvements.push("Implement content delivery network (CDN) for global performance")
-  }
-
-  return improvements.slice(0, 6) // Return top 6 improvements
-}
-
-function generateRealisticSubdomains(domain: string, profile: any) {
-  const commonSubdomains = ["www", "api", "cdn", "static"]
-  const categorySubdomains = {
-    "E-commerce": ["shop", "checkout", "payments", "admin"],
-    "Developer Platform": ["api", "docs", "status", "blog"],
-    "Content/Media": ["cdn", "media", "assets", "blog"],
-    Educational: ["portal", "library", "resources", "student"],
-  }
-
-  const subdomains = [...commonSubdomains, ...(categorySubdomains[profile.category] || ["blog", "support"])]
-
-  return subdomains.slice(0, 4).map((sub) => `${sub}.${domain}`)
-}
-
-function generateRealisticContentStats(profile: any) {
-  const baseStats = {
-    "Search Engine": { wordCount: [500, 1500], paragraphs: [5, 15], images: [2, 8], links: [10, 30] },
-    "Developer Platform": { wordCount: [2000, 8000], paragraphs: [20, 80], images: [5, 20], links: [50, 200] },
-    "E-commerce": { wordCount: [1000, 5000], paragraphs: [10, 50], images: [20, 100], links: [30, 150] },
-    "Content/Media": { wordCount: [3000, 12000], paragraphs: [30, 120], images: [15, 60], links: [40, 180] },
-    Educational: { wordCount: [2500, 10000], paragraphs: [25, 100], images: [10, 40], links: [35, 160] },
-    "Business Website": { wordCount: [800, 3000], paragraphs: [8, 30], images: [5, 25], links: [15, 80] },
-  }
-
-  const stats = baseStats[profile.category] || baseStats["Business Website"]
-
-  return {
-    wordCount: Math.floor(Math.random() * (stats.wordCount[1] - stats.wordCount[0]) + stats.wordCount[0]),
-    paragraphs: Math.floor(Math.random() * (stats.paragraphs[1] - stats.paragraphs[0]) + stats.paragraphs[0]),
-    images: Math.floor(Math.random() * (stats.images[1] - stats.images[0]) + stats.images[0]),
-    links: Math.floor(Math.random() * (stats.links[1] - stats.links[0]) + stats.links[0]),
-  }
-}
-
-function generateRealisticTechnicalData(profile: any) {
-  const performanceRanges = {
-    "Search Engine": { loadTime: [200, 800], pageSize: [50, 200], requests: [5, 20] },
-    "Developer Platform": { loadTime: [500, 1500], pageSize: [200, 800], requests: [15, 50] },
-    "E-commerce": { loadTime: [800, 2000], pageSize: [300, 1200], requests: [25, 80] },
-    "Content/Media": { loadTime: [600, 1800], pageSize: [400, 1500], requests: [20, 70] },
-    Educational: { loadTime: [700, 1600], pageSize: [250, 900], requests: [18, 60] },
-    "Business Website": { loadTime: [500, 1500], pageSize: [150, 600], requests: [10, 40] },
-  }
-
-  const ranges = performanceRanges[profile.category] || performanceRanges["Business Website"]
-
-  return {
-    loadTime: Math.floor(Math.random() * (ranges.loadTime[1] - ranges.loadTime[0]) + ranges.loadTime[0]),
-    pageSize: Math.floor(Math.random() * (ranges.pageSize[1] - ranges.pageSize[0]) + ranges.pageSize[0]),
-    requests: Math.floor(Math.random() * (ranges.requests[1] - ranges.requests[0]) + ranges.requests[0]),
-  }
-}
-
-function getRandomHostingProvider() {
-  const providers = [
-    "Amazon Web Services",
-    "Google Cloud Platform",
-    "Microsoft Azure",
-    "Cloudflare",
-    "DigitalOcean",
-    "Vercel",
-    "Netlify",
-    "Heroku",
-    "Linode",
-    "Vultr",
-  ]
-  return providers[Math.floor(Math.random() * providers.length)]
-}
-
-function getRandomServerLocation() {
-  const locations = [
-    "United States",
-    "Germany",
-    "United Kingdom",
-    "Canada",
-    "Netherlands",
-    "Singapore",
-    "Japan",
-    "Australia",
-    "France",
-    "Ireland",
-  ]
-  return locations[Math.floor(Math.random() * locations.length)]
-}
-
-function generateRealisticIP() {
-  return `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    console.log("🚀 Starting enhanced website analysis request")
-
-    // Parse request body
-    let requestData
     try {
-      const body = await request.text()
-      console.log("📝 Request body length:", body?.length || 0)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 15000)
 
-      if (!body || !body.trim()) {
-        console.error("❌ Empty request body")
-        return NextResponse.json(
-          {
-            error: "Request body is empty",
-          },
-          { status: 400 },
-        )
+      response = await fetch(formattedUrl, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.5",
+          "Accept-Encoding": "gzip, deflate, br",
+          Connection: "keep-alive",
+          "Upgrade-Insecure-Requests": "1",
+        },
+        signal: controller.signal,
+        redirect: "follow",
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 
-      requestData = safeJsonParse(body, null)
-      if (!requestData) {
-        console.error("❌ Invalid JSON in request body")
-        return NextResponse.json(
-          {
-            error: "Invalid JSON in request body",
-          },
-          { status: 400 },
-        )
-      }
+      // Extract security headers
+      securityHeaders = extractSecurityHeaders(response.headers)
+
+      html = await response.text()
+      console.log(`Successfully fetched ${html.length} characters from ${formattedUrl}`)
     } catch (error) {
-      console.error("❌ Request parsing error:", error)
+      console.error(`Failed to fetch ${formattedUrl}:`, error)
       return NextResponse.json(
         {
-          error: "Failed to parse request body",
-        },
-        { status: 400 },
-      )
-    }
-
-    // Validate required fields
-    try {
-      validateRequired(requestData.url, "url")
-    } catch (error: any) {
-      console.error("❌ Validation error:", error.message)
-      return NextResponse.json(
-        {
-          error: error.message,
-        },
-        { status: 400 },
-      )
-    }
-
-    const { url } = requestData
-
-    // Validate and normalize URL format
-    let normalizedUrl: string
-    try {
-      normalizedUrl = url.trim()
-      if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
-        normalizedUrl = "https://" + normalizedUrl
-      }
-      new URL(normalizedUrl)
-    } catch (urlError) {
-      console.error("❌ Invalid URL format:", url)
-      return NextResponse.json(
-        {
-          error: "Invalid URL format",
-        },
-        { status: 400 },
-      )
-    }
-
-    console.log("🔍 Analyzing website:", normalizedUrl)
-
-    // Perform enhanced website analysis
-    const analysisResult = await safeAsyncOperation(
-      () => analyzeWebsiteEnhanced(normalizedUrl),
-      null,
-      "Failed to analyze website",
-    )
-
-    if (!analysisResult) {
-      console.error("❌ Analysis failed")
-      return NextResponse.json(
-        {
-          error: "Failed to analyze website",
+          error: "Failed to fetch website",
+          message: error instanceof Error ? error.message : "Network error",
+          details: "Please check if the website is accessible and try again",
         },
         { status: 500 },
       )
     }
 
-    console.log("✅ Enhanced analysis completed successfully")
-    console.log("📊 Analysis results:", {
-      title: analysisResult.title,
-      sustainability: analysisResult.sustainability_score,
-      performance: analysisResult.performance_score,
-      security: analysisResult.security_score,
+    // Parse HTML content
+    const $ = cheerio.load(html)
+
+    // Extract basic information
+    const title =
+      $("title").text().trim() ||
+      $("h1").first().text().trim() ||
+      formattedUrl.split("//")[1]?.split("/")[0] ||
+      "Unknown Website"
+
+    const description =
+      $('meta[name="description"]').attr("content") ||
+      $('meta[property="og:description"]').attr("content") ||
+      $('meta[name="twitter:description"]').attr("content") ||
+      ""
+
+    // Enhanced content extraction
+    $("script, style, nav, footer, aside, .advertisement, .ads").remove()
+    const bodyText = $("body").text().replace(/\s+/g, " ").trim()
+
+    const paragraphs = $("p")
+      .map((_, el) => $(el).text().trim())
+      .get()
+      .filter((text) => text.length > 20)
+      .slice(0, 20)
+
+    const headings = $("h1, h2, h3, h4, h5, h6")
+      .map((_, el) => $(el).text().trim())
+      .get()
+      .filter((text) => text.length > 0)
+      .slice(0, 20)
+
+    const links = $("a[href]")
+      .map((_, el) => {
+        const href = $(el).attr("href") || ""
+        if (href.startsWith("http")) return href
+        if (href.startsWith("/")) {
+          try {
+            const baseUrl = new URL(formattedUrl)
+            return `${baseUrl.protocol}//${baseUrl.host}${href}`
+          } catch (e) {
+            return ""
+          }
+        }
+        return ""
+      })
+      .get()
+      .filter(Boolean)
+      .slice(0, 50)
+
+    const images = $("img[src]")
+      .map((_, el) => {
+        const src = $(el).attr("src") || ""
+        if (src.startsWith("http")) return src
+        if (src.startsWith("/")) {
+          try {
+            const baseUrl = new URL(formattedUrl)
+            return `${baseUrl.protocol}//${baseUrl.host}${src}`
+          } catch (e) {
+            return ""
+          }
+        }
+        return ""
+      })
+      .get()
+      .filter(Boolean)
+      .slice(0, 30)
+
+    // Enhanced keyword extraction
+    const words = bodyText
+      .toLowerCase()
+      .split(/\W+/)
+      .filter(
+        (word) =>
+          word.length > 3 &&
+          ![
+            "about",
+            "after",
+            "also",
+            "been",
+            "before",
+            "being",
+            "between",
+            "both",
+            "could",
+            "does",
+            "doing",
+            "during",
+            "each",
+            "from",
+            "have",
+            "having",
+            "here",
+            "more",
+            "most",
+            "other",
+            "some",
+            "such",
+            "than",
+            "that",
+            "their",
+            "them",
+            "then",
+            "there",
+            "these",
+            "they",
+            "this",
+            "those",
+            "what",
+            "when",
+            "where",
+            "which",
+            "while",
+            "with",
+            "would",
+            "your",
+            "will",
+            "said",
+            "make",
+            "like",
+            "time",
+            "just",
+            "know",
+            "take",
+            "people",
+            "into",
+            "year",
+            "good",
+            "work",
+            "well",
+            "many",
+            "first",
+            "right",
+            "life",
+            "way",
+            "even",
+            "back",
+            "only",
+            "think",
+            "come",
+            "hand",
+            "high",
+            "large",
+            "world",
+            "still",
+            "place",
+          ].includes(word),
+      )
+
+    const wordFrequency: Record<string, number> = {}
+    words.forEach((word) => {
+      wordFrequency[word] = (wordFrequency[word] || 0) + 1
     })
 
-    // Save to database if available
-    if (isNeonAvailable()) {
-      await safeDbOperation(
-        async () => {
-          await sql`
-            INSERT INTO website_analyses (
-              id, url, title, summary, key_points, keywords,
-              sustainability_score, performance_score, script_optimization_score,
-              content_quality_score, security_score, improvements,
-              hosting_provider_name, ssl_certificate, server_location, ip_address,
-              created_at, updated_at
-            ) VALUES (
-              ${analysisResult._id}, ${analysisResult.url}, ${analysisResult.title}, 
-              ${analysisResult.summary}, ${JSON.stringify(analysisResult.keyPoints)}, 
-              ${JSON.stringify(analysisResult.keywords)}, ${analysisResult.sustainability_score},
-              ${analysisResult.performance_score}, ${analysisResult.script_optimization_score},
-              ${analysisResult.content_quality_score}, ${analysisResult.security_score},
-              ${JSON.stringify(analysisResult.improvements)}, ${analysisResult.hosting_provider_name},
-              ${analysisResult.ssl_certificate}, ${analysisResult.server_location}, ${analysisResult.ip_address},
-              ${new Date().toISOString()}, ${new Date().toISOString()}
-            )
-          `
-          return analysisResult
-        },
-        analysisResult,
-        "Error saving analysis to database",
-      )
+    const keywords = Object.entries(wordFrequency)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 15)
+      .map(([word]) => word)
+
+    // Extract meta keywords if available
+    const metaKeywords = $('meta[name="keywords"]').attr("content") || ""
+    if (metaKeywords) {
+      const metaKeywordsList = metaKeywords.split(",").map((k) => k.trim().toLowerCase())
+      metaKeywordsList.forEach((keyword) => {
+        if (keyword && !keywords.includes(keyword) && keywords.length < 20) {
+          keywords.push(keyword)
+        }
+      })
     }
 
-    console.log("📊 Returning enhanced analysis results")
-    return NextResponse.json(analysisResult)
-  } catch (error: any) {
-    console.error("💥 Website analysis error:", error)
+    // Analyze subdomains from links
+    const subdomainSet = new Set<string>()
+    const baseHostname = new URL(formattedUrl).hostname
+
+    links.forEach((link) => {
+      try {
+        const linkUrl = new URL(link)
+        const hostname = linkUrl.hostname
+        if (hostname && hostname !== baseHostname && !subdomainSet.has(hostname)) {
+          subdomainSet.add(hostname)
+        }
+      } catch (e) {
+        // Invalid URL, skip
+      }
+    })
+
+    const subdomains = Array.from(subdomainSet).slice(0, 10)
+
+    // Enhanced performance calculations
+    const scriptCount = $("script").length
+    const cssCount = $('link[rel="stylesheet"]').length
+    const imageCount = images.length
+    const totalElements = $("*").length
+
+    const totalScriptSize = $("script")
+      .map((_, el) => $(el).html()?.length || 0)
+      .get()
+      .reduce((a, b) => a + b, 0)
+
+    // Calculate enhanced scores
+    const performanceScore = Math.min(100, Math.max(30, 100 - (scriptCount * 2 + imageCount / 3)))
+    const scriptOptimizationScore = Math.min(100, Math.max(30, 100 - (scriptCount * 3 + totalScriptSize / 10000)))
+
+    // Check for duplicate content
+    const paragraphTexts = new Set(paragraphs)
+    const duplicateContentScore = Math.min(
+      100,
+      Math.max(40, 100 * (paragraphTexts.size / Math.max(paragraphs.length, 1))),
+    )
+
+    // Calculate security score
+    const securityScore = calculateSecurityScore(formattedUrl, securityHeaders, $)
+
+    const sustainabilityScore = Math.floor((performanceScore + scriptOptimizationScore + duplicateContentScore) / 3)
+
+    // Generate improvement suggestions
+    const improvements = generateImprovements(
+      scriptCount,
+      imageCount,
+      cssCount,
+      performanceScore,
+      scriptOptimizationScore,
+      duplicateContentScore,
+      securityScore,
+      description,
+      headings.length,
+      totalElements,
+    )
+
+    // Create summary
+    let summary = description
+    if (!summary && paragraphs.length > 0) {
+      summary = paragraphs[0].substring(0, 200)
+      if (paragraphs[0].length > 200) summary += "..."
+    }
+    if (!summary) {
+      summary = `${title} is a website with ${links.length} links, ${imageCount} images, and ${paragraphs.length} content sections. The site focuses on ${keywords.slice(0, 3).join(", ")}.`
+    }
+
+    // Generate key points
+    const keyPoints = [
+      `Contains ${imageCount} images and ${links.length} external links`,
+      `Has ${headings.length} headings organizing ${paragraphs.length} content sections`,
+      `Uses ${scriptCount} JavaScript files and ${cssCount} CSS stylesheets`,
+      `Focuses on topics related to ${keywords.slice(0, 3).join(", ")}`,
+      `${sustainabilityScore > 75 ? "Demonstrates good" : "Shows potential for improved"} performance optimization`,
+      `Security score of ${securityScore}% with ${Object.keys(securityHeaders).length} security headers`,
+    ]
+
+    // Create content stats
+    const contentStats = {
+      wordCount: words.length,
+      paragraphs: paragraphs.length,
+      headings: headings.length,
+      images: imageCount,
+      links: links.length,
+    }
+
+    // Create the analysis result
+    const analysisResult = {
+      url: formattedUrl,
+      title,
+      summary,
+      key_points: keyPoints,
+      keywords,
+      sustainability_score: sustainabilityScore,
+      performance_score: performanceScore,
+      script_optimization_score: scriptOptimizationScore,
+      content_quality_score: duplicateContentScore,
+      security_score: securityScore,
+      ssl_certificate: formattedUrl.startsWith("https://"),
+      security_headers: securityHeaders,
+      improvements,
+      subdomains,
+      content_stats: contentStats,
+      raw_data: {
+        paragraphs: paragraphs.slice(0, 10),
+        headings: headings.slice(0, 15),
+        links: links.slice(0, 30),
+      },
+      ip_address: ipAddress,
+      hosting_provider_name: hostingInfo?.name || null,
+      hosting_provider_id: hostingInfo?.id || null,
+      server_location: hostingInfo?.location || null,
+      user_id: userId || null,
+      created_at: new Date(),
+    }
+
+    // Save to Neon database
+    let analysisId: number
+    try {
+      const result = await sql`
+        INSERT INTO website_analyzer.analyses 
+        (url, title, summary, key_points, keywords, sustainability_score, performance_score, 
+         script_optimization_score, content_quality_score, security_score, ssl_certificate,
+         security_headers, improvements, subdomains, content_stats, raw_data, ip_address,
+         hosting_provider_name, hosting_provider_id, server_location, user_id, created_at)
+        VALUES (
+          ${formattedUrl}, ${title}, ${summary}, ${JSON.stringify(keyPoints)}, 
+          ${JSON.stringify(keywords)}, ${sustainabilityScore}, ${performanceScore},
+          ${scriptOptimizationScore}, ${duplicateContentScore}, ${securityScore},
+          ${formattedUrl.startsWith("https://")}, ${JSON.stringify(securityHeaders)},
+          ${JSON.stringify(improvements)}, ${JSON.stringify(subdomains)}, 
+          ${JSON.stringify(contentStats)}, ${JSON.stringify(analysisResult.raw_data)},
+          ${ipAddress}, ${hostingInfo?.name || null}, ${hostingInfo?.id || null},
+          ${hostingInfo?.location || null}, ${userId || null}, NOW()
+        )
+        RETURNING id
+      `
+      analysisId = result[0].id
+      console.log(`Analysis saved to database with ID: ${analysisId}`)
+
+      // Generate and save recommendations
+      await generateAndSaveRecommendations(analysisId, analysisResult)
+    } catch (dbError) {
+      console.error("Database error (non-critical):", dbError)
+      analysisId = Date.now() // Fallback ID
+    }
+
+    return NextResponse.json({
+      ...analysisResult,
+      _id: analysisId.toString(),
+      // Legacy format for compatibility
+      sustainability: {
+        score: sustainabilityScore,
+        performance: performanceScore,
+        scriptOptimization: scriptOptimizationScore,
+        duplicateContent: duplicateContentScore,
+        improvements,
+      },
+      keyPoints,
+      contentStats,
+      hostingInfo,
+    })
+  } catch (error) {
+    console.error("Error analyzing website:", error)
     return NextResponse.json(
       {
-        error: error.message || "Internal server error during website analysis",
+        error: "Failed to analyze website",
+        message: error instanceof Error ? error.message : "Unknown error",
+        details: "Please check the URL and try again. Some websites may block automated analysis.",
       },
       { status: 500 },
     )
+  }
+}
+
+// Helper functions
+function extractSecurityHeaders(headers: Headers): Record<string, string> {
+  const securityHeaders: Record<string, string> = {}
+
+  const securityHeaderNames = [
+    "strict-transport-security",
+    "content-security-policy",
+    "x-frame-options",
+    "x-content-type-options",
+    "x-xss-protection",
+    "referrer-policy",
+    "permissions-policy",
+    "expect-ct",
+  ]
+
+  securityHeaderNames.forEach((headerName) => {
+    const value = headers.get(headerName)
+    if (value) {
+      securityHeaders[headerName] = value
+    }
+  })
+
+  return securityHeaders
+}
+
+function calculateSecurityScore(url: string, securityHeaders: Record<string, string>, $: cheerio.CheerioAPI): number {
+  let score = 0
+
+  // HTTPS check (30 points)
+  if (url.startsWith("https://")) {
+    score += 30
+  }
+
+  // Security headers (50 points total)
+  const criticalHeaders = [
+    "strict-transport-security", // 10 points
+    "content-security-policy", // 15 points
+    "x-frame-options", // 10 points
+    "x-content-type-options", // 5 points
+    "x-xss-protection", // 5 points
+    "referrer-policy", // 5 points
+  ]
+
+  const headerScores = [10, 15, 10, 5, 5, 5]
+  criticalHeaders.forEach((header, index) => {
+    if (securityHeaders[header]) {
+      score += headerScores[index]
+    }
+  })
+
+  // Additional security checks (20 points)
+  // Check for mixed content
+  const hasHttpResources = $('img[src^="http:"], script[src^="http:"], link[href^="http:"]').length === 0
+  if (hasHttpResources) score += 10
+
+  // Check for inline scripts (security risk)
+  const inlineScripts = $("script:not([src])").length
+  if (inlineScripts < 3) score += 10
+
+  return Math.min(100, score)
+}
+
+async function detectHostingProvider(
+  ipAddress: string,
+  hostname: string,
+): Promise<{ id: number; name: string; location: string } | null> {
+  try {
+    // Simple hosting provider detection based on common patterns
+    const providers = [
+      { pattern: /amazonaws\.com|aws/, name: "Amazon Web Services", id: 4 },
+      { pattern: /googleusercontent\.com|google/, name: "Google Cloud Platform", id: 5 },
+      { pattern: /azure|microsoft/, name: "Microsoft Azure", id: 6 },
+      { pattern: /cloudflare/, name: "Cloudflare", id: 12 },
+      { pattern: /digitalocean/, name: "DigitalOcean", id: 13 },
+      { pattern: /linode/, name: "Linode", id: 14 },
+      { pattern: /vultr/, name: "Vultr", id: 15 },
+      { pattern: /bluehost/, name: "Bluehost", id: 7 },
+      { pattern: /hostgator/, name: "HostGator", id: 8 },
+      { pattern: /godaddy/, name: "GoDaddy", id: 9 },
+      { pattern: /siteground/, name: "SiteGround", id: 3 },
+      { pattern: /wpengine/, name: "WP Engine", id: 10 },
+      { pattern: /kinsta/, name: "Kinsta", id: 11 },
+    ]
+
+    for (const provider of providers) {
+      if (provider.pattern.test(hostname.toLowerCase())) {
+        return {
+          id: provider.id,
+          name: provider.name,
+          location: "Unknown", // Would need IP geolocation service for accurate location
+        }
+      }
+    }
+
+    return null
+  } catch (error) {
+    console.error("Error detecting hosting provider:", error)
+    return null
+  }
+}
+
+function generateImprovements(
+  scriptCount: number,
+  imageCount: number,
+  cssCount: number,
+  performanceScore: number,
+  scriptOptimizationScore: number,
+  duplicateContentScore: number,
+  securityScore: number,
+  description: string,
+  headingCount: number,
+  totalElements: number,
+): string[] {
+  const improvements: string[] = []
+
+  // Performance improvements
+  if (scriptCount > 10) {
+    improvements.push("Reduce the number of JavaScript files to improve loading speed")
+  }
+  if (imageCount > 20) {
+    improvements.push("Optimize image sizes and implement lazy loading")
+  }
+  if (cssCount > 5) {
+    improvements.push("Consolidate CSS files to reduce HTTP requests")
+  }
+  if (performanceScore < 70) {
+    improvements.push("Implement browser caching for static assets")
+  }
+  if (scriptOptimizationScore < 70) {
+    improvements.push("Minimize and compress JavaScript files")
+  }
+
+  // Security improvements
+  if (securityScore < 70) {
+    improvements.push("Implement security headers (CSP, HSTS, X-Frame-Options)")
+  }
+  if (securityScore < 50) {
+    improvements.push("Enable HTTPS and implement proper SSL/TLS configuration")
+  }
+
+  // Content improvements
+  if (duplicateContentScore < 70) {
+    improvements.push("Remove duplicate content to improve SEO")
+  }
+  if (!description) {
+    improvements.push("Add a meta description to improve SEO")
+  }
+  if (headingCount < 3) {
+    improvements.push("Add more headings to improve content structure")
+  }
+
+  // Technical improvements
+  if (totalElements > 1000) {
+    improvements.push("Simplify page structure to reduce DOM complexity")
+  }
+
+  // Sustainability improvements
+  improvements.push("Consider green hosting providers to reduce carbon footprint")
+  improvements.push("Implement efficient caching strategies to reduce server load")
+
+  // Ensure we have at least 6 improvement suggestions
+  const defaultImprovements = [
+    "Enable GZIP compression to reduce file sizes",
+    "Use a Content Delivery Network (CDN) for faster content delivery",
+    "Implement responsive images for better mobile performance",
+    "Reduce third-party scripts and tracking codes",
+    "Optimize font loading to prevent layout shifts",
+    "Implement proper caching headers for static resources",
+  ]
+
+  while (improvements.length < 6) {
+    const suggestion = defaultImprovements[improvements.length % defaultImprovements.length]
+    if (!improvements.includes(suggestion)) {
+      improvements.push(suggestion)
+    }
+  }
+
+  return improvements
+}
+
+async function generateAndSaveRecommendations(analysisId: number, analysis: any) {
+  const recommendations = [
+    {
+      category: "performance",
+      priority: analysis.performance_score < 60 ? "high" : analysis.performance_score < 80 ? "medium" : "low",
+      title: "Optimize Website Performance",
+      description: `Your website has a performance score of ${analysis.performance_score}%. Improving performance will enhance user experience and search engine rankings.`,
+      implementation_steps: [
+        "Minimize HTTP requests by combining CSS and JavaScript files",
+        "Optimize images by compressing and using modern formats (WebP, AVIF)",
+        "Enable browser caching with proper cache headers",
+        "Use a Content Delivery Network (CDN)",
+        "Minimize and compress CSS and JavaScript files",
+      ],
+      estimated_impact: analysis.performance_score < 60 ? "high" : "medium",
+      estimated_effort: "moderate",
+      resources: ["https://web.dev/performance/", "https://developers.google.com/speed/pagespeed/insights/"],
+    },
+    {
+      category: "security",
+      priority: analysis.security_score < 60 ? "high" : analysis.security_score < 80 ? "medium" : "low",
+      title: "Enhance Website Security",
+      description: `Your website has a security score of ${analysis.security_score}%. Implementing security best practices will protect your site and users.`,
+      implementation_steps: [
+        "Implement HTTPS with a valid SSL certificate",
+        "Add security headers (CSP, HSTS, X-Frame-Options)",
+        "Keep software and plugins updated",
+        "Use strong authentication methods",
+        "Regular security audits and monitoring",
+      ],
+      estimated_impact: "high",
+      estimated_effort: analysis.security_score < 60 ? "moderate" : "easy",
+      resources: ["https://owasp.org/www-project-top-ten/", "https://securityheaders.com/"],
+    },
+    {
+      category: "sustainability",
+      priority: analysis.sustainability_score < 70 ? "high" : "medium",
+      title: "Improve Environmental Impact",
+      description: `Your website has a sustainability score of ${analysis.sustainability_score}%. Reducing environmental impact helps the planet and can improve performance.`,
+      implementation_steps: [
+        "Choose a green hosting provider with renewable energy",
+        "Optimize images and reduce file sizes",
+        "Implement efficient caching strategies",
+        "Minimize third-party scripts and trackers",
+        "Use efficient coding practices",
+      ],
+      estimated_impact: "medium",
+      estimated_effort: "moderate",
+      resources: ["https://www.websitecarbon.com/", "https://sustainablewebdesign.org/"],
+    },
+  ]
+
+  try {
+    for (const rec of recommendations) {
+      await sql`
+        INSERT INTO website_analyzer.recommendations 
+        (analysis_id, category, priority, title, description, implementation_steps, 
+         estimated_impact, estimated_effort, resources, created_at)
+        VALUES (
+          ${analysisId}, ${rec.category}, ${rec.priority}, ${rec.title}, 
+          ${rec.description}, ${JSON.stringify(rec.implementation_steps)},
+          ${rec.estimated_impact}, ${rec.estimated_effort}, 
+          ${JSON.stringify(rec.resources)}, NOW()
+        )
+      `
+    }
+  } catch (error) {
+    console.error("Error saving recommendations:", error)
   }
 }

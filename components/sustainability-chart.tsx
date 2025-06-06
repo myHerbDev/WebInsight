@@ -1,52 +1,50 @@
 "use client"
 
-import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from "recharts"
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
 interface SustainabilityChartProps {
-  performance: number
-  scriptOptimization: number
-  contentQuality: number
-  security: number
+  data: {
+    score: number
+    performance: number
+    scriptOptimization: number
+    duplicateContent: number
+  }
 }
 
-export function SustainabilityChart({
-  performance,
-  scriptOptimization,
-  contentQuality,
-  security,
-}: SustainabilityChartProps) {
-  const data = [
+export function SustainabilityChart({ data }: SustainabilityChartProps) {
+  const chartData = [
     {
-      subject: "Performance",
-      score: performance,
-      fullMark: 100,
+      name: "Performance",
+      value: data.performance,
+      fill: "#8b5cf6",
     },
     {
-      subject: "Script Optimization",
-      score: scriptOptimization,
-      fullMark: 100,
+      name: "Script Optimization",
+      value: data.scriptOptimization,
+      fill: "#14b8a6",
     },
     {
-      subject: "Content Quality",
-      score: contentQuality,
-      fullMark: 100,
+      name: "Duplicate Content",
+      value: data.duplicateContent,
+      fill: "#6366f1",
     },
     {
-      subject: "Security",
-      score: security,
-      fullMark: 100,
+      name: "Overall Score",
+      value: data.score,
+      fill: "#ec4899",
     },
   ]
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <RadarChart data={data}>
-        <PolarGrid />
-        <PolarAngleAxis dataKey="subject" />
-        <PolarRadiusAxis angle={90} domain={[0, 100]} />
-        <Radar name="Score" dataKey="score" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
+      <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis domain={[0, 100]} />
+        <Tooltip />
         <Legend />
-      </RadarChart>
+        <Bar dataKey="value" name="Score (%)" />
+      </BarChart>
     </ResponsiveContainer>
   )
 }
