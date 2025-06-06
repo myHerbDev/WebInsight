@@ -11,7 +11,7 @@ import { Toaster } from "@/components/ui/toaster"
 import type { WebsiteData } from "@/types/website-data"
 import { AlertCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import WebsiteForm from "@/components/website-form" // Declare the WebsiteForm variable
+import { WebsiteForm } from "@/components/website-form"
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
