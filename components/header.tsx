@@ -1,138 +1,108 @@
 "use client"
 
-import { useState } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Logo } from "@/components/logo"
+import { MoonIcon, SunIcon, Menu, User } from "lucide-react"
+import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { UserProfileButton } from "@/components/user-profile-button"
-import { SignUpModal } from "@/components/sign-up-modal"
-import { LoginModal } from "@/components/login-modal"
-import { useAuth } from "@/lib/auth-provider"
-import { Menu, BarChart2, FileText, BookOpen, HelpCircle, Sparkles } from "lucide-react"
+import { Logo } from "@/components/logo"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import Link from "next/link"
 
 export function Header() {
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [showSignUpModal, setShowSignUpModal] = useState(false)
-  const [showLoginModal, setShowLoginModal] = useState(false)
-  const pathname = usePathname()
-  const { user, isLoading } = useAuth()
-
-  const routes = [
-    {
-      href: "/",
-      label: "Dashboard",
-      icon: <BarChart2 className="h-4 w-4 mr-2" />,
-      active: pathname === "/",
-    },
-    {
-      href: "/ai-content",
-      label: "AI Content",
-      icon: <Sparkles className="h-4 w-4 mr-2" />,
-      active: pathname === "/ai-content",
-    },
-    {
-      href: "/docs",
-      label: "Documentation",
-      icon: <FileText className="h-4 w-4 mr-2" />,
-      active: pathname === "/docs" || pathname?.startsWith("/docs/"),
-    },
-    {
-      href: "/blog",
-      label: "Blog",
-      icon: <BookOpen className="h-4 w-4 mr-2" />,
-      active: pathname === "/blog",
-    },
-    {
-      href: "/support",
-      label: "Support",
-      icon: <HelpCircle className="h-4 w-4 mr-2" />,
-      active: pathname === "/support",
-    },
-  ]
+  const { theme, setTheme } = useTheme()
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sheet open={showMobileMenu} onOpenChange={setShowMobileMenu}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden" aria-label="Toggle Menu">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle Menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="pr-0">
-              <div className="px-7">
-                <Link href="/" className="flex items-center" onClick={() => setShowMobileMenu(false)}>
-                  <Logo />
-                </Link>
-              </div>
-              <nav className="flex flex-col gap-4 px-2 mt-8">
-                {routes.map((route) => (
-                  <Link
-                    key={route.href}
-                    href={route.href}
-                    onClick={() => setShowMobileMenu(false)}
-                    className={`flex items-center px-4 py-2 text-sm rounded-md hover:bg-accent ${
-                      route.active ? "bg-accent font-medium" : ""
-                    }`}
-                  >
-                    {route.icon}
-                    {route.label}
-                  </Link>
-                ))}
-              </nav>
-            </SheetContent>
-          </Sheet>
-          <Link href="/" className="hidden md:flex">
-            <Logo />
+    <header className="border-b bg-white/80 backdrop-blur-sm dark:bg-gray-950/80 sticky top-0 z-50">
+      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <Link href="/" className="flex items-center">
+          <Logo size="md" showText={true} />
+        </Link>
+
+        <nav className="hidden md:flex items-center space-x-6">
+          <Link
+            href="/"
+            className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400 transition-colors"
+          >
+            Analyze
           </Link>
-        </div>
-        <nav className="hidden md:flex items-center gap-1">
-          {routes.map((route) => (
-            <Link
-              key={route.href}
-              href={route.href}
-              className={`px-3 py-2 text-sm font-medium rounded-md hover:bg-accent flex items-center ${
-                route.active ? "bg-accent" : ""
-              }`}
-            >
-              {route.icon}
-              {route.label}
-            </Link>
-          ))}
+          <Link
+            href="/compare"
+            className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400 transition-colors"
+          >
+            Compare
+          </Link>
+          <Link
+            href="/hosting"
+            className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400 transition-colors"
+          >
+            Hosting
+          </Link>
+          <Link
+            href="/recommendations"
+            className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400 transition-colors"
+          >
+            Recommendations
+          </Link>
+          <Link
+            href="/saved"
+            className="text-gray-600 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400 transition-colors"
+          >
+            Saved
+          </Link>
         </nav>
-        <div className="flex items-center gap-2">
-          {!isLoading && !user ? (
-            <>
-              <Button variant="ghost" onClick={() => setShowLoginModal(true)} className="hidden md:flex">
-                Log In
+
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <User className="h-5 w-5" />
               </Button>
-              <Button onClick={() => setShowSignUpModal(true)}>Sign Up</Button>
-            </>
-          ) : (
-            <UserProfileButton />
-          )}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>
+                <Link href="/profile">Profile</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link href="/settings">Settings</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>Sign Out</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem>
+                <Link href="/">Analyze</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link href="/compare">Compare</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link href="/hosting">Hosting</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link href="/recommendations">Recommendations</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link href="/saved">Saved</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
-      <SignUpModal
-        isOpen={showSignUpModal}
-        onClose={() => setShowSignUpModal(false)}
-        onLoginClick={() => {
-          setShowSignUpModal(false)
-          setShowLoginModal(true)
-        }}
-      />
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onSignUpClick={() => {
-          setShowLoginModal(false)
-          setShowSignUpModal(true)
-        }}
-      />
     </header>
   )
 }
