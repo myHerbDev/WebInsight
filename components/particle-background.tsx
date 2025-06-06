@@ -4,16 +4,27 @@ import { useEffect, useState } from "react"
 
 export function ParticleBackground() {
   const [mounted, setMounted] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     setMounted(true)
+
+    // Check if device is mobile
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+
+    return () => window.removeEventListener("resize", checkMobile)
   }, [])
 
-  if (!mounted) return null
+  if (!mounted || isMobile) return null
 
   return (
     <div className="particles-bg">
-      {Array.from({ length: 15 }, (_, i) => (
+      {Array.from({ length: 12 }, (_, i) => (
         <div
           key={i}
           className="particle"

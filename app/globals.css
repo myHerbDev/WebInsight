@@ -471,10 +471,71 @@ body {
   }
 }
 
-/* Responsive design improvements */
+/* Enhanced responsive design improvements */
+@media (max-width: 1024px) {
+  .particle {
+    width: 3px !important;
+    height: 3px !important;
+    animation-duration: 12s !important;
+  }
+}
+
 @media (max-width: 768px) {
   .particle {
     display: none; /* Hide particles on mobile for performance */
+  }
+
+  .glass-card {
+    backdrop-filter: blur(10px); /* Reduce blur on mobile for performance */
+  }
+
+  .shimmer::after {
+    animation-duration: 2s; /* Faster shimmer on mobile */
+  }
+
+  .float-animation {
+    animation: none; /* Disable float animation on mobile */
+  }
+
+  .hover-lift:hover {
+    transform: none; /* Disable hover lift on mobile */
+  }
+}
+
+@media (max-width: 640px) {
+  .bg-animated-gradient {
+    background-size: 200% 200%; /* Smaller gradient size on mobile */
+    animation-duration: 8s; /* Faster animation on mobile */
+  }
+
+  .gradient-text {
+    background-size: 150% 150%; /* Optimize gradient text for mobile */
+  }
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+  .hover-lift:hover {
+    transform: none;
+  }
+
+  .shimmer::after {
+    display: none; /* Disable shimmer on touch devices */
+  }
+
+  .group:hover .bg-animated-gradient {
+    opacity: 0.1; /* Reduce hover effects on touch */
+  }
+}
+
+/* Tablet specific optimizations */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .particle {
+    animation-duration: 15s;
+  }
+
+  .glass-card {
+    backdrop-filter: blur(15px);
   }
 }
 

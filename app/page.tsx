@@ -93,23 +93,23 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col text-foreground page-transition">
       <Header />
-      <main className="flex-1 flex flex-col items-center justify-center container mx-auto px-4 py-8 sm:py-12">
+      <main className="flex-1 flex flex-col items-center justify-center container mx-auto px-4 sm:px-6 py-6 sm:py-8 md:py-12">
         <div className="w-full max-w-4xl text-center">
           {/* Enhanced Main Page Hero Content */}
-          <div className="mb-8 sm:mb-12">
-            <div className="inline-block p-4 rounded-full bg-primary-gradient mb-6 shadow-2xl animate-pulse-glow-slow hover-lift">
-              <Sparkles className="h-12 w-12 sm:h-16 sm:w-16 text-white filter drop-shadow-[0_0_15px_rgba(255,255,255,0.9)]" />
+          <div className="mb-6 sm:mb-8 md:mb-12">
+            <div className="inline-block p-3 sm:p-4 rounded-full bg-primary-gradient mb-4 sm:mb-6 shadow-2xl animate-pulse-glow-slow hover-lift">
+              <Sparkles className="h-8 w-8 sm:h-12 sm:w-12 md:h-16 md:w-16 text-white filter drop-shadow-[0_0_15px_rgba(255,255,255,0.9)]" />
             </div>
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-foreground tracking-tight mb-4">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground tracking-tight mb-3 sm:mb-4 px-4">
               Web<span className="gradient-text">InSight</span>
             </h1>
-            <p className="mt-4 sm:mt-6 text-xl sm:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            <p className="mt-3 sm:mt-4 md:mt-6 text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4">
               AI-Powered Analysis for a Smarter, Greener Web.
             </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-2 text-sm text-muted-foreground">
-              <span className="px-3 py-1 bg-primary-gradient/10 rounded-full">Performance Analysis</span>
-              <span className="px-3 py-1 bg-primary-gradient/10 rounded-full">Sustainability Insights</span>
-              <span className="px-3 py-1 bg-primary-gradient/10 rounded-full">SEO Optimization</span>
+            <div className="mt-4 sm:mt-6 flex flex-wrap justify-center gap-2 text-xs sm:text-sm text-muted-foreground px-4">
+              <span className="px-2 sm:px-3 py-1 bg-primary-gradient/10 rounded-full">Performance Analysis</span>
+              <span className="px-2 sm:px-3 py-1 bg-primary-gradient/10 rounded-full">Sustainability Insights</span>
+              <span className="px-2 sm:px-3 py-1 bg-primary-gradient/10 rounded-full">SEO Optimization</span>
             </div>
           </div>
 
