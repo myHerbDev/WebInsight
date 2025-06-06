@@ -765,10 +765,10 @@ Generated with WebInSight AI
             <span className="text-xs text-gray-500">{new Date(content.createdAt).toLocaleDateString()}</span>
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">{content.title}</h2>
-          {(websiteData?.title || content.websiteUrl) && (
+          {(websiteData?.title || websiteData?.url) && (
             <p className="text-sm text-gray-600 flex items-center mb-4">
               <ExternalLink className="w-4 h-4 mr-1" />
-              Based on analysis of: {websiteData?.title || content.websiteUrl}
+              Based on analysis of: {websiteData?.title || websiteData?.url}
             </p>
           )}
 
