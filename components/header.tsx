@@ -39,13 +39,13 @@ export function Header() {
   const pathname = usePathname()
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/60 glass-morphism">
+    <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center" aria-label="WebInSight Home">
           <Logo size="md" showText={true} />
         </Link>
 
-        <nav className="hidden md:flex items-center space-x-1.5">
+        <nav className="hidden md:flex items-center space-x-1">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
@@ -54,21 +54,20 @@ export function Header() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "group relative px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 flex items-center space-x-2 card-hover-lift",
+                  "group relative px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center space-x-2",
                   isActive
-                    ? "text-foreground bg-primary-gradient/10"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50",
+                    ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                    : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
                 )}
                 aria-current={isActive ? "page" : undefined}
               >
                 <Icon
                   className={cn(
                     "h-4 w-4 transition-colors",
-                    isActive ? "text-primary-gradient-start" : "text-muted-foreground group-hover:text-foreground",
+                    isActive ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-400",
                   )}
                 />
                 <span>{item.label}</span>
-                {isActive && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary-gradient"></span>}
               </Link>
             )
           })}
@@ -80,7 +79,7 @@ export function Header() {
             size="icon"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             aria-label="Toggle theme"
-            className="text-muted-foreground hover:text-foreground hover:bg-accent/50"
+            className="rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -92,25 +91,28 @@ export function Header() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                className="rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                 aria-label="User menu"
               >
                 <User className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-card border-border shadow-lg rounded-xl mt-1">
-              <DropdownMenuItem asChild className="cursor-pointer hover:bg-accent/70">
+            <DropdownMenuContent
+              align="end"
+              className="w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-lg rounded-xl mt-1"
+            >
+              <DropdownMenuItem asChild className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
                 <Link href="/profile" className="flex items-center py-2 px-3">
-                  <UserCircle2 className="h-4 w-4 mr-2.5 text-muted-foreground" /> Profile
+                  <UserCircle2 className="h-4 w-4 mr-2.5 text-gray-500 dark:text-gray-400" /> Profile
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="cursor-pointer hover:bg-accent/70">
+              <DropdownMenuItem asChild className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800">
                 <Link href="/settings" className="flex items-center py-2 px-3">
-                  <Settings className="h-4 w-4 mr-2.5 text-muted-foreground" /> Settings
+                  <Settings className="h-4 w-4 mr-2.5 text-gray-500 dark:text-gray-400" /> Settings
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-border/70 my-1" />
-              <DropdownMenuItem className="flex items-center text-destructive hover:!bg-destructive/10 py-2 px-3 cursor-pointer">
+              <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700 my-1" />
+              <DropdownMenuItem className="flex items-center text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 py-2 px-3 cursor-pointer">
                 <LogOut className="h-4 w-4 mr-2.5" /> Sign Out
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -123,19 +125,26 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                  className="rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                   aria-label="Open navigation menu"
                 >
                   <LayoutGrid className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-card border-border shadow-lg rounded-xl mt-1">
+              <DropdownMenuContent
+                align="end"
+                className="w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-lg rounded-xl mt-1"
+              >
                 {navItems.map((item) => {
                   const Icon = item.icon
                   return (
-                    <DropdownMenuItem key={item.href} asChild className="cursor-pointer hover:bg-accent/70">
+                    <DropdownMenuItem
+                      key={item.href}
+                      asChild
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+                    >
                       <Link href={item.href} className="flex items-center space-x-2.5 py-2 px-3">
-                        <Icon className="h-4 w-4 text-muted-foreground" />
+                        <Icon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                         <span>{item.label}</span>
                       </Link>
                     </DropdownMenuItem>

@@ -1,61 +1,67 @@
+"use client"
+
+import { useEffect, useState } from "react"
+
 export function LoadingAnimation() {
+  const [progress, setProgress] = useState(0)
+  const [loadingText, setLoadingText] = useState("Analyzing website...")
+
+  useEffect(() => {
+    const texts = [
+      "Analyzing website...",
+      "Checking performance...",
+      "Evaluating SEO...",
+      "Measuring sustainability...",
+      "Generating insights...",
+    ]
+
+    let currentTextIndex = 0
+    const textInterval = setInterval(() => {
+      currentTextIndex = (currentTextIndex + 1) % texts.length
+      setLoadingText(texts[currentTextIndex])
+    }, 2000)
+
+    // Simulate progress
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 95) {
+          clearInterval(progressInterval)
+          return 95
+        }
+        return prev + Math.random() * 10
+      })
+    }, 800)
+
+    return () => {
+      clearInterval(textInterval)
+      clearInterval(progressInterval)
+    }
+  }, [])
+
   return (
-    <div className="flex flex-col items-center justify-center py-20 min-h-[350px] space-y-8">
-      {/* Modern Loading Circle with Multiple Layers */}
-      <div className="relative w-24 h-24">
-        {/* Outer rotating ring */}
-        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary-gradient-start border-r-primary-gradient-middle animate-spin-slow"></div>
-
-        {/* Middle pulsing ring */}
-        <div className="absolute inset-2 rounded-full border-3 border-transparent border-b-primary-gradient-end border-l-primary-gradient-start animate-spin-reverse"></div>
-
-        {/* Inner glowing core */}
-        <div className="absolute inset-4 rounded-full bg-primary-gradient animate-pulse-glow shadow-lg"></div>
-
-        {/* Center sparkle */}
+    <div className="flex flex-col items-center justify-center py-16 px-4">
+      {/* Google-style loading animation */}
+      <div className="relative w-20 h-20 mb-8">
+        <div className="absolute inset-0 border-4 border-t-blue-600 border-r-red-500 border-b-yellow-500 border-l-green-500 rounded-full animate-spin"></div>
+        <div className="absolute inset-2 border-4 border-t-transparent border-r-transparent border-b-transparent border-l-blue-600 rounded-full animate-spin-slow"></div>
+        <div className="absolute inset-4 border-4 border-t-green-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin-reverse"></div>
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-3 h-3 bg-white rounded-full animate-ping"></div>
-        </div>
-
-        {/* Floating particles around the circle */}
-        <div className="absolute -inset-8">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-primary-gradient-middle rounded-full animate-float-particle"
-              style={{
-                top: `${50 + 40 * Math.cos((i * Math.PI * 2) / 8)}%`,
-                left: `${50 + 40 * Math.sin((i * Math.PI * 2) / 8)}%`,
-                animationDelay: `${i * 0.2}s`,
-                animationDuration: "3s",
-              }}
-            />
-          ))}
+          <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse"></div>
         </div>
       </div>
 
-      {/* Enhanced text with typing effect */}
-      <div className="text-center space-y-3">
-        <p className="text-xl font-semibold text-foreground animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-          <span className="inline-block animate-typing">Gathering WebInSights</span>
-          <span className="animate-blink">...</span>
-        </p>
-        <p className="text-sm text-muted-foreground animate-fade-in-up max-w-md" style={{ animationDelay: "0.4s" }}>
-          Our AI is analyzing your website's performance, sustainability, and optimization opportunities
-        </p>
+      <div className="text-center">
+        <p className="text-lg font-medium text-gray-800 dark:text-gray-200 mb-2">{loadingText}</p>
 
-        {/* Progress indicators */}
-        <div className="flex justify-center space-x-2 mt-4" style={{ animationDelay: "0.6s" }}>
-          {["Performance", "Security", "Sustainability", "SEO"].map((item, index) => (
-            <div
-              key={item}
-              className="px-3 py-1 text-xs bg-primary-gradient/10 rounded-full text-primary-gradient-middle animate-fade-in-up"
-              style={{ animationDelay: `${0.8 + index * 0.2}s` }}
-            >
-              {item}
-            </div>
-          ))}
+        {/* Google-style progress bar */}
+        <div className="w-64 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-2">
+          <div
+            className="h-full bg-gradient-to-r from-blue-600 to-purple-600 rounded-full"
+            style={{ width: `${progress}%`, transition: "width 0.5s ease-out" }}
+          ></div>
         </div>
+
+        <p className="text-sm text-gray-500 dark:text-gray-400">This may take a moment...</p>
       </div>
     </div>
   )
