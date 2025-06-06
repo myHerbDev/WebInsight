@@ -29,50 +29,52 @@
     --destructive-foreground: 0 0% 100%;
 
     --border: 210 20% 90%; /* Lighter border */
-    --input: 210 20% 90%; /* Lighter input border */
+    --input: 210 20% 88%; /* Slightly darker input border for better visibility on light gradients */
     --ring: 210 90% 60%; /* Ring color for focus, can be brand color */
 
     --radius: 0.5rem; /* Default border radius */
 
     /* Brand specific colors */
     --brand-default: 210 90% 50%;
+    --brand-default-rgb: 51, 153, 255; /* RGB for Tailwind shadow color utility */
     --brand-light: 210 90% 95%;
     --brand-dark: 210 90% 45%;
     --brand-text: 210 90% 55%;
   }
 
   .dark {
-    --background: 220 18% 12%; /* Dark mode background */
+    --background: 220 18% 10%; /* Darker background for Gemini feel */
     --foreground: 210 20% 90%; /* Light gray text */
 
-    --card: 220 18% 15%; /* Dark cards */
+    --card: 220 18% 13%; /* Darker cards */
     --card-foreground: 210 20% 90%;
 
-    --popover: 220 18% 15%;
+    --popover: 220 18% 13%;
     --popover-foreground: 210 20% 90%;
 
     --primary: 210 90% 55%; /* Slightly lighter blue for dark mode */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 18% 20%; /* Darker secondary */
+    --secondary: 220 18% 18%; /* Darker secondary */
     --secondary-foreground: 210 20% 90%;
 
-    --muted: 220 18% 25%; /* Darker muted */
+    --muted: 220 18% 22%; /* Darker muted */
     --muted-foreground: 210 15% 65%;
 
-    --accent: 210 90% 25%; /* Darker accent */
+    --accent: 210 90% 22%; /* Darker accent */
     --accent-foreground: 210 90% 75%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 18% 28%; /* Darker border */
-    --input: 220 18% 28%;
+    --border: 220 18% 25%; /* Darker border */
+    --input: 220 18% 25%;
     --ring: 210 90% 65%;
 
     /* Brand specific colors for dark mode */
     --brand-default: 210 90% 55%;
-    --brand-light: 210 90% 25%; /* This might be too dark, adjust if needed */
+    --brand-default-rgb: 77, 166, 255; /* RGB for Tailwind shadow color utility */
+    --brand-light: 210 90% 22%;
     --brand-dark: 210 90% 50%;
     --brand-text: 210 90% 65%;
   }
@@ -111,13 +113,13 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-secondary;
+  @apply bg-secondary/50; /* More subtle track */
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted;
+  @apply bg-muted/70; /* More subtle thumb */
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/50;
+  @apply bg-muted-foreground/60;
 }

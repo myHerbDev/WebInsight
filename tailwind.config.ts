@@ -8,23 +8,22 @@ const config = {
     "./components/**/*.{ts,tsx}",
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
-    "*.{js,ts,jsx,tsx,mdx}", // Added this line from my previous config
+    "*.{js,ts,jsx,tsx,mdx}",
   ],
-  prefix: "", // Standard for shadcn/ui
+  prefix: "",
   theme: {
     container: {
       center: true,
-      padding: "1.5rem", // My custom padding
+      padding: "1.5rem",
       screens: {
         "2xl": "1400px",
       },
     },
     extend: {
       fontFamily: {
-        sans: ["var(--font-inter)", ...fontFamily.sans], // My custom font
+        sans: ["var(--font-inter)", ...fontFamily.sans],
       },
       colors: {
-        // Standard shadcn/ui colors, will be overridden by globals.css variables
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -58,7 +57,6 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // My custom brand colors (will also be defined in globals.css)
         brand: {
           DEFAULT: "hsl(var(--brand-default))",
           light: "hsl(var(--brand-light))",
@@ -67,17 +65,18 @@ const config = {
         },
       },
       borderRadius: {
-        // My custom border radius
-        lg: "0.75rem",
+        lg: "0.75rem", // Maintained from previous
+        xl: "1.0rem", // Added for larger elements like the form card
         md: "0.5rem",
         sm: "0.25rem",
       },
       boxShadow: {
-        // My custom minimal shadows
         sm: "0 1px 2px 0 rgba(0, 0, 0, 0.03)",
         DEFAULT: "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)",
         md: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)",
-        lg: "0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05)",
+        // Adjusted for a slightly more pronounced but still minimal "Gemini" feel
+        lg: "0 8px 25px -8px rgba(var(--brand-default-rgb), 0.1), 0 4px 10px -6px rgba(var(--brand-default-rgb), 0.1)",
+        xl: "0 15px 35px -15px rgba(var(--brand-default-rgb), 0.15), 0 8px 15px -10px rgba(var(--brand-default-rgb), 0.15)",
         none: "none",
       },
       keyframes: {
@@ -89,7 +88,6 @@ const config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        // My custom loading animation keyframes
         pulseScale: {
           "0%, 100%": { transform: "scale(1)", opacity: "1" },
           "50%": { transform: "scale(1.1)", opacity: "0.7" },
@@ -104,17 +102,23 @@ const config = {
           "0%": { opacity: "0", transform: "scale(0.8)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
+        // New animation for the Sparkles icon
+        pulseGlow: {
+          "0%, 100%": { opacity: "0.6", transform: "scale(1)" },
+          "50%": { opacity: "1", transform: "scale(1.2)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        // My custom loading animations
         "pulse-scale": "pulseScale 2s infinite ease-in-out",
         orbit1: "orbit 3s infinite linear",
         orbit2: "orbit 3s infinite linear 0.6s",
         orbit3: "orbit 3s infinite linear 1.2s",
         orbit4: "orbit 3s infinite linear 1.8s",
         "fade-in-grow": "fadeInGrow 0.5s ease-out forwards",
+        // New animation class
+        "pulse-glow": "pulseGlow 2.5s infinite ease-in-out",
       },
     },
   },
