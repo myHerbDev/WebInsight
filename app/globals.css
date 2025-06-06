@@ -50,6 +50,9 @@
     --brand-light: hsl(var(--primary-gradient-start) / 0.1);
     --brand-dark: hsl(var(--primary-gradient-middle));
     --brand-text: hsl(var(--primary-gradient-start));
+
+    /* Header height for sticky elements */
+    --header-height: 64px; /* Adjust if your header height changes */
   }
 
   .dark {
@@ -181,6 +184,48 @@ body {
   }
   .animate-ping-slow {
     animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+
+  /* Cursor Aura Styles */
+  .cursor-aura {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 32px; /* Increased size */
+    height: 32px; /* Increased size */
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    mix-blend-mode: overlay; /* Softer blend mode */
+    background: radial-gradient(
+      circle,
+      hsla(var(--primary-gradient-middle-rgb), 0.25) 0% /* Softer, larger gradient */,
+      hsla(var(--primary-gradient-middle-rgb), 0) 70%
+    );
+    transform: translate(-50%, -50%);
+    transition: width 0.2s ease-out, height 0.2s ease-out, opacity 0.2s ease-out; /* Smooth transitions */
+    opacity: 0; /* Start hidden */
+  }
+
+  body:hover .cursor-aura {
+    /* Show on body hover */
+    opacity: 1;
+  }
+
+  /* Optional: Scale aura on interactive elements */
+  a:hover ~ .cursor-aura,
+  button:hover ~ .cursor-aura,
+  [role="button"]:hover ~ .cursor-aura,
+  input:hover ~ .cursor-aura,
+  select:hover ~ .cursor-aura,
+  textarea:hover ~ .cursor-aura {
+    width: 48px; /* Larger on hover over interactive elements */
+    height: 48px;
+    background: radial-gradient(
+      circle,
+      hsla(var(--primary-gradient-start-rgb), 0.3) 0%,
+      hsla(var(--primary-gradient-start-rgb), 0) 70%
+    );
   }
 }
 
