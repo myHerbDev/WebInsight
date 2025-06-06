@@ -52,4 +52,5 @@ const Card: React.FC<CardProps> = ({ result }) => {
   )
 }
 
+export { ResultsSection }
 export default ResultsSection
