@@ -65,6 +65,7 @@
     "react-hook-form": "^7.54.1",
     "react-resizable-panels": "^2.1.7",
     "recharts": "latest",
+    "shadcn": "latest",
     "snappy": "latest",
     "socks": "latest",
     "sonner": "^1.7.1",

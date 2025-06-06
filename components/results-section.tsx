@@ -18,6 +18,14 @@ import {
   Linkedin,
   Facebook,
   Twitter,
+  BarChartHorizontalBig,
+  Leaf,
+  FileSignature,
+  Sparkles,
+  ExternalLink,
+  Info,
+  CheckCircle,
+  Globe,
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SustainabilityChart } from "@/components/sustainability-chart"
@@ -25,14 +33,15 @@ import { ContentTypeGenerator } from "@/components/content-type-generator"
 import { toast } from "@/components/ui/use-toast"
 import {
   shareToTwitter,
-  shareToLinkedIn, // This is for direct link sharing
+  shareToLinkedIn,
   shareToFacebook,
   shareViaGmail,
   createGoogleDoc,
   copyToClipboard,
-  generateLinkedInPost, // New import
+  generateLinkedInPost,
 } from "@/lib/share"
 import { cn } from "@/lib/utils"
+import { Progress } from "@/components/ui/progress"
 
 interface ResultsSectionProps {
   data: WebsiteData
@@ -50,8 +59,6 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
 
   const handleExport = async (format: string) => {
     setIsExporting(format)
-    // ... (existing handleExport logic remains largely the same)
-    // Ensure toast messages are styled minimally if needed
     try {
       const response = await fetch("/api/export", {
         method: "POST",
@@ -59,7 +66,6 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
         body: JSON.stringify({
           analysisId: data._id,
           format: format === "pdf" ? "pdf" : markdownEnabled ? "markdown" : "plain",
-          includeScreenshot: false,
         }),
       })
       if (!response.ok) {
@@ -73,7 +79,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
           const success = await copyToClipboard(result.content)
           toast({ title: success ? "Copied to clipboard" : "Copy Failed" })
           break
-        case "pdf":
+        case "pdf": // This downloads HTML to be printed as PDF
           const blob = new Blob([result.content], { type: "text/html" })
           const url = URL.createObjectURL(blob)
           const a = document.createElement("a")
@@ -83,13 +89,12 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
           a.click()
           document.body.removeChild(a)
           URL.revokeObjectURL(url)
-          toast({ title: "HTML Report Downloaded", description: "Open in browser and print as PDF." })
+          toast({ title: "HTML Report Downloaded", description: "Open in browser and print to PDF." })
           break
         case "gdocs":
           createGoogleDoc(result.content, result.websiteTitle || result.title)
           toast({ title: "Google Docs File Ready", description: "Text file downloaded for Google Docs." })
           break
-        // Share functions will open new tabs, toasts confirm action initiation
         case "gmail":
           shareViaGmail({
             title: result.websiteTitle || result.title,
@@ -108,7 +113,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
           })
           toast({ title: "Opening Twitter..." })
           break
-        case "linkedin": // This is direct link share
+        case "linkedin":
           shareToLinkedIn({
             title: result.websiteTitle || result.title,
             url: result.websiteUrl || data.url,
@@ -147,54 +152,57 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
       analysisUrl: window.location.href,
     })
     const success = await copyToClipboard(postText)
-    if (success) {
-      toast({
-        title: "LinkedIn Post Copied",
-        description: "Suggested post content copied to clipboard.",
-      })
-    } else {
-      toast({
-        title: "Copy Failed",
-        description: "Could not copy content to clipboard.",
-        variant: "destructive",
-      })
-    }
+    toast({
+      title: success ? "LinkedIn Post Copied" : "Copy Failed",
+      description: success ? "Suggested post content copied." : "Could not copy content.",
+      variant: success ? "default" : "destructive",
+    })
   }
 
-  const cardClassName = "bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm"
-  const tabsListClassName = "grid grid-cols-2 sm:grid-cols-4 mb-6 bg-slate-100 dark:bg-slate-800/50 p-1 rounded-lg"
+  const cardClassName = "bg-card rounded-lg border border-border shadow-sm"
+  const tabsListClassName = "grid grid-cols-2 sm:grid-cols-4 mb-6 bg-secondary p-1 rounded-lg"
   const tabsTriggerClassName =
-    "data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 data-[state=active]:shadow-sm text-slate-600 dark:text-slate-300 data-[state=active]:text-brand-DEFAULT dark:data-[state=active]:text-brand-light py-2 text-sm"
+    "data-[state=active]:bg-card data-[state=active]:shadow-sm text-muted-foreground data-[state=active]:text-brand-text py-2.5 text-sm font-medium flex items-center justify-center gap-2"
+
+  const tabIcons = {
+    overview: BarChartHorizontalBig,
+    sustainability: Leaf,
+    content: FileSignature,
+    generate: Sparkles,
+  }
 
   return (
-    <div className="space-y-6 mb-12">
+    <div className="space-y-6 mb-12 animate-fade-in-grow">
       <Card className={cardClassName}>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start mb-6">
             <div className="mb-4 sm:mb-0">
-              <h2 className="text-2xl font-semibold text-slate-800 dark:text-slate-200">{data.title}</h2>
-              <p className="text-slate-500 dark:text-slate-400 break-all">{data.url}</p>
-              <div className="flex flex-wrap items-center mt-2 space-x-4 text-sm text-slate-600 dark:text-slate-400">
-                <span>Sustain: {data.sustainability?.score || 0}%</span>
-                <span>Perf: {data.sustainability?.performance || 0}%</span>
-                <span>Words: {data.contentStats?.wordCount || 0}</span>
+              <h2 className="text-2xl font-semibold text-foreground">{data.title}</h2>
+              <a
+                href={data.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-brand-text hover:underline flex items-center gap-1 break-all"
+              >
+                {data.url} <ExternalLink className="h-3 w-3" />
+              </a>
+              <div className="flex flex-wrap items-center mt-2 space-x-4 text-xs text-muted-foreground">
+                <span>
+                  Sustain: <strong className="text-foreground">{data.sustainability?.score || 0}%</strong>
+                </span>
+                <span>
+                  Perf: <strong className="text-foreground">{data.sustainability?.performance || 0}%</strong>
+                </span>
+                <span>
+                  Words: <strong className="text-foreground">{data.contentStats?.wordCount || 0}</strong>
+                </span>
               </div>
             </div>
             <div className="flex space-x-2 shrink-0">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onSave}
-                className="border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
-              >
+              <Button variant="outline" size="sm" onClick={onSave} className="border-input hover:bg-secondary">
                 <Save className="h-4 w-4 mr-2" /> Save
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onFavorite}
-                className="border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
-              >
+              <Button variant="outline" size="sm" onClick={onFavorite} className="border-input hover:bg-secondary">
                 <Star className="h-4 w-4 mr-2" /> Favorite
               </Button>
             </div>
@@ -202,28 +210,23 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
 
           <Tabs value={selectedTab} onValueChange={setSelectedTab}>
             <TabsList className={tabsListClassName}>
-              <TabsTrigger value="overview" className={tabsTriggerClassName}>
-                Overview
-              </TabsTrigger>
-              <TabsTrigger value="sustainability" className={tabsTriggerClassName}>
-                Sustainability
-              </TabsTrigger>
-              <TabsTrigger value="content" className={tabsTriggerClassName}>
-                Content
-              </TabsTrigger>
-              <TabsTrigger value="generate" className={tabsTriggerClassName}>
-                Generate
-              </TabsTrigger>
+              {Object.entries(tabIcons).map(([tabKey, Icon]) => (
+                <TabsTrigger key={tabKey} value={tabKey} className={tabsTriggerClassName}>
+                  <Icon className="h-4 w-4" />
+                  {tabKey.charAt(0).toUpperCase() + tabKey.slice(1)}
+                </TabsTrigger>
+              ))}
             </TabsList>
 
-            {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
               <Card className={cardClassName}>
                 <CardHeader>
-                  <CardTitle className="text-lg font-medium">Summary</CardTitle>
+                  <CardTitle className="text-lg font-medium flex items-center gap-2">
+                    <Info className="h-5 w-5 text-brand-DEFAULT" /> Summary
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-slate-600 dark:text-slate-300">{data.summary}</p>
+                  <p className="text-muted-foreground">{data.summary}</p>
                 </CardContent>
               </Card>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -232,12 +235,10 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                     <CardTitle className="text-lg font-medium">Key Points</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ul className="space-y-2 text-slate-600 dark:text-slate-300">
+                    <ul className="space-y-2 text-muted-foreground">
                       {data.keyPoints.map((point, index) => (
-                        <li key={index} className="flex items-start">
-                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-brand-light text-brand-dark text-xs font-medium mr-2 shrink-0">
-                            {index + 1}
-                          </span>
+                        <li key={index} className="flex items-start text-sm">
+                          <CheckCircle className="h-4 w-4 text-green-500 mr-2 mt-0.5 shrink-0" />
                           {point}
                         </li>
                       ))}
@@ -251,11 +252,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
                       {data.keywords.map((keyword, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
-                        >
+                        <Badge key={index} variant="secondary" className="bg-secondary text-foreground">
                           {keyword}
                         </Badge>
                       ))}
@@ -263,15 +260,110 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                   </CardContent>
                 </Card>
               </div>
-              {/* ... other overview content ... */}
+              {data.subdomains && data.subdomains.length > 0 && (
+                <Card className={cardClassName}>
+                  <CardHeader>
+                    <CardTitle className="text-lg font-medium flex items-center gap-2">
+                      <Globe className="h-5 w-5 text-brand-DEFAULT" /> Related Domains
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      {data.subdomains.map((subdomain, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center p-2.5 border border-border rounded-md bg-secondary text-sm"
+                        >
+                          <Globe className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <span className="text-foreground truncate">{subdomain}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
-            {/* Sustainability Tab */}
             <TabsContent value="sustainability" className="space-y-6">
-              {/* ... sustainability content with updated cardClassName ... */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className={cardClassName}>
+                  <CardHeader>
+                    <CardTitle className="text-lg font-medium">Sustainability Score</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-center mb-6">
+                      <div className="relative w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center">
+                        <svg className="w-full h-full" viewBox="0 0 100 100">
+                          <circle
+                            className="text-secondary dark:text-slate-700"
+                            strokeWidth="10"
+                            stroke="currentColor"
+                            fill="transparent"
+                            r="40"
+                            cx="50"
+                            cy="50"
+                          />
+                          <circle
+                            className="text-brand-DEFAULT"
+                            strokeWidth="10"
+                            strokeDasharray={251.2}
+                            strokeDashoffset={251.2 - (251.2 * (data.sustainability?.score || 0)) / 100}
+                            strokeLinecap="round"
+                            stroke="currentColor"
+                            fill="transparent"
+                            r="40"
+                            cx="50"
+                            cy="50"
+                            style={{ transition: "stroke-dashoffset 0.5s ease-out" }}
+                          />
+                        </svg>
+                        <div className="absolute text-3xl font-semibold text-foreground">
+                          {data.sustainability?.score || 0}
+                          <span className="text-lg">%</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {[
+                        { label: "Performance", value: data.sustainability?.performance || 0 },
+                        { label: "Script Optimization", value: data.sustainability?.scriptOptimization || 0 },
+                        { label: "Content Quality", value: data.sustainability?.duplicateContent || 0 },
+                      ].map((item) => (
+                        <div key={item.label}>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="text-muted-foreground">{item.label}</span>
+                            <span className="font-medium text-foreground">{item.value}%</span>
+                          </div>
+                          <Progress value={item.value} className="h-2 bg-secondary" />
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className={cardClassName}>
+                  <CardHeader>
+                    <CardTitle className="text-lg font-medium">Improvement Suggestions</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-3">
+                      {(data.sustainability?.improvements || []).map((improvement, index) => (
+                        <li key={index} className="flex items-start p-3 border border-border rounded-md bg-secondary">
+                          <div className="w-5 h-5 rounded-full bg-brand-light text-brand-dark flex items-center justify-center mr-3 text-xs font-medium shrink-0">
+                            {index + 1}
+                          </div>
+                          <span className="text-sm text-foreground">{improvement}</span>
+                        </li>
+                      ))}
+                      {(data.sustainability?.improvements || []).length === 0 && (
+                        <p className="text-sm text-muted-foreground">No specific sustainability improvements found.</p>
+                      )}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
               <Card className={cardClassName}>
                 <CardHeader>
-                  <CardTitle className="text-lg font-medium">Sustainability Metrics</CardTitle>
+                  <CardTitle className="text-lg font-medium">Sustainability Metrics Breakdown</CardTitle>
                 </CardHeader>
                 <CardContent className="h-80">
                   <SustainabilityChart data={data.sustainability} />
@@ -279,7 +371,6 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
               </Card>
             </TabsContent>
 
-            {/* Content Tab */}
             <TabsContent value="content" className="space-y-6">
               <Card className={cardClassName}>
                 <CardHeader>
@@ -288,9 +379,9 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                 <CardContent>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
                     {Object.entries(data.contentStats || {}).map(([key, value]) => (
-                      <div key={key} className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg text-center">
-                        <div className="text-2xl font-bold text-slate-800 dark:text-slate-200">{value}</div>
-                        <div className="text-sm text-slate-500 dark:text-slate-400 capitalize">
+                      <div key={key} className="bg-secondary p-4 rounded-lg text-center">
+                        <div className="text-2xl font-semibold text-foreground">{value}</div>
+                        <div className="text-xs text-muted-foreground capitalize">
                           {key.replace(/([A-Z])/g, " $1").trim()}
                         </div>
                       </div>
@@ -317,22 +408,22 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                           action: handleCopyLinkedInPost,
                         },
                         { label: "Facebook", icon: Facebook, format: "facebook" },
-                        { label: "Copy to Clipboard", icon: Clipboard, format: "clipboard" },
-                        { label: "Export HTML (Print to PDF)", icon: Download, format: "pdf" },
+                        { label: "Copy Text", icon: Clipboard, format: "clipboard" },
+                        { label: "Export HTML", icon: Download, format: "pdf" },
                       ].map((item) => {
                         const Icon = item.icon
                         return (
                           <Button
                             key={item.format}
                             variant="outline"
-                            className="justify-start border-slate-300 hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+                            className="justify-start border-input hover:bg-secondary text-sm"
                             onClick={() => (item.action ? item.action() : handleExport(item.format))}
                             disabled={!!isExporting && isExporting === item.format}
                           >
                             {isExporting === item.format ? (
                               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                             ) : (
-                              <Icon className="h-4 w-4 mr-2" />
+                              <Icon className="h-4 w-4 mr-2 text-muted-foreground" />
                             )}
                             {item.label}
                           </Button>
@@ -345,50 +436,48 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                   <CardHeader>
                     <CardTitle className="text-lg font-medium">Export Settings</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span>Export with Markdown</span>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant={markdownEnabled ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setMarkdownEnabled(true)}
-                          >
-                            Yes
-                          </Button>
-                          <Button
-                            variant={!markdownEnabled ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setMarkdownEnabled(false)}
-                          >
-                            No
-                          </Button>
-                        </div>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Export with Markdown</span>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant={markdownEnabled ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setMarkdownEnabled(true)}
+                          className={markdownEnabled ? "bg-brand-DEFAULT text-primary-foreground" : "border-input"}
+                        >
+                          Yes
+                        </Button>
+                        <Button
+                          variant={!markdownEnabled ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setMarkdownEnabled(false)}
+                          className={!markdownEnabled ? "bg-brand-DEFAULT text-primary-foreground" : "border-input"}
+                        >
+                          No
+                        </Button>
                       </div>
-
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Content Tone</label>
-                        <Select value={toneVoice} onValueChange={setToneVoice}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select tone" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="professional">Professional</SelectItem>
-                            <SelectItem value="casual">Casual</SelectItem>
-                            <SelectItem value="enthusiastic">Enthusiastic</SelectItem>
-                            <SelectItem value="technical">Technical</SelectItem>
-                            <SelectItem value="friendly">Friendly</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1 text-muted-foreground">Content Tone</label>
+                      <Select value={toneVoice} onValueChange={setToneVoice}>
+                        <SelectTrigger className="border-input">
+                          <SelectValue placeholder="Select tone" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="professional">Professional</SelectItem>
+                          <SelectItem value="casual">Casual</SelectItem>
+                          <SelectItem value="enthusiastic">Enthusiastic</SelectItem>
+                          <SelectItem value="technical">Technical</SelectItem>
+                          <SelectItem value="friendly">Friendly</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </CardContent>
                 </Card>
               </div>
             </TabsContent>
 
-            {/* Generate Tab */}
             <TabsContent value="generate" className="space-y-6">
               <ContentTypeGenerator
                 analysisId={data._id}
@@ -400,18 +489,24 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
         </CardContent>
       </Card>
 
-      <div className={cn(cardClassName, "p-6 text-center")}>
-        <h3 className="text-xl font-semibold mb-2 text-slate-800 dark:text-slate-200">Save Your Analysis</h3>
-        <p className="mb-4 text-slate-600 dark:text-slate-400">
-          Sign up to save your analysis, access historical data, and unlock more features.
-        </p>
-        <Button
-          onClick={() => onSignUpClick(userId || undefined)}
-          className="bg-brand-DEFAULT hover:bg-brand-dark text-white"
-        >
-          Sign Up Now
-        </Button>
-      </div>
+      <Card className={cn(cardClassName, "p-6 text-center bg-brand-light dark:bg-slate-800/30")}>
+        <CardHeader className="p-0 mb-3">
+          <CardTitle className="text-xl font-semibold text-brand-dark dark:text-brand-light">
+            Unlock Full Potential
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <p className="mb-4 text-brand-text dark:text-slate-300 text-sm">
+            Sign up to save your analysis, access historical data, and export to PDF.
+          </p>
+          <Button
+            onClick={() => onSignUpClick(userId || undefined)}
+            className="bg-brand-DEFAULT hover:bg-brand-dark text-primary-foreground shadow-sm hover:shadow-md transition-shadow"
+          >
+            Sign Up Now
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   )
 }

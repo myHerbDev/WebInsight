@@ -7,8 +7,10 @@ import { LoadingAnimation } from "@/components/loading-animation"
 import { ResultsSection } from "@/components/results-section"
 import { SignUpModal } from "@/components/sign-up-modal"
 import { WebsiteForm } from "@/components/website-form"
-import { toast } from "@/components/ui/use-toast"
+import { toast, Toaster } from "@/components/ui/use-toast" // Ensure Toaster is imported
 import type { WebsiteData } from "@/types/website-data"
+import { AlertCircle } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
@@ -34,16 +36,17 @@ export default function Home() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to analyze website")
+        throw new Error(data.error || data.message || "Failed to analyze website")
       }
 
       setWebsiteData(data)
-    } catch (error) {
-      console.error("Error analyzing website:", error)
-      setError("Failed to analyze the website. Please try again.")
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred."
+      console.error("Error analyzing website:", err)
+      setError(errorMessage)
       toast({
-        title: "Error",
-        description: "Failed to analyze the website. Please try again.",
+        title: "Analysis Error",
+        description: errorMessage,
         variant: "destructive",
       })
     } finally {
@@ -73,7 +76,6 @@ export default function Home() {
         throw new Error(data.error || `Failed to ${type} analysis`)
       }
 
-      // If we got a userId back and don't have one yet, save it
       if (data.userId && !userId) {
         setUserId(data.userId)
       }
@@ -82,41 +84,40 @@ export default function Home() {
         title: "Success",
         description: data.message || `${type === "favorite" ? "Added to favorites" : "Analysis saved"}`,
       })
-    } catch (error) {
-      console.error(`Error ${type}ing analysis:`, error)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred."
+      console.error(`Error ${type}ing analysis:`, err)
       toast({
         title: "Error",
-        description: `Failed to ${type} the analysis. Please try again.`,
+        description: `Failed to ${type} the analysis. ${errorMessage}`,
         variant: "destructive",
       })
     }
   }
 
-  const handleSignUp = (tempUserId: string) => {
-    // If we have a userId from a temporary save, pass it to the modal
-    setUserId(tempUserId || userId)
+  const handleSignUp = (tempUserId?: string) => {
+    setUserId(tempUserId || userId || null) // Ensure userId is string or null
     setShowSignUpModal(true)
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 py-8 sm:py-12">
         <div className="max-w-4xl mx-auto">
           <WebsiteForm onSubmit={handleAnalyzeWebsite} />
 
           {isLoading && <LoadingAnimation />}
 
           {error && !isLoading && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mt-6">
-              <p className="text-red-800 dark:text-red-300">{error}</p>
-              <p className="text-sm text-red-600 dark:text-red-400 mt-2">
-                Please check your URL and try again. If the problem persists, try a different website.
-              </p>
-            </div>
+            <Alert variant="destructive" className="mt-6">
+              <AlertCircle className="h-5 w-5" />
+              <AlertTitle>Analysis Failed</AlertTitle>
+              <AlertDescription>{error} Please check the URL or try a different website.</AlertDescription>
+            </Alert>
           )}
 
-          {websiteData && (
+          {websiteData && !isLoading && (
             <ResultsSection
               data={websiteData}
               onSignUpClick={handleSignUp}
@@ -128,7 +129,7 @@ export default function Home() {
         </div>
       </main>
       <Footer />
-
+      <Toaster /> {/* Add Toaster for shadcn/ui toasts */}
       {showSignUpModal && (
         <SignUpModal
           onClose={() => setShowSignUpModal(false)}
@@ -137,8 +138,8 @@ export default function Home() {
             setUserId(newUserId)
             setShowSignUpModal(false)
             toast({
-              title: "Success",
-              description: "Account created successfully!",
+              title: "Account Created",
+              description: "You've successfully signed up!",
             })
           }}
         />
