@@ -1,43 +1,52 @@
 "use client"
 
-import { Search } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Brain } from "lucide-react" // Using Zap or Brain for AI feel
 
 interface LogoProps {
   size?: "sm" | "md" | "lg"
   showText?: boolean
   className?: string
+  iconOnly?: boolean
 }
 
-export function Logo({ size = "md", showText = true, className = "" }: LogoProps) {
-  const sizeClasses = {
-    sm: "w-6 h-6", // Adjusted for better visual balance
-    md: "w-7 h-7",
-    lg: "w-9 h-9",
+export function Logo({ size = "md", showText = true, className = "", iconOnly = false }: LogoProps) {
+  const iconContainerSizeClasses = {
+    sm: "w-8 h-8", // Adjusted for new design
+    md: "w-10 h-10",
+    lg: "w-12 h-12",
   }
 
   const iconSizeClasses = {
-    sm: "w-3.5 h-3.5",
-    md: "w-4 h-4",
-    lg: "w-5 h-5",
+    sm: "w-4 h-4",
+    md: "w-5 h-5",
+    lg: "w-6 h-6",
   }
 
   const textSizeClasses = {
-    sm: "text-xl", // Slightly larger for 'sm'
+    sm: "text-xl",
     md: "text-2xl",
     lg: "text-3xl",
   }
 
+  const IconComponent = Brain // Or Zap, or a custom SVG path
+
   return (
-    <div className={`flex items-center space-x-2 ${className}`}>
+    <div className={cn("flex items-center", className)}>
       <div
-        className={`${sizeClasses[size]} rounded-md bg-brand-DEFAULT flex items-center justify-center text-white shadow-sm`}
+        className={cn(
+          iconContainerSizeClasses[size],
+          "rounded-lg flex items-center justify-center text-white transition-all duration-300 ease-out",
+          "bg-primary-gradient hover:shadow-lg hover:scale-105", // Gradient background
+        )}
+        style={{ backgroundSize: "200% 200%" }} // For gradient animation if desired
       >
-        <Search className={`${iconSizeClasses[size]}`} />
+        <IconComponent className={cn(iconSizeClasses[size])} />
       </div>
 
-      {showText && (
-        <h1 className={`${textSizeClasses[size]} font-semibold text-slate-800 dark:text-slate-100 tracking-tight`}>
-          Web<span className="text-brand-DEFAULT">InSight</span>
+      {!iconOnly && showText && (
+        <h1 className={cn(textSizeClasses[size], "font-semibold text-foreground ml-2.5 tracking-tight")}>
+          Web<span className="text-transparent bg-clip-text bg-primary-gradient">InSight</span>
         </h1>
       )}
     </div>

@@ -159,10 +159,10 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
     })
   }
 
-  const cardClassName = "bg-card rounded-lg border border-border shadow-sm"
-  const tabsListClassName = "grid grid-cols-2 sm:grid-cols-4 mb-6 bg-secondary p-1 rounded-lg"
+  const cardClassName = "bg-card rounded-xl border border-border/70 shadow-lg overflow-hidden"
+  const tabsListClassName = "grid grid-cols-2 sm:grid-cols-4 mb-6 bg-secondary/70 p-1 rounded-lg backdrop-blur-sm"
   const tabsTriggerClassName =
-    "data-[state=active]:bg-card data-[state=active]:shadow-sm text-muted-foreground data-[state=active]:text-brand-text py-2.5 text-sm font-medium flex items-center justify-center gap-2"
+    "data-[state=active]:bg-card data-[state=active]:shadow-md text-muted-foreground data-[state=active]:text-primary-gradient-start py-2.5 text-sm font-medium flex items-center justify-center gap-2 rounded-md transition-all"
 
   const tabIcons = {
     overview: BarChartHorizontalBig,
@@ -172,8 +172,8 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
   }
 
   return (
-    <div className="space-y-6 mb-12 animate-fade-in-grow">
-      <Card className={cardClassName}>
+    <div className="space-y-8 mb-12 animate-slide-up-fade-in">
+      <Card className={cn(cardClassName, "mt-0")}>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start mb-6">
             <div className="mb-4 sm:mb-0">
@@ -230,7 +230,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                 </CardContent>
               </Card>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className={cardClassName}>
+                <Card className="rounded-xl shadow-md border-border/60 bg-secondary/30 dark:bg-secondary/20 backdrop-blur-sm">
                   <CardHeader>
                     <CardTitle className="text-lg font-medium">Key Points</CardTitle>
                   </CardHeader>
@@ -245,7 +245,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                     </ul>
                   </CardContent>
                 </Card>
-                <Card className={cardClassName}>
+                <Card className="rounded-xl shadow-md border-border/60 bg-secondary/30 dark:bg-secondary/20 backdrop-blur-sm">
                   <CardHeader>
                     <CardTitle className="text-lg font-medium">Keywords</CardTitle>
                   </CardHeader>
@@ -261,7 +261,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                 </Card>
               </div>
               {data.subdomains && data.subdomains.length > 0 && (
-                <Card className={cardClassName}>
+                <Card className="rounded-xl shadow-md border-border/60 bg-secondary/30 dark:bg-secondary/20 backdrop-blur-sm">
                   <CardHeader>
                     <CardTitle className="text-lg font-medium flex items-center gap-2">
                       <Globe className="h-5 w-5 text-brand-DEFAULT" /> Related Domains
@@ -286,7 +286,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
 
             <TabsContent value="sustainability" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className={cardClassName}>
+                <Card className="rounded-xl shadow-md border-border/60 bg-secondary/30 dark:bg-secondary/20 backdrop-blur-sm">
                   <CardHeader>
                     <CardTitle className="text-lg font-medium">Sustainability Score</CardTitle>
                   </CardHeader>
@@ -340,7 +340,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                     </div>
                   </CardContent>
                 </Card>
-                <Card className={cardClassName}>
+                <Card className="rounded-xl shadow-md border-border/60 bg-secondary/30 dark:bg-secondary/20 backdrop-blur-sm">
                   <CardHeader>
                     <CardTitle className="text-lg font-medium">Improvement Suggestions</CardTitle>
                   </CardHeader>
@@ -361,7 +361,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                   </CardContent>
                 </Card>
               </div>
-              <Card className={cardClassName}>
+              <Card className="rounded-xl shadow-md border-border/60 bg-card dark:bg-card backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="text-lg font-medium">Sustainability Metrics Breakdown</CardTitle>
                 </CardHeader>
@@ -372,7 +372,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
             </TabsContent>
 
             <TabsContent value="content" className="space-y-6">
-              <Card className={cardClassName}>
+              <Card className="rounded-xl shadow-md border-border/60 bg-secondary/30 dark:bg-secondary/20 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle className="text-lg font-medium">Content Statistics</CardTitle>
                 </CardHeader>
@@ -390,7 +390,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                 </CardContent>
               </Card>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className={cardClassName}>
+                <Card className="rounded-xl shadow-md border-border/60 bg-secondary/30 dark:bg-secondary/20 backdrop-blur-sm">
                   <CardHeader>
                     <CardTitle className="text-lg font-medium">Export & Share</CardTitle>
                   </CardHeader>
@@ -432,7 +432,7 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
                     </div>
                   </CardContent>
                 </Card>
-                <Card className={cardClassName}>
+                <Card className="rounded-xl shadow-md border-border/60 bg-secondary/30 dark:bg-secondary/20 backdrop-blur-sm">
                   <CardHeader>
                     <CardTitle className="text-lg font-medium">Export Settings</CardTitle>
                   </CardHeader>
@@ -479,17 +479,24 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
             </TabsContent>
 
             <TabsContent value="generate" className="space-y-6">
-              <ContentTypeGenerator
-                analysisId={data._id}
-                tone={toneVoice}
-                onSignUpClick={() => onSignUpClick(userId || undefined)}
-              />
+              <Card className="rounded-xl shadow-md border-border/60 bg-card dark:bg-card backdrop-blur-sm">
+                <ContentTypeGenerator
+                  analysisId={data._id}
+                  tone={toneVoice}
+                  onSignUpClick={() => onSignUpClick(userId || undefined)}
+                />
+              </Card>
             </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
 
-      <Card className={cn(cardClassName, "p-6 text-center bg-brand-light dark:bg-slate-800/30")}>
+      <Card
+        className={cn(
+          cardClassName,
+          "p-6 sm:p-8 text-center bg-gradient-to-br from-primary-gradient-start/10 via-primary-gradient-middle/5 to-primary-gradient-end/10 dark:from-primary-gradient-start/5 dark:via-primary-gradient-middle/0 dark:to-primary-gradient-end/5",
+        )}
+      >
         <CardHeader className="p-0 mb-3">
           <CardTitle className="text-xl font-semibold text-brand-dark dark:text-brand-light">
             Unlock Full Potential
@@ -501,7 +508,8 @@ export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId
           </p>
           <Button
             onClick={() => onSignUpClick(userId || undefined)}
-            className="bg-brand-DEFAULT hover:bg-brand-dark text-primary-foreground shadow-sm hover:shadow-md transition-shadow"
+            className="bg-primary-gradient hover:opacity-90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.03]"
+            style={{ backgroundSize: "200% auto" }}
           >
             Sign Up Now
           </Button>

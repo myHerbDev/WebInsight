@@ -4,79 +4,93 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%; /* Light mode background */
-    --foreground: 215 25% 27%; /* Dark gray text */
+    /* Light Mode - Google AI Inspired Palette */
+    --background: 220 20% 97%; /* Lighter, slightly cool off-white */
+    --foreground: 220 15% 25%; /* Dark, desaturated blue-gray for text */
 
-    --card: 0 0% 100%; /* White cards */
-    --card-foreground: 215 25% 27%;
+    --card: 0 0% 100%; /* Clean white cards */
+    --card-foreground: 220 15% 25%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 27%;
+    --popover-foreground: 220 15% 25%;
 
-    --primary: 210 90% 50%; /* Google-like blue */
-    --primary-foreground: 0 0% 100%; /* White text on primary */
+    /* Primary Gradient - Core of the new theme */
+    --primary-gradient-start: 210 100% 55%; /* Vibrant Blue */
+    --primary-gradient-middle: 260 100% 65%; /* Purple */
+    --primary-gradient-end: 310 100% 50%; /* Magenta/Pinkish */
 
-    --secondary: 210 20% 96%; /* Very light gray for secondary elements */
-    --secondary-foreground: 215 25% 27%;
+    --primary-gradient-start-rgb: 25, 150, 255;
+    --primary-gradient-middle-rgb: 128, 77, 255;
+    --primary-gradient-end-rgb: 255, 25, 178;
 
-    --muted: 210 20% 92%; /* Lighter muted background */
-    --muted-foreground: 210 15% 45%; /* Softer muted text */
+    --primary: 210 100% 55%; /* Fallback solid primary */
+    --primary-foreground: 0 0% 100%;
 
-    --accent: 210 90% 95%; /* Light blue accent background */
-    --accent-foreground: 210 90% 40%; /* Darker blue text on accent */
+    --secondary: 220 20% 92%; /* Lighter cool gray for secondary elements */
+    --secondary-foreground: 220 10% 40%;
 
-    --destructive: 0 72% 51%; /* Clear red */
+    --muted: 220 20% 88%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 210 100% 95%; /* Very light blue accent */
+    --accent-foreground: 210 100% 45%;
+
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 90%; /* Lighter border */
-    --input: 210 20% 88%; /* Slightly darker input border for better visibility on light gradients */
-    --ring: 210 90% 60%; /* Ring color for focus, can be brand color */
+    --border: 220 20% 85%; /* Softer border */
+    --input: 220 20% 90%; /* Input border */
+    --ring: 210 100% 60%; /* Ring color for focus */
 
-    --radius: 0.5rem; /* Default border radius */
+    --radius: 0.75rem; /* Slightly larger default radius */
 
-    /* Brand specific colors */
-    --brand-default: 210 90% 50%;
-    --brand-default-rgb: 51, 153, 255; /* RGB for Tailwind shadow color utility */
-    --brand-light: 210 90% 95%;
-    --brand-dark: 210 90% 45%;
-    --brand-text: 210 90% 55%;
+    /* Brand specific colors (can be same as primary or distinct) */
+    --brand-default: hsl(var(--primary-gradient-start));
+    --brand-default-rgb: var(--primary-gradient-start-rgb);
+    --brand-light: hsl(var(--primary-gradient-start) / 0.1);
+    --brand-dark: hsl(var(--primary-gradient-middle));
+    --brand-text: hsl(var(--primary-gradient-start));
   }
 
   .dark {
-    --background: 220 18% 10%; /* Darker background for Gemini feel */
-    --foreground: 210 20% 90%; /* Light gray text */
+    /* Dark Mode - Google AI Inspired Palette */
+    --background: 220 25% 8%; /* Very dark, slightly cool background */
+    --foreground: 220 15% 85%; /* Light gray text */
 
-    --card: 220 18% 13%; /* Darker cards */
-    --card-foreground: 210 20% 90%;
+    --card: 220 20% 12%; /* Darker cards */
+    --card-foreground: 220 15% 85%;
 
-    --popover: 220 18% 13%;
-    --popover-foreground: 210 20% 90%;
+    --popover: 220 20% 12%;
+    --popover-foreground: 220 15% 85%;
 
-    --primary: 210 90% 55%; /* Slightly lighter blue for dark mode */
+    /* Primary Gradient remains vibrant */
+    /* --primary-gradient-start, middle, end are the same */
+
+    --primary: 210 100% 60%; /* Fallback solid primary for dark */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 18% 18%; /* Darker secondary */
-    --secondary-foreground: 210 20% 90%;
+    --secondary: 220 20% 15%; /* Darker cool gray */
+    --secondary-foreground: 220 10% 70%;
 
-    --muted: 220 18% 22%; /* Darker muted */
-    --muted-foreground: 210 15% 65%;
+    --muted: 220 20% 20%;
+    --muted-foreground: 220 10% 60%;
 
-    --accent: 210 90% 22%; /* Darker accent */
-    --accent-foreground: 210 90% 75%;
+    --accent: 210 100% 18%; /* Darker blue accent */
+    --accent-foreground: 210 100% 70%;
 
-    --destructive: 0 62% 50%;
+    --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 18% 25%; /* Darker border */
-    --input: 220 18% 25%;
-    --ring: 210 90% 65%;
+    --border: 220 15% 22%; /* Softer dark border */
+    --input: 220 15% 25%;
+    --ring: 210 100% 65%;
 
     /* Brand specific colors for dark mode */
-    --brand-default: 210 90% 55%;
-    --brand-default-rgb: 77, 166, 255; /* RGB for Tailwind shadow color utility */
-    --brand-light: 210 90% 22%;
-    --brand-dark: 210 90% 50%;
-    --brand-text: 210 90% 65%;
+    --brand-default: hsl(var(--primary-gradient-start));
+    --brand-default-rgb: var(--primary-gradient-start-rgb);
+    --brand-light: hsl(var(--primary-gradient-start) / 0.15);
+    --brand-dark: hsl(var(--primary-gradient-middle));
+    --brand-text: hsl(var(--primary-gradient-start));
   }
 }
 
@@ -85,12 +99,17 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  /* Custom selection style */
+  ::selection {
+    background-color: hsl(var(--primary) / 0.7);
+    color: hsl(var(--primary-foreground));
   }
 }
 
-/* Inter Font Setup */
+/* Inter Font Setup - remains the same */
 @font-face {
   font-family: "Inter";
   font-style: normal;
@@ -107,19 +126,21 @@ body {
   font-family: var(--font-inter);
 }
 
-/* Custom scrollbar for a cleaner look (optional) */
+/* Custom scrollbar for a cleaner look */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-secondary/50; /* More subtle track */
+  @apply bg-secondary/30 dark:bg-secondary/20;
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted/70; /* More subtle thumb */
+  @apply bg-muted/50 dark:bg-muted/40;
   border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/60;
+  @apply bg-muted-foreground/50 dark:bg-muted-foreground/40;
 }

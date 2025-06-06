@@ -14,7 +14,7 @@ const config = {
   theme: {
     container: {
       center: true,
-      padding: "1.5rem",
+      padding: "1.5rem", // Increased padding for more whitespace
       screens: {
         "2xl": "1400px",
       },
@@ -32,6 +32,11 @@ const config = {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          gradient: {
+            start: "hsl(var(--primary-gradient-start))",
+            middle: "hsl(var(--primary-gradient-middle))",
+            end: "hsl(var(--primary-gradient-end))",
+          },
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -65,18 +70,19 @@ const config = {
         },
       },
       borderRadius: {
-        lg: "0.75rem", // Maintained from previous
-        xl: "1.0rem", // Added for larger elements like the form card
-        md: "0.5rem",
-        sm: "0.25rem",
+        lg: "var(--radius)", // Use CSS variable
+        xl: "calc(var(--radius) + 0.5rem)",
+        md: "calc(var(--radius) - 0.25rem)",
+        sm: "calc(var(--radius) - 0.375rem)",
       },
       boxShadow: {
-        sm: "0 1px 2px 0 rgba(0, 0, 0, 0.03)",
-        DEFAULT: "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)",
-        md: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05)",
-        // Adjusted for a slightly more pronounced but still minimal "Gemini" feel
-        lg: "0 8px 25px -8px rgba(var(--brand-default-rgb), 0.1), 0 4px 10px -6px rgba(var(--brand-default-rgb), 0.1)",
-        xl: "0 15px 35px -15px rgba(var(--brand-default-rgb), 0.15), 0 8px 15px -10px rgba(var(--brand-default-rgb), 0.15)",
+        // Softer, more diffused shadows
+        sm: "0 2px 4px 0 rgba(0,0,0,0.03)",
+        DEFAULT: "0 3px 6px 0 rgba(0,0,0,0.04), 0 2px 4px -1px rgba(0,0,0,0.04)",
+        md: "0 6px 12px -2px rgba(0,0,0,0.05), 0 3px 7px -3px rgba(0,0,0,0.05)",
+        lg: "0 10px 20px -5px rgba(var(--primary-gradient-start-rgb),0.07), 0 5px 10px -5px rgba(var(--primary-gradient-start-rgb),0.07)",
+        xl: "0 20px 30px -10px rgba(var(--primary-gradient-start-rgb),0.1), 0 8px 15px -8px rgba(var(--primary-gradient-start-rgb),0.1)",
+        "inner-soft": "inset 0 1px 2px 0 rgba(0,0,0,0.03)",
         none: "none",
       },
       keyframes: {
@@ -88,37 +94,49 @@ const config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
-        pulseScale: {
-          "0%, 100%": { transform: "scale(1)", opacity: "1" },
-          "50%": { transform: "scale(1.1)", opacity: "0.7" },
+        // New "Google AI" style loading animation
+        gradientWave: {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
         },
-        orbit: {
-          "0%": { transform: "rotate(0deg) translateX(30px) rotate(0deg) scale(0.5)", opacity: "0" },
-          "20%": { opacity: "1", transform: "rotate(72deg) translateX(30px) rotate(-72deg) scale(1)" },
-          "80%": { opacity: "1", transform: "rotate(288deg) translateX(30px) rotate(-288deg) scale(1)" },
-          "100%": { transform: "rotate(360deg) translateX(30px) rotate(-360deg) scale(0.5)", opacity: "0" },
+        subtlePulse: {
+          "0%, 100%": { opacity: "1", transform: "scale(1)" },
+          "50%": { opacity: "0.85", transform: "scale(0.98)" },
         },
-        fadeInGrow: {
-          "0%": { opacity: "0", transform: "scale(0.8)" },
-          "100%": { opacity: "1", transform: "scale(1)" },
+        fadeIn: {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
         },
-        // New animation for the Sparkles icon
+        slideUpFadeIn: {
+          from: { opacity: "0", transform: "translateY(10px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        aurora: {
+          from: { backgroundPosition: "50% 50%, 50% 50%" },
+          to: { backgroundPosition: "350% 50%, 350% 50%" },
+        },
         pulseGlow: {
-          "0%, 100%": { opacity: "0.6", transform: "scale(1)" },
-          "50%": { opacity: "1", transform: "scale(1.2)" },
+          // Kept from previous, might be useful
+          "0%, 100%": { opacity: "0.7", filter: "drop-shadow(0 0 3px hsl(var(--primary-gradient-start)))" },
+          "50%": { opacity: "1", filter: "drop-shadow(0 0 10px hsl(var(--primary-gradient-middle)))" },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "pulse-scale": "pulseScale 2s infinite ease-in-out",
-        orbit1: "orbit 3s infinite linear",
-        orbit2: "orbit 3s infinite linear 0.6s",
-        orbit3: "orbit 3s infinite linear 1.2s",
-        orbit4: "orbit 3s infinite linear 1.8s",
-        "fade-in-grow": "fadeInGrow 0.5s ease-out forwards",
-        // New animation class
+        "gradient-wave": "gradientWave 3s ease infinite",
+        "subtle-pulse": "subtlePulse 2.5s infinite ease-in-out",
+        "fade-in": "fadeIn 0.5s ease-out forwards",
+        "slide-up-fade-in": "slideUpFadeIn 0.5s ease-out forwards",
+        aurora: "aurora 60s linear infinite",
         "pulse-glow": "pulseGlow 2.5s infinite ease-in-out",
+      },
+      backgroundImage: {
+        "aurora-gradient":
+          "radial-gradient(ellipse at 50% 0%, hsl(var(--primary-gradient-start) / 0.2) 0%, transparent 70%), radial-gradient(ellipse at 50% 100%, hsl(var(--primary-gradient-end) / 0.2) 0%, transparent 70%)",
+        "primary-gradient":
+          "linear-gradient(90deg, hsl(var(--primary-gradient-start)), hsl(var(--primary-gradient-middle)), hsl(var(--primary-gradient-end)))",
       },
     },
   },

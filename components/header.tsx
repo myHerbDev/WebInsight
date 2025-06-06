@@ -3,7 +3,6 @@
 import {
   Moon,
   Sun,
-  Menu,
   User,
   LogOut,
   Settings,
@@ -12,6 +11,7 @@ import {
   Compass,
   ShieldCheck,
   Lightbulb,
+  LayoutGrid,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
@@ -39,29 +39,34 @@ export function Header() {
   const pathname = usePathname()
 
   return (
-    <header className="border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-      <div className="container mx-auto px-4 h-16 flex justify-between items-center">
+    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center" aria-label="WebInSight Home">
           <Logo size="md" showText={true} />
         </Link>
 
-        <nav className="hidden md:flex items-center space-x-1">
+        <nav className="hidden md:flex items-center space-x-1.5">
           {navItems.map((item) => {
             const Icon = item.icon
+            const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2",
-                  pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))
-                    ? "bg-secondary text-primary dark:bg-slate-800 dark:text-brand-light"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground dark:hover:bg-slate-800 dark:hover:text-slate-50",
+                  "group relative px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2",
+                  isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                 )}
-                aria-current={pathname === item.href ? "page" : undefined}
+                aria-current={isActive ? "page" : undefined}
               >
-                <Icon className="h-4 w-4" />
+                <Icon
+                  className={cn(
+                    "h-4 w-4 transition-colors",
+                    isActive ? "text-primary-gradient-start" : "text-muted-foreground group-hover:text-foreground",
+                  )}
+                />
                 <span>{item.label}</span>
+                {isActive && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary-gradient"></span>}
               </Link>
             )
           })}
@@ -73,9 +78,11 @@ export function Header() {
             size="icon"
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             aria-label="Toggle theme"
-            className="text-muted-foreground hover:text-foreground dark:hover:text-slate-300"
+            className="text-muted-foreground hover:text-foreground hover:bg-accent/50"
           >
-            {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">Toggle theme</span>
           </Button>
 
           <DropdownMenu>
@@ -83,26 +90,26 @@ export function Header() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-muted-foreground hover:text-foreground dark:hover:text-slate-300"
+                className="text-muted-foreground hover:text-foreground hover:bg-accent/50"
                 aria-label="User menu"
               >
                 <User className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-card border-border shadow-md">
-              <DropdownMenuItem asChild>
-                <Link href="/profile" className="flex items-center">
-                  <UserCircle2 className="h-4 w-4 mr-2 text-muted-foreground" /> Profile
+            <DropdownMenuContent align="end" className="w-56 bg-card border-border shadow-lg rounded-xl mt-1">
+              <DropdownMenuItem asChild className="cursor-pointer hover:bg-accent/70">
+                <Link href="/profile" className="flex items-center py-2 px-3">
+                  <UserCircle2 className="h-4 w-4 mr-2.5 text-muted-foreground" /> Profile
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/settings" className="flex items-center">
-                  <Settings className="h-4 w-4 mr-2 text-muted-foreground" /> Settings
+              <DropdownMenuItem asChild className="cursor-pointer hover:bg-accent/70">
+                <Link href="/settings" className="flex items-center py-2 px-3">
+                  <Settings className="h-4 w-4 mr-2.5 text-muted-foreground" /> Settings
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-border" />
-              <DropdownMenuItem className="flex items-center text-destructive hover:!bg-destructive/10">
-                <LogOut className="h-4 w-4 mr-2" /> Sign Out
+              <DropdownMenuSeparator className="bg-border/70 my-1" />
+              <DropdownMenuItem className="flex items-center text-destructive hover:!bg-destructive/10 py-2 px-3 cursor-pointer">
+                <LogOut className="h-4 w-4 mr-2.5" /> Sign Out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -114,18 +121,18 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-muted-foreground hover:text-foreground dark:hover:text-slate-300"
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent/50"
                   aria-label="Open navigation menu"
                 >
-                  <Menu className="h-5 w-5" />
+                  <LayoutGrid className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-card border-border shadow-md">
+              <DropdownMenuContent align="end" className="w-56 bg-card border-border shadow-lg rounded-xl mt-1">
                 {navItems.map((item) => {
                   const Icon = item.icon
                   return (
-                    <DropdownMenuItem key={item.href} asChild>
-                      <Link href={item.href} className="flex items-center space-x-2">
+                    <DropdownMenuItem key={item.href} asChild className="cursor-pointer hover:bg-accent/70">
+                      <Link href={item.href} className="flex items-center space-x-2.5 py-2 px-3">
                         <Icon className="h-4 w-4 text-muted-foreground" />
                         <span>{item.label}</span>
                       </Link>

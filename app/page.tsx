@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { Footer } from "@/components/footer"
 import { Header } from "@/components/header"
-import { LoadingAnimation } from "@/components/loading-animation"
 import { ResultsSection } from "@/components/results-section"
 import { SignUpModal } from "@/components/sign-up-modal"
 import { toast } from "@/components/ui/use-toast"
@@ -12,6 +11,7 @@ import type { WebsiteData } from "@/types/website-data"
 import { AlertCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { WebsiteForm } from "@/components/website-form"
+import { LoadingAnimation } from "@/components/loading-animation"
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
@@ -102,30 +102,29 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
+    <div className="min-h-screen flex flex-col text-foreground">
       <Header />
       <main className="flex-1 container mx-auto px-4 py-8 sm:py-12">
         <div className="max-w-4xl mx-auto">
           <WebsiteForm onSubmit={handleAnalyzeWebsite} />
-
           {isLoading && <LoadingAnimation />}
-
           {error && !isLoading && (
-            <Alert variant="destructive" className="mt-6">
+            <Alert variant="destructive" className="mt-8 shadow-lg rounded-xl p-6">
               <AlertCircle className="h-5 w-5" />
-              <AlertTitle>Analysis Failed</AlertTitle>
+              <AlertTitle className="font-semibold">Analysis Failed</AlertTitle>
               <AlertDescription>{error} Please check the URL or try a different website.</AlertDescription>
             </Alert>
           )}
-
           {websiteData && !isLoading && (
-            <ResultsSection
-              data={websiteData}
-              onSignUpClick={handleSignUp}
-              onSave={() => handleSaveAnalysis("save")}
-              onFavorite={() => handleSaveAnalysis("favorite")}
-              userId={userId}
-            />
+            <div className="mt-12">
+              <ResultsSection
+                data={websiteData}
+                onSignUpClick={handleSignUp}
+                onSave={() => handleSaveAnalysis("save")}
+                onFavorite={() => handleSaveAnalysis("favorite")}
+                userId={userId}
+              />
+            </div>
           )}
         </div>
       </main>

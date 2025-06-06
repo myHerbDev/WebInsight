@@ -1,35 +1,32 @@
-import { Search, BarChart2, Database, Settings2, Lightbulb } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 export function LoadingAnimation() {
-  const orbitingIcons = [
-    { Icon: BarChart2, delay: "animate-orbit1", color: "text-blue-500" },
-    { Icon: Database, delay: "animate-orbit2", color: "text-green-500" },
-    { Icon: Settings2, delay: "animate-orbit3", color: "text-purple-500" },
-    { Icon: Lightbulb, delay: "animate-orbit4", color: "text-yellow-500" },
-  ]
+  const barCount = 5
+  const animationDuration = 1.5 // seconds
 
   return (
-    <div className="flex flex-col items-center justify-center py-16 min-h-[300px]">
-      <div className="relative w-20 h-20 mb-8">
-        {/* Central Pulsing Icon */}
-        <Search className="w-12 h-12 text-brand-DEFAULT absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse-scale" />
-
-        {/* Orbiting Icons */}
-        {orbitingIcons.map(({ Icon, delay, color }, index) => (
+    <div className="flex flex-col items-center justify-center py-20 min-h-[350px] space-y-6">
+      <div className="flex items-end justify-center space-x-1.5 h-12">
+        {Array.from({ length: barCount }).map((_, i) => (
           <div
-            key={index}
-            className={`absolute top-1/2 left-1/2 w-6 h-6 ${delay}`}
-            style={{ transformOrigin: "0 0" }} // Orbit around the center of the parent
-          >
-            <Icon className={`w-full h-full ${color}`} />
-          </div>
+            key={i}
+            className={cn(
+              "w-2.5 rounded-full bg-primary-gradient animate-gradient-wave", // Using the gradient
+            )}
+            style={{
+              animationDelay: `${i * (animationDuration / (barCount * 2))}s`,
+              animationDuration: `${animationDuration}s`,
+              height: `${1 + (i % 3) * 0.75}rem`, // Varying heights: 1rem, 1.75rem, 2.5rem
+              backgroundSize: "300% 300%", // For gradient animation
+            }}
+          />
         ))}
       </div>
-      <p className="text-lg font-medium text-slate-700 dark:text-slate-300 animate-fade-in-grow">
+      <p className="text-lg font-medium text-foreground animate-fade-in" style={{ animationDelay: "0.2s" }}>
         Gathering WebInSights...
       </p>
-      <p className="text-sm text-slate-500 dark:text-slate-400 animate-fade-in-grow" style={{ animationDelay: "0.2s" }}>
-        This might take a moment.
+      <p className="text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: "0.4s" }}>
+        Our AI is working its magic. This might take a moment.
       </p>
     </div>
   )
