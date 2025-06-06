@@ -10,16 +10,20 @@ export function Footer() {
     { href: "/terms", label: "Terms of Service" },
     { href: "/contact", label: "Contact" },
   ]
+  const legalLinks = [
+    { href: "/legal", label: "Legal Information" },
+    { href: "/complaints", label: "File a Complaint" },
+  ]
   const socialLinks = [
-    { href: "https://github.com/myHerbDev/websight-analyzer", label: "GitHub", icon: Github },
-    { href: "https://x.com/myherbdev", label: "Twitter", icon: Twitter }, // Assuming X/Twitter
-    { href: "https://linkedin.com/in/yourprofile", label: "LinkedIn", icon: Linkedin }, // Replace with actual LinkedIn
+    { href: "https://github.com/myHerbDev", label: "GitHub", icon: Github },
+    { href: "https://x.com/myherb1", label: "Twitter", icon: Twitter },
+    { href: "https://linkedin.com/company/myherb/", label: "LinkedIn", icon: Linkedin },
   ]
 
   return (
     <footer className="bg-secondary/50 border-t border-border/60 dark:bg-background/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-10">
           <div className="md:col-span-2 space-y-4">
             <Logo size="md" showText={true} />
             <p className="text-sm text-muted-foreground max-w-md">
@@ -31,6 +35,21 @@ export function Footer() {
             <h5 className="font-semibold text-foreground mb-3.5">Quick Links</h5>
             <ul className="space-y-2.5">
               {footerLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-muted-foreground hover:text-primary-gradient-start hover:underline transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h5 className="font-semibold text-foreground mb-3.5">Legal</h5>
+            <ul className="space-y-2.5">
+              {legalLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}

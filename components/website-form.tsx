@@ -28,16 +28,16 @@ export function WebsiteForm({ onSubmit }: WebsiteFormProps) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-border/70 shadow-xl p-6 sm:p-10 mb-12 relative overflow-hidden",
-        "bg-card dark:bg-card", // Cleaner card background
+        "rounded-3xl border border-white/20 shadow-2xl p-6 sm:p-10 mb-12 relative overflow-hidden",
+        "bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl", // Magic Gloss effect
       )}
     >
-      {/* Subtle gradient glow effect from corners */}
+      {/* Enhanced aurora glow */}
       <div
-        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] -z-10 opacity-20 dark:opacity-10 animate-aurora"
+        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] -z-10 opacity-30 dark:opacity-20 animate-aurora"
         style={{
           backgroundImage:
-            "radial-gradient(ellipse at center, hsl(var(--primary-gradient-start) / 0.3) 0%, transparent 40%), radial-gradient(ellipse at center, hsl(var(--primary-gradient-end) / 0.3) 0%, transparent 40%)",
+            "radial-gradient(ellipse at center, hsl(var(--primary-gradient-start) / 0.4) 0%, transparent 35%), radial-gradient(ellipse at center, hsl(var(--primary-gradient-end) / 0.4) 0%, transparent 35%)",
         }}
       />
 
@@ -61,7 +61,7 @@ export function WebsiteForm({ onSubmit }: WebsiteFormProps) {
             placeholder="e.g., example.com or https://example.com"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            className="pl-12 pr-4 h-14 rounded-lg text-base border-input focus:ring-2 focus:ring-primary-gradient-start/50 focus:border-primary-gradient-start bg-background/80 dark:bg-slate-800/60 backdrop-blur-sm shadow-inner-soft"
+            className="pl-12 pr-4 h-14 rounded-full text-base border-input focus:ring-2 focus:ring-primary-gradient-start/50 focus:border-primary-gradient-start bg-background/80 dark:bg-slate-800/60 backdrop-blur-sm shadow-inner-soft"
             aria-label="Website URL"
           />
         </div>
@@ -69,10 +69,10 @@ export function WebsiteForm({ onSubmit }: WebsiteFormProps) {
         <Button
           type="submit"
           className={cn(
-            "w-full h-14 text-primary-foreground font-semibold rounded-lg text-base flex items-center justify-center space-x-2.5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] focus:ring-4 focus:ring-primary-gradient-start/30",
-            "bg-primary-gradient hover:opacity-90", // Apply gradient background
+            "w-full h-14 text-primary-foreground font-semibold rounded-full text-base flex items-center justify-center space-x-2.5 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] focus:ring-4 focus:ring-primary-gradient-start/30",
+            "bg-primary-gradient hover:opacity-90",
           )}
-          style={{ backgroundSize: "200% auto" }} // For potential hover gradient animation
+          style={{ backgroundSize: "200% auto" }}
           aria-label="Analyze Website"
           disabled={!url.trim()}
         >

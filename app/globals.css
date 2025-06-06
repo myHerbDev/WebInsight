@@ -42,7 +42,7 @@
     --input: 220 20% 90%; /* Input border */
     --ring: 210 100% 60%; /* Ring color for focus */
 
-    --radius: 0.75rem; /* Slightly larger default radius */
+    --radius: 1rem; /* Increased from 0.75rem for a rounder look */
 
     /* Brand specific colors (can be same as primary or distinct) */
     --brand-default: hsl(var(--primary-gradient-start));

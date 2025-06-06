@@ -3,7 +3,7 @@ import { Footer } from "@/components/footer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Brain, Leaf, Zap, Users, Target, Heart, Github } from "lucide-react"
+import { Brain, Leaf, Zap, Users, Target, Heart, Github, BookOpen, Rocket, Handshake, Award, Star } from "lucide-react"
 import Link from "next/link"
 
 export default function AboutPage() {
@@ -50,6 +50,44 @@ export default function AboutPage() {
     "Vercel",
     "Neon Database",
     "shadcn/ui",
+  ]
+
+  const timelineEvents = [
+    {
+      icon: BookOpen,
+      date: "Phase 1: The Genesis",
+      title: "From a Single Blog to a Vision",
+      description:
+        "myHerb began as a personal blog, a space for sharing knowledge and passion. This humble beginning laid the foundation for a much larger vision: to build a robust digital agency.",
+    },
+    {
+      icon: Rocket,
+      date: "Phase 2: Solo Development",
+      title: "The Journey of Self-Reliance",
+      description:
+        "Driven by determination, our founder embarked on a journey of learning development alone, mastering the skills needed to turn a vision into a tangible, high-impact reality.",
+    },
+    {
+      icon: Handshake,
+      date: "Phase 3: Building Networks",
+      title: "Forging a Wise Network of Partners",
+      description:
+        "Growth accelerated as myHerb cultivated a strong network of strategic partners, transforming from a solo venture into a collaborative agency powerhouse.",
+    },
+    {
+      icon: Award,
+      date: "Phase 4: Enterprise Partnerships",
+      title: "Achieving Major Milestones",
+      description:
+        "A pivotal moment was reached with partnerships from industry giants like PayPal, Atlassian, Google Play, Microsoft, Wrike, MongoDB, Mixpanel, and Segment.",
+    },
+    {
+      icon: Star,
+      date: "Phase 5: Industry Recognition",
+      title: "Validation and Influence",
+      description:
+        "Our expertise and partner network were recognized with a total score of 98 on Partnerbase.com. Today, myHerb's influence spans major publishing networks and thrives on LinkedIn.",
+    },
   ]
 
   return (
@@ -200,6 +238,68 @@ export default function AboutPage() {
                     Making advanced web analysis tools available to developers and businesses of all sizes.
                   </p>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Timeline/Roadmap Section */}
+          <div className="mb-12">
+            <h2 className="text-3xl font-bold text-center mb-10 text-slate-800 dark:text-slate-200">Our Journey</h2>
+            <div className="relative">
+              {/* The vertical line */}
+              <div
+                className="absolute left-6 top-0 h-full w-0.5 bg-gradient-to-b from-primary-gradient-start via-primary-gradient-middle to-primary-gradient-end"
+                aria-hidden="true"
+              ></div>
+
+              <div className="space-y-12">
+                {timelineEvents.map((event, index) => {
+                  const Icon = event.icon
+                  return (
+                    <div key={index} className="relative pl-16">
+                      <div className="absolute left-0 top-1 flex items-center">
+                        <div className="w-12 h-12 bg-primary-gradient rounded-full flex items-center justify-center ring-8 ring-background">
+                          <Icon className="h-6 w-6 text-white" />
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-primary-gradient-start mb-1">{event.date}</p>
+                        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-2">{event.title}</h3>
+                        <p className="text-slate-600 dark:text-slate-400">{event.description}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Open Source Sponsorship Section */}
+          <Card className="mb-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/60">
+            <CardHeader>
+              <CardTitle className="flex items-center text-2xl">
+                <Heart className="h-6 w-6 mr-3 text-primary-gradient-start" />
+                Supporting a Sustainable Future
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-slate-600 dark:text-slate-400 mb-4">
+                We are proud to support open-source development focused on sustainability through our two sponsor
+                accounts. This initiative, the{" "}
+                <span className="font-semibold text-primary-gradient-start">Free-style Collaborative Hub</span>,
+                empowers developers to create innovative solutions for a greener web.
+              </p>
+              <div className="flex gap-4">
+                <Button asChild variant="outline">
+                  <a href="#" target="_blank" rel="noopener noreferrer">
+                    Sponsor Account 1
+                  </a>
+                </Button>
+                <Button asChild variant="outline">
+                  <a href="#" target="_blank" rel="noopener noreferrer">
+                    Sponsor Account 2
+                  </a>
+                </Button>
               </div>
             </CardContent>
           </Card>
