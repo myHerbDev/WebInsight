@@ -1,12 +1,11 @@
 "use client"
 
-import { Alert } from "@/components/ui/alert"
-import { useState, useEffect, useMemo } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { useState, useEffect, useMemo, useCallback } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Search,
@@ -21,6 +20,13 @@ import {
   Star,
   Award,
   TreePine,
+  ChevronLeft,
+  ChevronRight,
+  Server,
+  Cloud,
+  Lock,
+  NetworkIcon,
+  BarChart3,
 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
@@ -29,11 +35,13 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { Toaster } from "@/components/ui/toaster"
+import { cn } from "@/lib/utils"
 
 interface HostingProvider {
   id: number
   name: string
   website: string
+  description?: string
   sustainability_score: number
   renewable_energy_percentage: number
   carbon_neutral: boolean
@@ -44,23 +52,28 @@ interface HostingProvider {
   security_features: string[]
   uptime_guarantee: number
   support_quality: number
+  rank?: number
+  average_rating?: number // 0-5
+  reviews_count?: number
+  cdn_available?: boolean
+  ssl_support?: "free" | "paid" | "included" | "none"
+  infrastructure_type?: "cloud" | "dedicated" | "vps" | "shared" | "hybrid"
 }
+
+const ITEMS_PER_PAGE = 15
 
 export default function HostingProvidersPage() {
   const [providers, setProviders] = useState<HostingProvider[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
-  const [sortBy, setSortBy] = useState("sustainability_score")
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+  const [sortBy, setSortBy] = useState("rank") // Default sort by rank
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc") // Rank ascending
   const [filterTier, setFilterTier] = useState("all")
   const [apiError, setApiError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("all")
+  const [currentPage, setCurrentPage] = useState(1)
 
-  useEffect(() => {
-    fetchProviders()
-  }, [])
-
-  const fetchProviders = async () => {
+  const fetchProviders = useCallback(async () => {
     setLoading(true)
     setApiError(null)
     try {
@@ -84,24 +97,44 @@ export default function HostingProvidersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const { greenProviders, lessGreenProviders, filteredAndSortedProviders } = useMemo(() => {
+  useEffect(() => {
+    fetchProviders()
+  }, [fetchProviders])
+
+  const { greenProviders, lessGreenProviders, paginatedProviders, totalPages } = useMemo(() => {
     let tempProviders = [...providers]
 
-    // Filter by search term
     tempProviders = tempProviders.filter((provider) => {
       const nameMatch = provider.name.toLowerCase().includes(searchTerm.toLowerCase())
       const websiteMatch = provider.website.toLowerCase().includes(searchTerm.toLowerCase())
-      const searchMatch = nameMatch || websiteMatch
+      const descriptionMatch = provider.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false
+      const searchMatch = nameMatch || websiteMatch || descriptionMatch
       const tierMatch = filterTier === "all" || provider.pricing_tier === filterTier
       return searchMatch && tierMatch
     })
 
-    // Sort providers
     tempProviders.sort((a, b) => {
       let aValue = a[sortBy as keyof HostingProvider]
       let bValue = b[sortBy as keyof HostingProvider]
+
+      // Handle undefined ranks or other sortable numeric values by pushing them to the end
+      if (sortBy === "rank" || typeof aValue === "number") {
+        aValue =
+          aValue === undefined || aValue === null
+            ? sortOrder === "asc"
+              ? Number.POSITIVE_INFINITY
+              : Number.NEGATIVE_INFINITY
+            : aValue
+        bValue =
+          bValue === undefined || bValue === null
+            ? sortOrder === "asc"
+              ? Number.POSITIVE_INFINITY
+              : Number.NEGATIVE_INFINITY
+            : bValue
+      }
+
       if (typeof aValue === "number" && typeof bValue === "number") {
         return sortOrder === "asc" ? aValue - bValue : bValue - aValue
       }
@@ -111,6 +144,7 @@ export default function HostingProvidersPage() {
       }
       const valA = typeof aValue === "boolean" ? (aValue ? 1 : 0) : aValue
       const valB = typeof bValue === "boolean" ? (bValue ? 1 : 0) : bValue
+
       if (sortOrder === "asc") {
         return valA < valB ? -1 : valA > valB ? 1 : 0
       } else {
@@ -118,21 +152,30 @@ export default function HostingProvidersPage() {
       }
     })
 
-    // Categorize providers
     const green = tempProviders.filter((p) => p.sustainability_score >= 75 || p.carbon_neutral)
     const lessGreen = tempProviders.filter((p) => p.sustainability_score < 75 && !p.carbon_neutral)
 
-    // Filter by active tab
-    let filtered = tempProviders
-    if (activeTab === "green") filtered = green
-    if (activeTab === "less-green") filtered = lessGreen
+    let currentListToPaginate = tempProviders
+    if (activeTab === "green") currentListToPaginate = green
+    if (activeTab === "less-green") currentListToPaginate = lessGreen
+
+    const calculatedTotalPages = Math.ceil(currentListToPaginate.length / ITEMS_PER_PAGE)
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+    const endIndex = startIndex + ITEMS_PER_PAGE
+    const paginated = currentListToPaginate.slice(startIndex, endIndex)
 
     return {
       greenProviders: green,
       lessGreenProviders: lessGreen,
-      filteredAndSortedProviders: filtered,
+      paginatedProviders: paginated,
+      totalPages: calculatedTotalPages,
     }
-  }, [providers, searchTerm, sortBy, sortOrder, filterTier, activeTab])
+  }, [providers, searchTerm, sortBy, sortOrder, filterTier, activeTab, currentPage])
+
+  // Reset to page 1 when filters or search term change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, sortBy, sortOrder, filterTier, activeTab])
 
   const getTierColor = (tier: string) => {
     switch (tier?.toLowerCase()) {
@@ -155,175 +198,238 @@ export default function HostingProvidersPage() {
     return "bg-gradient-to-r from-red-500 to-pink-500"
   }
 
-  const getScoreTextColor = (score: number) => {
-    if (score >= 80) return "text-green-600 dark:text-green-400"
-    if (score >= 60) return "text-yellow-600 dark:text-yellow-400"
-    return "text-red-600 dark:text-red-400"
-  }
-
-  const renderStars = (rating: number) => {
-    const stars = Math.round(rating / 20) // Convert to 5-star scale
+  const renderStars = (rating?: number) => {
+    if (typeof rating !== "number" || rating < 0 || rating > 5) {
+      return <span className="text-xs text-muted-foreground">N/A</span>
+    }
+    const fullStars = Math.floor(rating)
+    const halfStar = rating % 1 >= 0.5 ? 1 : 0
+    const emptyStars = 5 - fullStars - halfStar
     return (
       <div className="flex items-center">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`h-3 w-3 ${i < stars ? "text-yellow-400 fill-current" : "text-gray-300 dark:text-gray-600"}`}
-          />
+        {[...Array(fullStars)].map((_, i) => (
+          <Star key={`full-${i}`} className="h-4 w-4 text-yellow-400 fill-yellow-400" />
         ))}
-        <span className="ml-1 text-xs text-muted-foreground">({rating}%)</span>
+        {halfStar === 1 && (
+          <Star
+            key="half"
+            className="h-4 w-4 text-yellow-400 fill-yellow-400"
+            style={{ clipPath: "polygon(0 0, 50% 0, 50% 100%, 0 100%)" }}
+          />
+        )}
+        {[...Array(emptyStars)].map((_, i) => (
+          <Star key={`empty-${i}`} className="h-4 w-4 text-gray-300 dark:text-gray-600" />
+        ))}
       </div>
     )
   }
 
-  const ProviderCard = ({ provider }: { provider: HostingProvider }) => (
-    <Card className="group hover:shadow-xl transition-all duration-300 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/60 flex flex-col overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-gradient-start/5 to-primary-gradient-end/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+  const ProviderCard = ({ provider }: { provider: HostingProvider }) => {
+    const isGreen = provider.sustainability_score >= 75 || provider.carbon_neutral
+    return (
+      <Card
+        className={cn(
+          "group relative overflow-hidden transition-all duration-500 ease-out hover:shadow-2xl flex flex-col",
+          "bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border",
+          isGreen
+            ? "border-green-500/30 hover:border-green-500/70"
+            : "border-slate-200/60 dark:border-slate-800/60 hover:border-primary-gradient-start/50",
+        )}
+      >
+        <div
+          className={cn(
+            "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500",
+            "bg-animated-gradient", // CSS class for animated gradient
+          )}
+        />
+        {provider.rank && (
+          <Badge
+            variant="secondary"
+            className="absolute top-3 left-3 z-20 bg-primary-gradient text-white px-2.5 py-1 text-xs font-bold"
+          >
+            Rank #{provider.rank}
+          </Badge>
+        )}
+        {isGreen && (
+          <div className="absolute top-2 right-2 z-20 p-1.5 bg-green-500/20 dark:bg-green-400/20 rounded-full">
+            <Leaf className="h-5 w-5 text-green-600 dark:text-green-400" />
+          </div>
+        )}
 
-      <CardHeader className="pb-3 relative z-10">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-xl font-semibold text-slate-800 dark:text-slate-100 group-hover:text-primary-gradient-start transition-colors">
-              {provider.name}
-            </CardTitle>
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <Badge
-                variant="outline"
-                className={`${getTierColor(provider.pricing_tier)} px-2.5 py-1 text-xs font-medium`}
-              >
-                {provider.pricing_tier}
-              </Badge>
-              {provider.carbon_neutral && (
-                <Badge
-                  variant="outline"
-                  className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-300 dark:border-green-700 px-2.5 py-1 text-xs font-medium"
-                >
-                  <TreePine className="h-3 w-3 mr-1" />
-                  Carbon Neutral
-                </Badge>
-              )}
-              {provider.green_certifications.length > 0 && (
-                <Badge
-                  variant="outline"
-                  className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-300 dark:border-blue-700 px-2.5 py-1 text-xs font-medium"
-                >
-                  <Award className="h-3 w-3 mr-1" />
-                  Certified
-                </Badge>
+        <CardHeader className="pb-3 relative z-10">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 pr-8">
+              {" "}
+              {/* Added pr-8 for spacing from potential rank/leaf badge */}
+              <CardTitle className="text-xl font-semibold text-slate-800 dark:text-slate-100 group-hover:text-primary-gradient-start transition-colors">
+                {provider.name}
+              </CardTitle>
+              {provider.average_rating && provider.reviews_count && (
+                <div className="flex items-center mt-1.5">
+                  {renderStars(provider.average_rating)}
+                  <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">
+                    ({provider.reviews_count} reviews)
+                  </span>
+                </div>
               )}
             </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            asChild
-            className="text-slate-500 hover:text-primary-gradient-start dark:text-slate-400 dark:hover:text-primary-gradient-start -mt-1 -mr-1 transition-colors"
-          >
-            <a
-              href={provider.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Visit ${provider.name} website`}
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className="text-slate-500 hover:text-primary-gradient-start dark:text-slate-400 dark:hover:text-primary-gradient-start -mt-1 -mr-1 transition-colors z-20"
             >
-              <ExternalLink className="h-4 w-4" />
-            </a>
-          </Button>
-        </div>
-      </CardHeader>
+              <a
+                href={provider.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Visit ${provider.name} website`}
+              >
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            </Button>
+          </div>
+          {provider.description && (
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 leading-relaxed line-clamp-2">
+              {provider.description}
+            </p>
+          )}
+        </CardHeader>
 
-      <CardContent className="space-y-4 text-sm flex-grow relative z-10">
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <span className="font-medium text-slate-600 dark:text-slate-300">Sustainability</span>
-              <span className={`font-bold ${getScoreTextColor(provider.sustainability_score)}`}>
-                {provider.sustainability_score}%
+        <CardContent className="space-y-3 text-sm flex-grow relative z-10 pt-2">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+            <div className="flex items-center" title="Sustainability Score">
+              <BarChart3 className="h-3.5 w-3.5 mr-1.5 text-green-500 shrink-0" />
+              Sustainability: <span className="font-semibold ml-1">{provider.sustainability_score}%</span>
+            </div>
+            <div className="flex items-center" title="Performance Rating">
+              <Zap className="h-3.5 w-3.5 mr-1.5 text-blue-500 shrink-0" />
+              Performance: <span className="font-semibold ml-1">{provider.performance_rating}%</span>
+            </div>
+            <div className="flex items-center" title="Renewable Energy">
+              <Leaf className="h-3.5 w-3.5 mr-1.5 text-emerald-500 shrink-0" />
+              Renewable: <span className="font-semibold ml-1">{provider.renewable_energy_percentage}%</span>
+            </div>
+            <div className="flex items-center" title="Uptime Guarantee">
+              <Shield className="h-3.5 w-3.5 mr-1.5 text-purple-500 shrink-0" />
+              Uptime: <span className="font-semibold ml-1">{provider.uptime_guarantee}%</span>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-200/60 dark:border-slate-700/60 my-2" />
+
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+            <div className="flex items-center" title="Infrastructure Type">
+              {provider.infrastructure_type === "cloud" ? (
+                <Cloud className="h-3.5 w-3.5 mr-1.5 text-sky-500 shrink-0" />
+              ) : (
+                <Server className="h-3.5 w-3.5 mr-1.5 text-slate-500 shrink-0" />
+              )}
+              Infrastructure:{" "}
+              <span className="font-semibold ml-1 capitalize">{provider.infrastructure_type || "N/A"}</span>
+            </div>
+            <div className="flex items-center" title="CDN Availability">
+              <NetworkIcon className="h-3.5 w-3.5 mr-1.5 text-orange-500 shrink-0" />
+              CDN: <span className="font-semibold ml-1">{provider.cdn_available ? "Yes" : "No"}</span>
+            </div>
+            <div className="flex items-center" title="SSL Support">
+              <Lock className="h-3.5 w-3.5 mr-1.5 text-red-500 shrink-0" />
+              SSL: <span className="font-semibold ml-1 capitalize">{provider.ssl_support || "N/A"}</span>
+            </div>
+            <div className="flex items-center" title="Carbon Neutral">
+              <TreePine className="h-3.5 w-3.5 mr-1.5 text-lime-600 shrink-0" />
+              Carbon Neutral: <span className="font-semibold ml-1">{provider.carbon_neutral ? "Yes" : "No"}</span>
+            </div>
+          </div>
+
+          {provider.data_center_locations && provider.data_center_locations.length > 0 && (
+            <div className="flex items-start text-xs mt-2" title="Data Center Locations">
+              <Globe className="h-3.5 w-3.5 mr-1.5 text-cyan-500 shrink-0 mt-0.5" />
+              Locations:{" "}
+              <span className="ml-1 text-slate-600 dark:text-slate-400 line-clamp-1">
+                {provider.data_center_locations.join(", ")}
               </span>
             </div>
-            <Progress
-              value={provider.sustainability_score}
-              className="h-2 bg-slate-200 dark:bg-slate-700"
-              indicatorClassName={getScoreIndicatorClass(provider.sustainability_score)}
-            />
-          </div>
-
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <span className="font-medium text-slate-600 dark:text-slate-300">Performance</span>
-              <span className={`font-bold ${getScoreTextColor(provider.performance_rating)}`}>
-                {provider.performance_rating}%
+          )}
+          {provider.green_certifications && provider.green_certifications.length > 0 && (
+            <div className="flex items-start text-xs mt-1" title="Green Certifications">
+              <Award className="h-3.5 w-3.5 mr-1.5 text-yellow-500 shrink-0 mt-0.5" />
+              Certs:{" "}
+              <span className="ml-1 text-slate-600 dark:text-slate-400 line-clamp-1">
+                {provider.green_certifications.join(", ")}
               </span>
             </div>
-            <Progress
-              value={provider.performance_rating}
-              className="h-2 bg-slate-200 dark:bg-slate-700"
-              indicatorClassName={getScoreIndicatorClass(provider.performance_rating)}
-            />
-          </div>
-        </div>
+          )}
+        </CardContent>
 
-        <div>
-          <div className="flex justify-between items-center mb-1">
-            <span className="font-medium text-slate-600 dark:text-slate-300">Renewable Energy</span>
-            <span className="font-bold text-green-600 dark:text-green-400">
-              {provider.renewable_energy_percentage}%
-            </span>
+        <div className="p-4 pt-3 mt-auto border-t border-slate-100/60 dark:border-slate-800/60 relative z-10">
+          <div className="flex gap-2">
+            <Button
+              asChild
+              size="sm"
+              className="flex-1 bg-primary-gradient hover:opacity-90 text-white dark:text-primary-foreground transition-opacity"
+            >
+              <Link href={`/hosting/${provider.id}`}>View Details</Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="border-primary-gradient-start/30 text-primary-gradient-start hover:bg-primary-gradient-start/10"
+            >
+              <Link href={`/compare?providers=${provider.id}`}>Compare</Link>
+            </Button>
           </div>
-          <Progress
-            value={provider.renewable_energy_percentage}
-            className="h-2 bg-slate-200 dark:bg-slate-700"
-            indicatorClassName="bg-gradient-to-r from-green-500 to-emerald-500"
-          />
         </div>
+      </Card>
+    )
+  }
 
-        <div className="space-y-2">
-          <div className="flex items-center text-slate-500 dark:text-slate-400">
-            <Shield className="h-4 w-4 mr-2 text-blue-500 shrink-0" />
-            <span className="truncate">
-              {provider.security_features.length > 2
-                ? `${provider.security_features.slice(0, 2).join(", ")}...`
-                : provider.security_features.join(", ") || "Standard Security"}
-            </span>
-          </div>
-          <div className="flex items-center text-slate-500 dark:text-slate-400">
-            <Globe className="h-4 w-4 mr-2 text-sky-500 shrink-0" />
-            <span className="truncate">
-              {provider.data_center_locations.length > 2
-                ? `${provider.data_center_locations.slice(0, 2).join(", ")}...`
-                : provider.data_center_locations.join(", ") || "Multiple Locations"}
-            </span>
-          </div>
-          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-            <div className="flex items-center">
-              <Zap className="h-4 w-4 mr-2 text-yellow-500 shrink-0" />
-              {provider.uptime_guarantee}% Uptime
-            </div>
-            {renderStars(provider.support_quality)}
-          </div>
-        </div>
-      </CardContent>
-
-      <div className="p-4 pt-3 mt-auto border-t border-slate-100/60 dark:border-slate-800/60 relative z-10">
-        <div className="flex gap-2">
-          <Button
-            asChild
-            size="sm"
-            className="flex-1 bg-primary-gradient hover:opacity-90 text-white dark:text-primary-foreground transition-opacity"
-          >
-            <Link href={`/hosting/${provider.id}`}>View Details</Link>
-          </Button>
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="border-primary-gradient-start/30 text-primary-gradient-start hover:bg-primary-gradient-start/10"
-          >
-            <Link href={`/compare?providers=${provider.id}`}>Compare</Link>
-          </Button>
-        </div>
+  const PaginationControls = () => {
+    if (totalPages <= 1) return null
+    return (
+      <div className="flex items-center justify-center space-x-2 mt-10">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+          disabled={currentPage === 1}
+          aria-label="Previous Page"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        {Array.from({ length: totalPages }, (_, i) => i + 1)
+          // Display a limited number of page buttons e.g. max 5 buttons
+          .filter((pageNumber) => {
+            if (totalPages <= 5) return true
+            const start = Math.max(1, Math.min(currentPage - 2, totalPages - 4))
+            const end = Math.min(totalPages, start + 4)
+            return pageNumber >= start && pageNumber <= end
+          })
+          .map((pageNumber) => (
+            <Button
+              key={pageNumber}
+              variant={currentPage === pageNumber ? "default" : "outline"}
+              size="icon"
+              onClick={() => setCurrentPage(pageNumber)}
+              aria-label={`Go to page ${pageNumber}`}
+              className={cn(currentPage === pageNumber && "bg-primary-gradient text-white")}
+            >
+              {pageNumber}
+            </Button>
+          ))}
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+          disabled={currentPage === totalPages}
+          aria-label="Next Page"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
       </div>
-    </Card>
-  )
+    )
+  }
 
   if (loading) {
     return (
@@ -345,8 +451,8 @@ export default function HostingProvidersPage() {
         <main className="flex-1 container mx-auto px-4 py-8">
           <Alert variant="destructive" className="max-w-2xl mx-auto">
             <AlertTriangle className="h-5 w-5" />
-            <CardTitle>Failed to Load Providers</CardTitle>
-            <CardDescription>{apiError}</CardDescription>
+            <AlertTitle>Failed to Load Providers</AlertTitle>
+            <AlertDescription>{apiError}</AlertDescription>
             <Button onClick={fetchProviders} className="mt-4">
               Try Again
             </Button>
@@ -372,8 +478,8 @@ export default function HostingProvidersPage() {
           </p>
         </div>
 
-        {/* Search and Filter Controls */}
-        <Card className="mb-8 p-6 shadow-lg border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+        <Card className="mb-8 p-6 shadow-xl border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-20 z-30">
+          {/* Search and Filter Controls - largely unchanged but ensure they reset pagination */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
             <div className="relative lg:col-span-2">
               <label
@@ -385,13 +491,12 @@ export default function HostingProvidersPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 mt-3 h-4 w-4 text-slate-400 dark:text-slate-500 pointer-events-none" />
               <Input
                 id="search-providers"
-                placeholder="Search by name or website..."
+                placeholder="Search by name, description..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-11 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60 focus:ring-primary-gradient-start focus:border-primary-gradient-start"
+                className="pl-10 h-11 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60 focus:ring-primary-gradient-start focus:border-primary-gradient-start rounded-lg"
               />
             </div>
-
             <div>
               <label htmlFor="sort-by" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
                 Sort by
@@ -399,21 +504,19 @@ export default function HostingProvidersPage() {
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger
                   id="sort-by"
-                  className="h-11 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60"
+                  className="h-11 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60 rounded-lg"
                 >
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="rank">Rank</SelectItem>
                   <SelectItem value="sustainability_score">Sustainability</SelectItem>
                   <SelectItem value="performance_rating">Performance</SelectItem>
-                  <SelectItem value="renewable_energy_percentage">Renewable Energy</SelectItem>
+                  <SelectItem value="average_rating">Avg. Rating</SelectItem>
                   <SelectItem value="name">Name (A-Z)</SelectItem>
-                  <SelectItem value="pricing_tier">Pricing Tier</SelectItem>
-                  <SelectItem value="support_quality">Support Quality</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
             <div>
               <label
                 htmlFor="filter-tier"
@@ -424,7 +527,7 @@ export default function HostingProvidersPage() {
               <Select value={filterTier} onValueChange={setFilterTier}>
                 <SelectTrigger
                   id="filter-tier"
-                  className="h-11 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60"
+                  className="h-11 bg-slate-50/80 dark:bg-slate-800/80 border-slate-300/60 dark:border-slate-700/60 rounded-lg"
                 >
                   <SelectValue placeholder="Filter by tier" />
                 </SelectTrigger>
@@ -438,47 +541,48 @@ export default function HostingProvidersPage() {
               </Select>
             </div>
           </div>
-
           <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-800/60">
             <Button
               variant="outline"
               onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-              className="border-slate-300/60 dark:border-slate-700/60 hover:bg-slate-100/80 dark:hover:bg-slate-800/80"
+              className="border-slate-300/60 dark:border-slate-700/60 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-lg"
             >
               {sortOrder === "asc" ? <SortAsc className="h-4 w-4 mr-2" /> : <SortDesc className="h-4 w-4 mr-2" />}
               {sortOrder === "asc" ? "Ascending" : "Descending"}
             </Button>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Showing {filteredAndSortedProviders.length} of {providers.length} providers
+              Page {currentPage} of {totalPages}. Displaying {paginatedProviders.length} providers.
             </p>
           </div>
         </Card>
 
-        {/* Tabs for categorization */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="grid w-full grid-cols-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-            <TabsTrigger value="all" className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white">
-              All Providers ({providers.length})
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8 mt-8">
+          <TabsList className="grid w-full grid-cols-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm rounded-lg">
+            <TabsTrigger
+              value="all"
+              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-md"
+            >
+              All ({providers.length})
             </TabsTrigger>
             <TabsTrigger
               value="green"
-              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white"
+              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-md"
             >
               <Leaf className="h-4 w-4 mr-2" />
-              Green Hosting ({greenProviders.length})
+              Green ({greenProviders.length})
             </TabsTrigger>
             <TabsTrigger
               value="less-green"
-              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white"
+              className="data-[state=active]:bg-primary-gradient data-[state=active]:text-white rounded-md"
             >
               Less Green ({lessGreenProviders.length})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="mt-6">
-            {filteredAndSortedProviders.length > 0 ? (
+            {paginatedProviders.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredAndSortedProviders.map((provider) => (
+                {paginatedProviders.map((provider) => (
                   <ProviderCard key={provider.id} provider={provider} />
                 ))}
               </div>
@@ -486,71 +590,52 @@ export default function HostingProvidersPage() {
               <Card className="text-center py-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
                 <CardContent>
                   <Search className="h-10 w-10 text-slate-400 dark:text-slate-500 mx-auto mb-3" />
-                  <p className="text-slate-600 dark:text-slate-400">
-                    No hosting providers found matching your criteria.
-                  </p>
-                  <p className="text-sm text-slate-500 dark:text-slate-500 mt-1">
-                    Try adjusting your search or filters.
-                  </p>
+                  <p className="text-slate-600 dark:text-slate-400">No providers found.</p>
                 </CardContent>
               </Card>
             )}
+            <PaginationControls />
           </TabsContent>
-
+          {/* Similar structure for "green" and "less-green" tabs, using their respective paginated lists */}
           <TabsContent value="green" className="mt-6">
-            <div className="mb-6 p-4 bg-green-50/80 dark:bg-green-900/20 rounded-lg border border-green-200/60 dark:border-green-800/60">
-              <h3 className="text-lg font-semibold text-green-800 dark:text-green-300 mb-2">
-                🌱 Green Hosting Providers
-              </h3>
-              <p className="text-green-700 dark:text-green-400 text-sm">
-                These providers demonstrate strong commitment to environmental sustainability through renewable energy
-                usage, carbon neutrality, and green certifications.
-              </p>
-            </div>
-            {greenProviders.length > 0 ? (
+            {/* ... Green providers intro ... */}
+            {paginatedProviders.length > 0 && activeTab === "green" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {greenProviders.map((provider) => (
+                {paginatedProviders.map((provider) => (
                   <ProviderCard key={provider.id} provider={provider} />
                 ))}
               </div>
             ) : (
-              <Card className="text-center py-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-                <CardContent>
-                  <Leaf className="h-10 w-10 text-green-500 mx-auto mb-3" />
-                  <p className="text-slate-600 dark:text-slate-400">
-                    No green hosting providers found matching your criteria.
-                  </p>
-                </CardContent>
-              </Card>
+              activeTab === "green" && (
+                <Card className="text-center py-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+                  <CardContent>
+                    <Leaf className="h-10 w-10 text-green-500 mx-auto mb-3" />
+                    <p className="text-slate-600 dark:text-slate-400">No green providers found.</p>
+                  </CardContent>
+                </Card>
+              )
             )}
+            <PaginationControls />
           </TabsContent>
-
           <TabsContent value="less-green" className="mt-6">
-            <div className="mb-6 p-4 bg-orange-50/80 dark:bg-orange-900/20 rounded-lg border border-orange-200/60 dark:border-orange-800/60">
-              <h3 className="text-lg font-semibold text-orange-800 dark:text-orange-300 mb-2">
-                ⚠️ Less Green Hosting Providers
-              </h3>
-              <p className="text-orange-700 dark:text-orange-400 text-sm">
-                These providers may offer good performance and features but have limited environmental commitments.
-                Consider their sustainability practices when making your choice.
-              </p>
-            </div>
-            {lessGreenProviders.length > 0 ? (
+            {/* ... Less green providers intro ... */}
+            {paginatedProviders.length > 0 && activeTab === "less-green" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {lessGreenProviders.map((provider) => (
+                {paginatedProviders.map((provider) => (
                   <ProviderCard key={provider.id} provider={provider} />
                 ))}
               </div>
             ) : (
-              <Card className="text-center py-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-                <CardContent>
-                  <AlertTriangle className="h-10 w-10 text-orange-500 mx-auto mb-3" />
-                  <p className="text-slate-600 dark:text-slate-400">
-                    No less green hosting providers found matching your criteria.
-                  </p>
-                </CardContent>
-              </Card>
+              activeTab === "less-green" && (
+                <Card className="text-center py-12 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+                  <CardContent>
+                    <AlertTriangle className="h-10 w-10 text-orange-500 mx-auto mb-3" />
+                    <p className="text-slate-600 dark:text-slate-400">No less green providers found.</p>
+                  </CardContent>
+                </Card>
+              )
             )}
+            <PaginationControls />
           </TabsContent>
         </Tabs>
       </main>

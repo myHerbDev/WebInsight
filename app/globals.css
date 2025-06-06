@@ -144,3 +144,43 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-muted-foreground/50 dark:bg-muted-foreground/40;
 }
+
+@layer utilities {
+  .bg-animated-gradient {
+    background: linear-gradient(
+      120deg,
+      hsl(var(--primary-gradient-start) / 0.05),
+      hsl(var(--primary-gradient-middle) / 0.05),
+      hsl(var(--primary-gradient-end) / 0.05),
+      hsl(var(--primary-gradient-middle) / 0.05),
+      hsl(var(--primary-gradient-start) / 0.05)
+    );
+    background-size: 400% 400%;
+    animation: gradientAnimation 10s ease infinite;
+  }
+
+  .dark .bg-animated-gradient {
+    background: linear-gradient(
+      120deg,
+      hsl(var(--primary-gradient-start) / 0.1),
+      hsl(var(--primary-gradient-middle) / 0.1),
+      hsl(var(--primary-gradient-end) / 0.1),
+      hsl(var(--primary-gradient-middle) / 0.1),
+      hsl(var(--primary-gradient-start) / 0.1)
+    );
+    background-size: 400% 400%;
+    animation: gradientAnimation 10s ease infinite;
+  }
+}
+
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
