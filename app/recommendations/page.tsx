@@ -66,149 +66,154 @@ interface RecommendationData {
 }
 
 // Mock data generator based on typical website analysis results
-const generateTailoredRecommendations = (websiteData?: any): RecommendationData => {
-  // This would normally come from your analysis API
-  const baseScore = websiteData?.sustainabilityScore || Math.floor(Math.random() * 40) + 30
-  const perfScore = websiteData?.performanceScore || Math.floor(Math.random() * 30) + 50
+const generateTailoredRecommendations = (websiteData: any): RecommendationData => {
+  const {
+    url = "example.com",
+    sustainabilityScore: baseScore = Math.floor(Math.random() * 40) + 30,
+    performanceScore: perfScore = Math.floor(Math.random() * 30) + 50,
+    hosting = null,
+  } = websiteData || {}
+
+  const hostingScore = hosting ? Math.floor(Math.random() * 20) + 70 : 0
+
+  const recommendations = []
+
+  // Sustainability Recommendations
+  if (baseScore < 60) {
+    recommendations.push({
+      priority: "high",
+      category: "sustainability",
+      title: "Improve Website Sustainability",
+      description: `Your website's sustainability score is ${baseScore}%.`,
+      impact: "high",
+      effort: "low",
+      estimatedImprovement: Math.min(30, 85 - baseScore),
+      actionItems: [
+        "Reduce the use of third-party scripts and trackers.",
+        "Optimize images and videos for faster loading times.",
+        "Consider using a Content Delivery Network (CDN) to reduce server load.",
+      ],
+    })
+  }
+
+  // Performance Recommendations
+  if (perfScore < 70) {
+    recommendations.push({
+      priority: "high",
+      category: "performance",
+      title: "Optimize Website Performance",
+      description: `Your website's performance score is ${perfScore}%.`,
+      impact: "high",
+      effort: "medium",
+      estimatedImprovement: Math.min(25, 90 - perfScore),
+      actionItems: [
+        "Enable browser caching to reduce server load.",
+        "Minify CSS and JavaScript files to reduce file sizes.",
+        "Use a caching plugin to improve website speed.",
+      ],
+    })
+  }
+
+  // Hosting Recommendations
+  if (!hosting || hostingScore < 70) {
+    recommendations.push({
+      priority: "medium",
+      category: "hosting",
+      title: "Consider Switching to a Green Hosting Provider",
+      description: "Your current hosting provider may not be the most sustainable option.",
+      impact: "medium",
+      effort: "low",
+      estimatedImprovement: 15,
+      actionItems: [
+        "Research green hosting providers from our catalog.",
+        "Compare renewable energy percentages.",
+        "Check for carbon offset programs.",
+        "Plan migration timeline.",
+      ],
+    })
+  }
+
+  // Optimization Recommendations
+  recommendations.push({
+    priority: "medium",
+    category: "optimization",
+    title: "Enable Content Delivery Network (CDN)",
+    description: "A CDN can reduce server load and improve global performance.",
+    impact: "medium",
+    effort: "low",
+    estimatedImprovement: 15,
+    actionItems: [
+      "Choose a green CDN provider.",
+      "Configure CDN for static assets.",
+      "Set up proper cache headers.",
+      "Monitor performance improvements.",
+    ],
+  })
+
+  // Hosting Recommendations
+  const hostingRecommendations = [
+    {
+      name: "GreenHost",
+      score: 95,
+      reason: "100% renewable energy with excellent performance metrics",
+      features: ["100% Renewable Energy", "Carbon Neutral", "High Performance", "24/7 Support"],
+      pricing: "Starting at $12/month",
+      link: "/hosting/1",
+    },
+    {
+      name: "EcoWeb Solutions",
+      score: 92,
+      reason: "Strong sustainability focus with premium features",
+      features: ["95% Renewable Energy", "Carbon Offset Programs", "Advanced Security", "CDN Included"],
+      pricing: "Starting at $18/month",
+      link: "/hosting/2",
+    },
+    {
+      name: "CloudGreen",
+      score: 88,
+      reason: "Excellent performance with good environmental practices",
+      features: ["100% Renewable Energy", "Global CDN", "99.99% Uptime", "Scalable Infrastructure"],
+      pricing: "Starting at $25/month",
+      link: "/hosting/4",
+    },
+  ]
+
+  const currentIssues = []
+
+  if (baseScore < 50) {
+    currentIssues.push({
+      type: "critical" as const,
+      title: "High Carbon Footprint",
+      description: "Your website's current hosting solution has a significant environmental impact.",
+      solution: "Switch to a green hosting provider immediately to reduce carbon emissions by up to 70%.",
+    })
+  }
+
+  if (perfScore < 60) {
+    currentIssues.push({
+      type: "warning" as const,
+      title: "Poor Performance Metrics",
+      description: "Slow loading times increase energy consumption and hurt user experience.",
+      solution: "Implement performance optimizations like image compression and caching.",
+    })
+  }
+
+  currentIssues.push({
+    type: "info" as const,
+    title: "Optimization Opportunities",
+    description: "Several areas for improvement have been identified to enhance sustainability.",
+    solution: "Follow the prioritized recommendations below to make incremental improvements.",
+  })
 
   return {
-    websiteUrl: websiteData?.url || "example.com",
+    websiteUrl: url,
     sustainabilityScore: baseScore,
     performanceScore: perfScore,
     carbonFootprint: Math.round((100 - baseScore) * 0.8 + Math.random() * 20),
     energyEfficiency: Math.round(baseScore * 0.9 + Math.random() * 10),
-    recommendations: [
-      {
-        priority: baseScore < 50 ? "high" : "medium",
-        category: "sustainability",
-        title: "Switch to Green Hosting Provider",
-        description: `Your current hosting has a sustainability score of ${baseScore}%. Switching to a green hosting provider could reduce your carbon footprint by up to 70%.`,
-        impact: "high",
-        effort: "low",
-        estimatedImprovement: Math.min(30, 85 - baseScore),
-        actionItems: [
-          "Research green hosting providers from our catalog",
-          "Compare renewable energy percentages",
-          "Check for carbon offset programs",
-          "Plan migration timeline",
-        ],
-      },
-      {
-        priority: perfScore < 70 ? "high" : "low",
-        category: "performance",
-        title: "Optimize Image Loading",
-        description: `Performance score of ${perfScore}% indicates room for improvement. Optimizing images could improve load times by 40-60%.`,
-        impact: "high",
-        effort: "medium",
-        estimatedImprovement: Math.min(25, 90 - perfScore),
-        actionItems: [
-          "Implement lazy loading for images",
-          "Use modern image formats (WebP, AVIF)",
-          "Compress existing images",
-          "Set up responsive image sizes",
-        ],
-      },
-      {
-        priority: "medium",
-        category: "optimization",
-        title: "Enable Content Delivery Network (CDN)",
-        description:
-          "A CDN can reduce server load and improve global performance while potentially reducing energy consumption.",
-        impact: "medium",
-        effort: "low",
-        estimatedImprovement: 15,
-        actionItems: [
-          "Choose a green CDN provider",
-          "Configure CDN for static assets",
-          "Set up proper cache headers",
-          "Monitor performance improvements",
-        ],
-      },
-      {
-        priority: baseScore > 70 ? "low" : "medium",
-        category: "sustainability",
-        title: "Implement Dark Mode",
-        description: "Dark mode can reduce energy consumption on OLED displays and improve user experience.",
-        impact: "low",
-        effort: "medium",
-        estimatedImprovement: 5,
-        actionItems: [
-          "Design dark theme variants",
-          "Implement theme switching",
-          "Test across different devices",
-          "Add user preference detection",
-        ],
-      },
-      {
-        priority: "medium",
-        category: "hosting",
-        title: "Optimize Database Queries",
-        description: "Efficient database queries reduce server processing time and energy consumption.",
-        impact: "medium",
-        effort: "high",
-        estimatedImprovement: 12,
-        actionItems: [
-          "Audit current database queries",
-          "Add appropriate indexes",
-          "Implement query caching",
-          "Consider database optimization tools",
-        ],
-      },
-    ],
-    hostingRecommendations: [
-      {
-        name: "GreenHost",
-        score: 95,
-        reason: "100% renewable energy with excellent performance metrics",
-        features: ["100% Renewable Energy", "Carbon Neutral", "High Performance", "24/7 Support"],
-        pricing: "Starting at $12/month",
-        link: "/hosting/1",
-      },
-      {
-        name: "EcoWeb Solutions",
-        score: 92,
-        reason: "Strong sustainability focus with premium features",
-        features: ["95% Renewable Energy", "Carbon Offset Programs", "Advanced Security", "CDN Included"],
-        pricing: "Starting at $18/month",
-        link: "/hosting/2",
-      },
-      {
-        name: "CloudGreen",
-        score: 88,
-        reason: "Excellent performance with good environmental practices",
-        features: ["100% Renewable Energy", "Global CDN", "99.99% Uptime", "Scalable Infrastructure"],
-        pricing: "Starting at $25/month",
-        link: "/hosting/4",
-      },
-    ],
-    currentIssues: [
-      ...(baseScore < 50
-        ? [
-            {
-              type: "critical" as const,
-              title: "High Carbon Footprint",
-              description: "Your website's current hosting solution has a significant environmental impact.",
-              solution: "Switch to a green hosting provider immediately to reduce carbon emissions by up to 70%.",
-            },
-          ]
-        : []),
-      ...(perfScore < 60
-        ? [
-            {
-              type: "warning" as const,
-              title: "Poor Performance Metrics",
-              description: "Slow loading times increase energy consumption and hurt user experience.",
-              solution: "Implement performance optimizations like image compression and caching.",
-            },
-          ]
-        : []),
-      {
-        type: "info" as const,
-        title: "Optimization Opportunities",
-        description: "Several areas for improvement have been identified to enhance sustainability.",
-        solution: "Follow the prioritized recommendations below to make incremental improvements.",
-      },
-    ],
+    recommendations,
+    hostingRecommendations,
+    currentIssues,
   }
 }
 
@@ -220,7 +225,14 @@ export default function RecommendationsPage() {
   useEffect(() => {
     // Simulate loading recommendations based on previous analysis
     const timer = setTimeout(() => {
-      setData(generateTailoredRecommendations())
+      setData(
+        generateTailoredRecommendations({
+          url: "example.com",
+          sustainabilityScore: 55,
+          performanceScore: 65,
+          hosting: { name: "OldHost", score: 60 },
+        }),
+      )
       setLoading(false)
     }, 1500)
 
