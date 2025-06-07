@@ -194,7 +194,7 @@ ${improvements.map((imp: string, i: number) => `${i + 1}. ${imp}`).join("\n")}
   let structureGuidelines = ""
 
   switch (contentType) {
-    case "research":
+    case "research_report": // was "research"
       specificInstructions = `
 TASK: Create a comprehensive research report about ${analysis.title}
 
@@ -274,7 +274,7 @@ Success Metrics & KPIs:
 `
       break
 
-    case "blog":
+    case "blog_post": // was "blog"
       specificInstructions = `
 TASK: Write an engaging blog post about the analysis of ${analysis.title}
 
@@ -301,7 +301,7 @@ Focus on storytelling while incorporating the real data and insights.
 `
       break
 
-    case "marketing":
+    case "marketing_copy": // was "marketing"
       specificInstructions = `
 TASK: Create marketing content for ${analysis.title} based on our analysis
 
@@ -327,52 +327,135 @@ Focus on actionable marketing strategies based on real analysis data.
 `
       break
 
-    case "social":
+    case "academic_summary":
       specificInstructions = `
-TASK: Create social media content about ${analysis.title}
+TASK: Create a concise academic summary of the analysis of ${analysis.title}.
 
-SOCIAL MEDIA BEST PRACTICES:
-1. Use the website description to create compelling hooks
-2. Include real performance metrics as social proof
-3. Reference actual findings for credibility
-4. Create platform-specific content
-5. Use relevant hashtags based on actual keywords
-6. Maintain ${tone} tone across all platforms
+ACADEMIC SUMMARY BEST PRACTICES:
+1. Focus on objective findings and data-driven insights from the analysis.
+2. Use formal, academic language in a ${tone} tone.
+3. Clearly state the purpose of the analysis and key outcomes.
+4. Reference specific metrics and data points (e.g., performance scores, content stats).
+5. Structure the summary logically: Introduction, Methodology (implied by analysis), Key Findings, Discussion/Implications, Conclusion.
+6. Avoid marketing language or overly subjective statements.
 
-SOCIAL CONTENT STRUCTURE:
-1. LinkedIn Professional Post
-2. Twitter/X Thread (3-5 tweets)
-3. Facebook Detailed Post
-4. Instagram Caption with Hashtags
-5. YouTube Video Description
-6. TikTok Video Script
+ACADEMIC SUMMARY STRUCTURE:
+1. Abstract/Brief Overview (1-2 sentences).
+2. Introduction: Purpose of analyzing ${analysis.title}.
+3. Key Analytical Findings: Summarize crucial data points from performance, content, and technical aspects.
+4. Discussion: Interpret the findings and their potential implications for the website's effectiveness or field.
+5. Conclusion: Briefly reiterate the main takeaways from the analysis.
 
-Each piece should reference the real website and actual analysis data.
+CRITICAL REQUIREMENTS:
+- Maintain a scholarly ${tone} tone.
+- Prioritize factual information from the WEBSITE ANALYSIS DATA.
+- Ensure clarity, conciseness, and precision.
 `
       break
 
-    case "document":
+    case "generic_document": // was "document"
       specificInstructions = `
-TASK: Create a formal document about ${analysis.title}
+TASK: Generate a formal document based on the analysis of ${analysis.title}.
 
-DOCUMENT BEST PRACTICES:
+FORMAL DOCUMENT BEST PRACTICES:
 1. Use formal language appropriate for ${tone} tone
-2. Structure information logically with clear sections
-3. Include executive summary based on website description
-4. Present data in tables and bullet points where appropriate
-5. Reference actual metrics and findings throughout
-6. Provide clear recommendations based on real improvement suggestions
+2. Structure information logically with clear sections, headings, and subheadings.
+3. Include an executive summary based on website description and key findings.
+4. Present data in tables, bullet points, or lists where appropriate for readability.
+5. Reference actual metrics and findings throughout the document.
+6. Provide clear, actionable recommendations if applicable, based on real improvement suggestions.
 
-DOCUMENT STRUCTURE:
-1. Title Page
-2. Executive Summary
-3. Methodology
-4. Findings (organized by category)
-5. Performance Analysis
-6. Recommendations
-7. Appendices (raw data)
+DOCUMENT STRUCTURE (Adaptable based on specific needs, but provide a general template):
+1. Title: Formal Document Regarding Analysis of ${analysis.title}
+2. Date of Generation: ${new Date().toLocaleDateString()}
+3. Executive Summary: A concise overview of the analysis purpose, key findings, and overall assessment.
+4. Introduction: Background on ${analysis.title} and the objectives of the analysis.
+5. Detailed Analysis Sections:
+    5.1. Performance Metrics Overview (using actual scores)
+    5.2. Content Strategy & SEO Insights (based on keywords, content stats)
+    5.3. Technical Infrastructure Assessment (script optimization, etc.)
+    5.4. Sustainability Insights (if applicable from scores)
+6. Key Findings Summary: Bulleted list of the most critical discoveries.
+7. Recommendations (Optional, if applicable): Actionable steps based on identified improvements.
+8. Conclusion: Final thoughts and overall assessment.
+9. Appendix (Optional): Reference to raw data points or detailed metrics.
 
 Focus on professional presentation of the analysis data.
+`
+      break
+
+    case "article":
+      specificInstructions = `
+TASK: Write an in-depth article about the analysis of ${analysis.title}.
+
+ARTICLE WRITING BEST PRACTICES:
+1. Develop a clear thesis or central theme for the article based on the analysis.
+2. Structure with an engaging introduction, well-developed body paragraphs, and a strong conclusion.
+3. Incorporate storytelling elements where appropriate, using the website's data as a case study.
+4. Use the ${tone} tone consistently. If "journalistic", maintain objectivity. If "analytical", provide deep insights.
+5. Support claims with specific data and examples from the WEBSITE ANALYSIS DATA.
+6. Include direct quotes or paraphrased insights from the 'Key Findings' or 'Improvements' sections.
+
+ARTICLE STRUCTURE:
+1. Catchy Headline: Reflecting the core insight of the article.
+2. Introduction: Hook the reader and introduce ${analysis.title} and the purpose of the analysis.
+3. Body Paragraphs (Multiple):
+    - Each paragraph focusing on a specific aspect (e.g., Performance Deep Dive, Content Effectiveness, Technical Soundness).
+    - Integrate data, findings, and improvement suggestions naturally.
+    - Compare/contrast aspects if relevant.
+4. Analysis/Interpretation: Go beyond just stating facts; explain what they mean.
+5. Conclusion: Summarize the main points and offer a final thought or call to action (if appropriate for the tone).
+`
+      break
+
+    case "test_report":
+      specificInstructions = `
+TASK: Create an analytical test report for ${analysis.title} based on the provided analysis data.
+
+TEST REPORT BEST PRACTICES:
+1. Present information in a structured, factual, and objective manner using a ${tone} tone.
+2. Clearly define the "tests" as the different aspects of the website analysis (Performance, Content Quality, SEO, etc.).
+3. For each "test area", report the metrics/findings (scores, stats, keywords).
+4. Identify any "issues" or "areas for improvement" based on the 'Improvements' section of the analysis.
+5. Conclude with an overall assessment and prioritized recommendations.
+
+TEST REPORT STRUCTURE:
+1. Report Title: Analytical Test Report for ${analysis.title}
+2. Report Date: ${new Date().toLocaleDateString()}
+3. Executive Summary: Overview of tests conducted (analysis areas) and summary of key results.
+4. Test Areas & Results:
+    4.1. Performance Test: Metrics (Overall Score, Load Times if available), Findings.
+    4.2. Content Quality & SEO Test: Metrics (Content Score, Word Count, Keywords), Findings.
+    4.3. Technical Test: Metrics (Script Optimization), Findings.
+    4.4. Sustainability Test: Metrics (Sustainability Score), Findings.
+5. Summary of Issues/Observations: Bulleted list of key areas needing attention from 'Improvements'.
+6. Recommendations: Prioritized list of actions.
+7. Overall Conclusion: Final assessment of the website based on the "tests".
+`
+      break
+
+    case "case_study":
+      specificInstructions = `
+TASK: Develop a case study on ${analysis.title} using the analysis data.
+
+CASE STUDY BEST PRACTICES:
+1. Structure as a narrative: Problem/Challenge (implied by areas for improvement), Solution (applied analysis), Results (current state), and Future Recommendations.
+2. Use the ${tone} tone. If for marketing, highlight strengths and potential. If for internal review, focus on honest assessment.
+3. Clearly present ${analysis.title} as the subject of the case study.
+4. Use specific data points from the analysis to illustrate points.
+5. Focus on what can be learned from this website's current state and analysis.
+
+CASE STUDY STRUCTURE:
+1. Title: Case Study: Analyzing the Digital Presence of ${analysis.title}
+2. Introduction: Introduce ${analysis.title} and the objective of this case study (to understand its digital effectiveness).
+3. Background/Situation: Describe ${analysis.title} based on its summary and content samples.
+4. Analysis & Findings (The Core of the Case Study):
+    - Present key metrics (Performance, Content, SEO, Sustainability).
+    - Discuss significant findings from 'Key Points'.
+    - Highlight strengths and weaknesses identified in the analysis.
+5. Challenges/Opportunities: Frame 'Improvements' as challenges to overcome or opportunities for growth.
+6. Discussion/Lessons Learned: What insights can be drawn from this analysis?
+7. Conclusion & Recommendations: Summarize the case and suggest future strategic directions for ${analysis.title}.
 `
       break
 
@@ -441,7 +524,7 @@ function getEnhancedFallbackContent(contentType: string, analysis: any, tone: st
     `${analysis.title} is a website that we've analyzed for performance, content quality, and technical optimization.`
 
   switch (contentType) {
-    case "research":
+    case "research_report":
       return `# Comprehensive Research Report: ${analysis.title}
 
 ## Executive Summary
@@ -571,7 +654,7 @@ This analysis provides a roadmap for transforming ${analysis.title} into a high-
 ---
 *Analysis completed on ${new Date().toLocaleDateString()} | Generated by DevSphere Website Analyzer*`
 
-    case "blog":
+    case "blog_post":
       return `# ${analysis.title}: A Deep Dive into Website Performance and Strategy
 
 ## The Digital Landscape Challenge
@@ -651,7 +734,7 @@ Whether you're running a ${keywords[0] || "business"} website or exploring ${key
 ---
 *Want to analyze your own website? Try our comprehensive website analyzer to discover performance insights and optimization opportunities.*`
 
-    case "marketing":
+    case "marketing_copy":
       return `# Marketing Strategy Analysis: ${analysis.title}
 
 ## Executive Summary
@@ -811,252 +894,55 @@ ${analysis.title} presents strong marketing opportunities with ${analysis.sustai
 ---
 *Marketing analysis completed ${new Date().toLocaleDateString()} | DevSphere Website Analyzer*`
 
-    case "social":
-      return `# Social Media Content Strategy: ${analysis.title}
-
-## Content Overview
-Based on our analysis of ${analysis.title}, here's platform-specific social media content that leverages real performance data and insights.
-
-## LinkedIn Professional Posts
-
-### Post 1: Performance Spotlight
-\`\`\`
-🔍 Just completed an in-depth analysis of ${analysis.title} and the results are fascinating!
-
-📊 Key Performance Metrics:
-• Sustainability Score: ${analysis.sustainability_score}%
-• Performance Rating: ${analysis.performance_score}%
-• Content Quality: ${analysis.content_quality_score}%
-
-${analysis.sustainability_score > 75 ? "Impressive optimization across the board! 🚀" : "Great foundation with clear optimization opportunities 📈"}
-
-What stood out most: ${keyPoints[0] || "Strong technical foundation"}
-
-Key insight: ${improvements[0] || "Performance optimization is crucial for user experience"}
-
-#WebsiteAnalysis #DigitalPerformance #${keywords[0]?.replace(/\s+/g, "") || "WebDev"} #UserExperience
-
-What's your experience optimizing website performance? Share your biggest challenge below! 👇
-\`\`\`
-
-### Post 2: Industry Insights
-\`\`\`
-💡 Analyzing ${analysis.title} revealed some interesting trends in ${keywords[0] || "digital"} strategy:
-
-🎯 Content Strategy Insights:
-• ${contentStats.wordCount || 0} words of content
-• ${contentStats.headings || 0} structural headings
-• ${contentStats.images || 0} visual elements
-• Focus on: ${keywords.slice(0, 3).join(", ")}
-
-Key takeaway: ${keyPoints[1] || "Content structure significantly impacts user engagement"}
-
-For ${keywords[0] || "industry"} professionals, this demonstrates the importance of ${improvements[0]?.toLowerCase() || "strategic optimization"}.
-
-#ContentStrategy #${keywords[0]?.replace(/\s+/g, "") || "Digital"}Marketing #WebsiteOptimization
-
-How do you approach content strategy for your website? Let's discuss! 💬
-\`\`\`
-
-## Twitter/X Thread
-
-### Thread: Performance Analysis
-\`\`\`
-🧵 Thread: Analyzed ${analysis.title} and found some eye-opening insights about website performance 
-
-1/5 📊 The numbers:
-• ${analysis.sustainability_score}% sustainability
-• ${analysis.performance_score}% performance
-• ${analysis.content_quality_score}% content quality
-
-${analysis.performance_score > 75 ? "Strong performance foundation! 🚀" : "Room for optimization 📈"}
-
-2/5 🎯 What makes it interesting:
-${keyPoints
-  .slice(0, 2)
-  .map((point: string) => `• ${point}`)
-  .join("\n")}
-
-3/5 💡 Key insight: ${improvements[0] || "Performance optimization drives user experience"}
-
-This is especially relevant for ${keywords[0] || "websites"} focusing on ${keywords[1] || "user engagement"}.
-
-4/5 🔧 Top recommendations:
-${improvements
-  .slice(0, 3)
-  .map((imp: string, i: number) => `${i + 1}. ${imp}`)
-  .join("\n")}
-
-5/5 🎯 Bottom line: ${analysis.sustainability_score > 70 ? "Solid foundation with optimization opportunities" : "Clear roadmap for improvement"}
-
-What's your biggest website performance challenge? 
-
-#WebPerformance #${keywords[0]?.replace(/\s+/g, "") || "WebDev"} #UX
-\`\`\`
-
-## Facebook Detailed Post
-
-\`\`\`
-🔍 Website Analysis Deep Dive: ${analysis.title}
-
-I recently analyzed ${analysis.title} and discovered some fascinating insights about modern website performance and strategy.
-
-📈 Performance Snapshot:
-${websiteDescription}
-
-🎯 What We Found:
-${keyPoints.map((point: string) => `✅ ${point}`).join("\n")}
-
-📊 By the Numbers:
-• Overall Score: ${analysis.sustainability_score}%
-• Performance: ${analysis.performance_score}%
-• Content Quality: ${analysis.content_quality_score}%
-• Content Volume: ${contentStats.wordCount || 0} words
-• Visual Elements: ${contentStats.images || 0} images
-
-💡 Key Insights:
-The analysis revealed that ${analysis.title} ${analysis.performance_score > 70 ? "demonstrates strong technical fundamentals" : "has significant optimization opportunities"}. The focus on ${keywords.slice(0, 3).join(", ")} shows a clear understanding of their target audience.
-
-🔧 Top Recommendations:
-${improvements
-  .slice(0, 4)
-  .map((imp: string, i: number) => `${i + 1}. ${imp}`)
-  .join("\n")}
-
-🎯 Takeaway for Website Owners:
-${analysis.performance_score > 70 ? "Consistent optimization efforts pay dividends in user experience and search rankings" : "Strategic improvements can dramatically enhance website performance and user satisfaction"}.
-
-What's your experience with website optimization? Have you noticed the impact of performance on user engagement?
-
-#WebsiteAnalysis #DigitalMarketing #${keywords[0]?.replace(/\s+/g, "") || "WebDev"} #UserExperience #ContentStrategy
-\`\`\`
-
-## Instagram Caption & Hashtags
-
-\`\`\`
-📊 Website Analysis Results: ${analysis.title} ✨
-
-Just completed a comprehensive analysis and the insights are incredible! 
-
-🎯 Quick Stats:
-• ${analysis.sustainability_score}% sustainability score
-• ${contentStats.wordCount || 0} words of content
-• ${contentStats.images || 0} images analyzed
-• Focus: ${keywords.slice(0, 2).join(" & ")}
-
-💡 Key Finding: ${keyPoints[0] || "Performance optimization is crucial"}
-
-${analysis.sustainability_score > 75 ? "Impressive optimization! 🚀" : "Great potential for growth 📈"}
-
-Swipe to see the full breakdown! 👉
-
-What's your biggest website challenge? Drop it in the comments! 💬
-
-#WebsiteAnalysis #DigitalMarketing #${keywords[0]?.replace(/\s+/g, "") || "WebDev"} #ContentStrategy #UserExperience #WebDesign #SEO #Performance #Analytics #DigitalStrategy #WebOptimization #UXDesign #ContentMarketing #TechAnalysis #WebsiteOptimization
-\`\`\`
-
-## YouTube Video Description
-
-\`\`\`
-🔍 Complete Website Analysis: ${analysis.title} | Performance Review & Optimization Tips
-
-In this detailed analysis, we dive deep into ${analysis.title} to uncover performance insights, content strategy, and optimization opportunities.
-
-📊 ANALYSIS HIGHLIGHTS:
-• Sustainability Score: ${analysis.sustainability_score}%
-• Performance Rating: ${analysis.performance_score}%
-• Content Quality: ${analysis.content_quality_score}%
-
-🎯 WHAT WE DISCOVERED:
-${keyPoints.map((point: string, i: number) => `${i + 1}. ${point}`).join("\n")}
-
-🔧 TOP RECOMMENDATIONS:
-${improvements
-  .slice(0, 5)
-  .map((imp: string, i: number) => `${i + 1}. ${imp}`)
-  .join("\n")}
-
-💡 KEY TAKEAWAYS:
-${analysis.title} ${analysis.sustainability_score > 70 ? "demonstrates strong digital fundamentals with clear optimization opportunities" : "shows significant potential for improvement across multiple performance areas"}.
-
-🎯 TIMESTAMPS:
-0:00 Introduction
-1:30 Performance Overview
-3:45 Content Analysis
-6:20 Technical Review
-8:15 Recommendations
-10:30 Implementation Tips
-12:45 Conclusion
-
-📈 RESOURCES MENTIONED:
-• Website Analyzer Tool: [Link]
-• Performance Guide: [Link]
-• Optimization Checklist: [Link]
-
-#WebsiteAnalysis #${keywords[0]?.replace(/\s+/g, "") || "WebDev"} #PerformanceOptimization #ContentStrategy #SEO #WebDesign #DigitalMarketing #UXDesign #WebsiteOptimization #TechnicalSEO #UserExperience
-
-👍 Like this video if it helped you understand website analysis better!
-🔔 Subscribe for more website optimization content!
-💬 Comment below with your website analysis questions!
-\`\`\`
-
-## TikTok Video Script
-
-\`\`\`
-🎬 TikTok Video Script: "${analysis.title} Website Analysis in 60 Seconds"
-
-[0-5s] Hook: "I analyzed ${analysis.title} and found something surprising..."
-
-[5-15s] Quick Stats Display:
-• ${analysis.sustainability_score}% sustainability
-• ${analysis.performance_score}% performance  
-• ${contentStats.wordCount || 0} words of content
-
-[15-30s] Key Finding: "${keyPoints[0] || "Performance optimization is crucial"}"
-
-[30-45s] Top Tip: "${improvements[0] || "Focus on loading speed optimization"}"
-
-[45-55s] Result: "${analysis.sustainability_score > 70 ? "Strong foundation for growth!" : "Huge potential for improvement!"}"
-
-[55-60s] CTA: "Want your website analyzed? Link in bio!"
-
-Text Overlay Ideas:
-• "Website Analysis Results 📊"
-• "${analysis.sustainability_score}% Score"
-• "Key Finding: ${keyPoints[0]?.substring(0, 30) || "Performance matters"}..."
-• "Top Tip: ${improvements[0]?.substring(0, 30) || "Optimize loading speed"}..."
-
-Hashtags: #WebsiteAnalysis #${keywords[0]?.replace(/\s+/g, "") || "WebDev"} #PerformanceOptimization #DigitalMarketing #WebDesign #TechTips #SEO #UserExperience #WebsiteOptimization #ContentStrategy
-\`\`\`
+    case "academic_summary":
+      return `# Academic Summary: Analysis of ${analysis.title}
+**Date:** ${new Date().toLocaleDateString()}
+**Subject:** ${analysis.title} (${analysis.url})
+
+**Abstract:** This summary presents key findings from a digital analysis of ${analysis.title}, focusing on performance, content strategy, and technical optimization. The analysis utilized automated tools to assess various metrics, providing a snapshot of the website's current digital efficacy.
+
+**1. Introduction:** The website ${analysis.title}, accessible at ${analysis.url}, was analyzed to evaluate its overall digital presence and identify areas for potential enhancement. The primary goal was to objectively measure its performance against standard web benchmarks.
+
+**2. Key Analytical Findings:**
+    - **Performance Metrics:** Overall Sustainability Score: ${analysis.sustainability_score}%; Performance Optimization: ${analysis.performance_score}%; Script Efficiency: ${analysis.script_optimization_score}%.
+    - **Content & SEO:** Content Quality Score: ${analysis.content_quality_score}%; Total Words: ${contentStats.wordCount || "N/A"}; Identified Keywords: ${keywords.slice(0, 5).join(", ") || "N/A"}.
+    - **Key Observations:** ${
+      keyPoints
+        .slice(0, 3)
+        .map((p: string) => `- ${p}`)
+        .join("\n") || "No specific key points highlighted in data."
+    }
+
+**3. Discussion:** The data indicates ${analysis.title} ${(analysis.performance_score || 0) > 70 ? "demonstrates a relatively strong technical foundation" : "has notable areas for technical improvement"}. The content volume and keyword focus suggest ${(contentStats.wordCount || 0) > 1000 ? "a significant content base" : "a concise content strategy"}. Identified improvement areas primarily revolve around: ${improvements.slice(0, 2).join("; ") || "general best practices"}.
+
+**4. Conclusion:** The analysis provides a quantitative overview of ${analysis.title}'s digital standing. While exhibiting ${(analysis.sustainability_score || 0) > 60 ? "several strengths" : "some foundational elements"}, strategic attention to ${improvements[0] || "performance optimization"} and ${improvements[1] || "content refinement"} could further enhance its effectiveness.
 
 ---
-*Social media content generated based on real analysis data from ${analysis.title} | ${new Date().toLocaleDateString()}*`
+*Generated by WScrapierr - AI Content Studio*`
 
-    default:
-      return `# ${contentType.charAt(0).toUpperCase() + contentType.slice(1)} Content: ${analysis.title}
-
+    case "generic_document":
+    case "article":
+    case "test_report":
+    case "case_study":
+      // For these new types, a more generic fallback is fine for now,
+      // as the main generation logic relies on the detailed prompts above.
+      return `# ${contentType.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}: ${analysis.title}
 ## Overview
 ${websiteDescription}
-
-## Analysis Summary
-**Website:** ${analysis.url}  
-**Analysis Date:** ${new Date(analysis.created_at).toLocaleDateString()}
-
-## Key Findings
-${keyPoints.map((point: string, i: number) => `${i + 1}. ${point}`).join("\n")}
-
-## Performance Metrics
-- **Sustainability Score:** ${analysis.sustainability_score}%
-- **Performance:** ${analysis.performance_score}%
-- **Content Quality:** ${analysis.content_quality_score}%
-
-## Recommendations
-${improvements.map((imp: string, i: number) => `${i + 1}. ${imp}`).join("\n")}
-
-## Keywords
-${keywords.join(", ")}
-
+This document provides a ${contentType.replace(/_/g, " ")} based on the automated analysis of ${analysis.title}.
+Key metrics include: Performance (${analysis.performance_score}%), Sustainability (${analysis.sustainability_score}%), Content Quality (${analysis.content_quality_score}%).
+Further details would be populated by the AI based on the specific prompt for this content type.
 ---
-*Generated by DevSphere Website Analyzer*`
+*Generated by WScrapierr - AI Content Studio*`
+
+    default:
+      return `# ${contentType.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}: ${analysis.title}
+## Overview
+${websiteDescription}
+This document provides a ${contentType.replace(/_/g, " ")} based on the automated analysis of ${analysis.title}.
+Key metrics include: Performance (${analysis.performance_score}%), Sustainability (${analysis.sustainability_score}%), Content Quality (${analysis.content_quality_score}%).
+Further details would be populated by the AI based on the specific prompt for this content type.
+---
+*Generated by WScrapierr - AI Content Studio*`
   }
 }

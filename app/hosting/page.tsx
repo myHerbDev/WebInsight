@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Search, Leaf, Shield, Zap, Globe, ExternalLink, SortAsc, SortDesc } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import Link from "next/link" // Import Link
 import { toast } from "@/components/ui/use-toast"
 
 interface HostingProvider {
@@ -15,6 +16,7 @@ interface HostingProvider {
   name: string
   website: string
   sustainability_score: number
+  description?: string
   renewable_energy_percentage: number
   carbon_neutral: boolean
   green_certifications: string[]
@@ -305,15 +307,8 @@ export default function HostingProvidersPage() {
                 >
                   Visit Website
                 </Button>
-                <Button
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => {
-                    // Navigate to detailed analysis page
-                    window.location.href = `/hosting/${provider.id}`
-                  }}
-                >
-                  Detailed Analysis
+                <Button size="sm" className="flex-1">
+                  <Link href={`/hosting/${provider.id}`}>Detailed Analysis</Link>
                 </Button>
               </div>
             </CardContent>

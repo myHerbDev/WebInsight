@@ -1,63 +1,22 @@
-import { createServerSupabaseClient, isSupabaseConfigured } from "./supabase"
+import { createHash } from "crypto"
 
-export async function getCurrentUser() {
-  if (!isSupabaseConfigured()) {
-    return null
-  }
-
-  const supabase = createServerSupabaseClient()
-  if (!supabase) {
-    return null
-  }
-
-  try {
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser()
-
-    if (error || !user) {
-      return null
-    }
-
-    return {
-      id: user.id,
-      email: user.email || "",
-      created_at: user.created_at || new Date().toISOString(),
-    }
-  } catch (error) {
-    console.error("Error getting current user:", error)
-    return null
-  }
+/**
+ * Simple password hashing function using Node.js built-in crypto
+ * This is a replacement for bcrypt to avoid build issues
+ * Note: In a production app, you should use a proper password hashing library
+ */
+export async function hashPassword(password: string): Promise<string> {
+  // Add a simple salt - in production, use a unique salt per user
+  const salt = "website-analyzer-salt"
+  return createHash("sha256")
+    .update(salt + password)
+    .digest("hex")
 }
 
-export async function verifyToken(token: string) {
-  if (!isSupabaseConfigured()) {
-    return null
-  }
-
-  const supabase = createServerSupabaseClient()
-  if (!supabase) {
-    return null
-  }
-
-  try {
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser(token)
-
-    if (error || !user) {
-      return null
-    }
-
-    return {
-      id: user.id,
-      email: user.email || "",
-      created_at: user.created_at || new Date().toISOString(),
-    }
-  } catch (error) {
-    console.error("Error verifying token:", error)
-    return null
-  }
+/**
+ * Verify a password against a hash
+ */
+export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  const hashedInput = await hashPassword(password)
+  return hashedInput === hash
 }
