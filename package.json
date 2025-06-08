@@ -13,7 +13,6 @@
   "dependencies": {
     "@ai-sdk/groq": "latest",
     "@aws-sdk/credential-providers": "latest",
-    "@emotion/is-prop-valid": "latest",
     "@hookform/resolvers": "^3.9.0",
     "@mongodb-js/zstd": "latest",
     "@neondatabase/serverless": "latest",
@@ -55,7 +54,7 @@
     "date-fns": "latest",
     "dns": "latest",
     "embla-carousel-react": "latest",
-    "framer-motion": "latest",
+    "framer-motion": "^11.11.17",
     "gcp-metadata": "latest",
     "input-otp": "latest",
     "kerberos": "latest",
