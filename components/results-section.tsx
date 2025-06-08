@@ -15,10 +15,9 @@ interface ResultsSectionProps {
   data: WebsiteData
   isLoading: boolean
   isError: boolean
-  onSignUpClick: () => void
 }
 
-export function ResultsSection({ data, isLoading, isError, onSignUpClick }: ResultsSectionProps) {
+export function ResultsSection({ data, isLoading, isError }: ResultsSectionProps) {
   const searchParams = useSearchParams()
   const [selectedTone, setSelectedTone] = useState(searchParams.get("tone") || "professional")
 
@@ -166,7 +165,7 @@ export function ResultsSection({ data, isLoading, isError, onSignUpClick }: Resu
           </TabsContent>
 
           <TabsContent value="content-generation">
-            <AiContentStudio analysisId={data._id} tone={selectedTone} onSignUpClick={onSignUpClick} />
+            <AiContentStudio analysisId={data._id} tone={selectedTone} />
           </TabsContent>
         </div>
       </Tabs>

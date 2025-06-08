@@ -9,8 +9,6 @@ import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { UserProfileButton } from "@/components/user-profile-button" // Assuming this exists
-import { SignUpModal } from "@/components/sign-up-modal" // Assuming this exists
-import { LoginModal } from "@/components/login-modal"
 import { useAuth } from "@/components/auth-provider"
 import {
   Menu,
@@ -29,8 +27,6 @@ import { Moon, Sun } from "lucide-react"
 
 export function Header() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [showSignUpModal, setShowSignUpModal] = useState(false)
-  const [showLoginModal, setShowLoginModal] = useState(false)
   const pathname = usePathname()
   const { user, isLoading } = useAuth() // Assuming useAuth provides user and isLoading
   const { theme, setTheme } = useTheme()
@@ -129,37 +125,20 @@ export function Header() {
               <UserProfileButton />
             ) : (
               <>
-                <Button variant="ghost" onClick={() => setShowLoginModal(true)} className="hidden sm:inline-flex">
-                  Log In
+                <Button variant="ghost" asChild className="hidden sm:inline-flex">
+                  <Link href="/login">Log In</Link>
                 </Button>
                 <Button
-                  onClick={() => setShowSignUpModal(true)}
+                  asChild
                   className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:opacity-90 text-white"
                 >
-                  Sign Up
+                  <Link href="/signup">Sign Up</Link>
                 </Button>
               </>
             ))}
           {isLoading && <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />}
         </div>
       </div>
-      {/* Modals (assuming they exist and are styled) */}
-      <SignUpModal
-        isOpen={showSignUpModal}
-        onClose={() => setShowSignUpModal(false)}
-        onLoginClick={() => {
-          setShowSignUpModal(false)
-          setShowLoginModal(true)
-        }}
-      />
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onSignUpClick={() => {
-          setShowLoginModal(false)
-          setShowSignUpModal(true)
-        }}
-      />
     </header>
   )
 }
