@@ -57,7 +57,7 @@ export async function POST(request: Request) {
       // Continue without database save - analysis still works
     }
 
-    return NextResponse.json({ analysis: analysisResult })
+    return NextResponse.json(analysisResult)
   } catch (error: any) {
     console.error("API Error:", error)
     return NextResponse.json({ error: error.message || "An unexpected error occurred" }, { status: 500 })

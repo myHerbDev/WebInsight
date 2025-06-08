@@ -3,13 +3,13 @@
 import type React from "react"
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Sparkles, Search, BarChart, ShieldCheck, Loader2 } from "lucide-react"
+import { Sparkles, Search, BarChart, ShieldCheck, Loader2, Zap, Globe, FileText, Brain } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "@/components/ui/use-toast"
 import type { WebsiteData } from "@/types/website-data"
-import { SearchResultsDisplay } from "@/components/search-results-display" // Ensure this path is correct
+import { SearchResultsDisplay } from "@/components/search-results-display"
 import { Separator } from "@/components/ui/separator"
 
 export default function HomePage() {
@@ -33,16 +33,23 @@ export default function HomePage() {
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url: url.trim() }),
       })
-      const data: WebsiteData = await response.json() // Type assertion
+
+      const data = await response.json()
+
       if (!response.ok) {
         console.error("Analysis API Error:", data)
-        // @ts-ignore
         throw new Error(data.error || data.message || "Failed to analyze website.")
       }
-      console.log("API Response Data:", data) // For debugging
+
+      console.log("API Response Data:", data)
       setAnalysisData(data)
+
+      toast({
+        title: "Analysis Complete",
+        description: "Website analysis has been completed successfully!",
+      })
     } catch (err: any) {
       console.error("Handle Analyze Error:", err)
       setError(err.message)
@@ -52,7 +59,34 @@ export default function HomePage() {
     }
   }
 
-  const featureCards = [
+  const wscrapierrFeatures = [
+    {
+      title: "Lightning-Fast Analysis",
+      description: "Get comprehensive website insights in seconds",
+      icon: Zap,
+      color: "from-yellow-400 to-orange-500",
+    },
+    {
+      title: "AI-Powered Intelligence",
+      description: "Advanced AI algorithms for deep website understanding",
+      icon: Brain,
+      color: "from-purple-400 to-pink-500",
+    },
+    {
+      title: "Global Reach",
+      description: "Analyze websites from anywhere in the world",
+      icon: Globe,
+      color: "from-blue-400 to-cyan-500",
+    },
+    {
+      title: "Smart Content Generation",
+      description: "Transform analysis into professional documents",
+      icon: FileText,
+      color: "from-green-400 to-emerald-500",
+    },
+  ]
+
+  const analysisFeatures = [
     {
       title: "Performance Analysis",
       description: "Deep dive into loading speeds, optimization scores, and technical performance metrics.",
@@ -109,6 +143,35 @@ export default function HomePage() {
         </p>
       </motion.div>
 
+      {/* WScrapierr Features Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="mb-12"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {wscrapierrFeatures.map((feature, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.1 + i * 0.1 }}
+            >
+              <Card className="text-center p-4 hover:shadow-lg transition-all duration-300 border-2 hover:border-primary/20">
+                <div
+                  className={`w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-r ${feature.color} flex items-center justify-center`}
+                >
+                  <feature.icon className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="font-semibold text-sm mb-1">{feature.title}</h3>
+                <p className="text-xs text-muted-foreground">{feature.description}</p>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -117,8 +180,8 @@ export default function HomePage() {
       >
         <form onSubmit={handleAnalyze} className="flex gap-0">
           <Input
-            type="url"
-            placeholder="Enter website URL to analyze or scrape..."
+            type="text"
+            placeholder="Enter website URL to analyze (e.g., example.com)..."
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             className="h-12 text-base flex-grow rounded-r-none border-r-0 focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -138,7 +201,7 @@ export default function HomePage() {
 
       {/* Results display area */}
       <motion.div
-        initial={false} // No initial animation for this container itself
+        initial={false}
         animate={{ opacity: analysisData || error || isLoading ? 1 : 0 }}
         transition={{ duration: 0.3 }}
         className="w-full"
@@ -146,7 +209,7 @@ export default function HomePage() {
         <SearchResultsDisplay results={analysisData} isLoading={isLoading} error={error} />
       </motion.div>
 
-      {/* Feature cards only show if no analysis data, no loading, and no error */}
+      {/* Analysis features only show if no analysis data, no loading, and no error */}
       {!analysisData && !isLoading && !error && (
         <>
           <motion.div className="text-center mb-12">
@@ -166,7 +229,7 @@ export default function HomePage() {
               hidden: { opacity: 0 },
             }}
           >
-            {featureCards.map((feature, i) => (
+            {analysisFeatures.map((feature, i) => (
               <motion.div
                 key={i}
                 variants={{
@@ -193,7 +256,9 @@ export default function HomePage() {
           </motion.div>
         </>
       )}
+
       <Separator className="my-16" />
+
       <div className="text-center text-muted-foreground text-sm">
         <p>WScrapierr helps you analyze websites, understand their structure, and generate insightful content.</p>
         <p>Powered by cutting-edge AI and web technologies.</p>

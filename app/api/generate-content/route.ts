@@ -7,7 +7,7 @@ const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST(request: Request) {
   try {
-    const { analysisId, contentType, tone } = await request.json()
+    const { analysisId, contentType, tone, intention } = await request.json()
 
     if (!contentType) {
       return NextResponse.json({ error: "Content type is required" }, { status: 400 })
@@ -67,7 +67,12 @@ export async function POST(request: Request) {
         console.log("Using Groq AI for content generation")
 
         // Create an enhanced prompt with the website's description and best practices
-        const prompt = createEnhancedResearchPrompt(analysis, contentType, tone || "professional")
+        const prompt = createEnhancedResearchPrompt(
+          analysis,
+          contentType,
+          tone || "professional",
+          intention || "inform",
+        )
 
         console.log("Generated prompt length:", prompt.length)
 
@@ -128,7 +133,7 @@ export async function POST(request: Request) {
 /**
  * Creates an enhanced research prompt with best practices and structured guidance
  */
-function createEnhancedResearchPrompt(analysis: any, contentType: string, tone: string): string {
+function createEnhancedResearchPrompt(analysis: any, contentType: string, tone: string, intention: string): string {
   // Parse JSON fields safely
   const keyPoints = Array.isArray(analysis.key_points)
     ? analysis.key_points
