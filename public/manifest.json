@@ -1,0 +1,76 @@
+{
+  "name": "WSfynder - Website Analysis Platform",
+  "short_name": "WSfynder",
+  "description": "Advanced website analysis and intelligence platform providing comprehensive insights into performance, SEO, security, and sustainability.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait-primary",
+  "categories": ["productivity", "developer", "utilities"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "WSfynder Desktop Interface"
+    },
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "WSfynder Mobile Interface"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Analyze Website",
+      "short_name": "Analyze",
+      "description": "Start analyzing a website",
+      "url": "/?action=analyze",
+      "icons": [
+        {
+          "src": "/shortcut-analyze.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "View Features",
+      "short_name": "Features",
+      "description": "Explore WSfynder features",
+      "url": "/features",
+      "icons": [
+        {
+          "src": "/shortcut-features.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

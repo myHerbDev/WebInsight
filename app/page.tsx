@@ -1,154 +1,177 @@
-import { Suspense } from "react"
+import type { Metadata } from "next"
 import { WebsiteForm } from "@/components/website-form"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import Link from "next/link"
-import { Search, BarChart3, Shield, Zap, Globe, Brain, ArrowRight, CheckCircle } from "lucide-react"
+import {
+  Search,
+  Shield,
+  Zap,
+  Eye,
+  TreePine,
+  Smartphone,
+  BarChart3,
+  FileText,
+  CheckCircle,
+  Star,
+  Users,
+  Globe,
+} from "lucide-react"
+
+export const metadata: Metadata = {
+  title: "WSfynder - Advanced Website Analysis & Intelligence Platform",
+  description:
+    "Analyze any website with WSfynder's comprehensive platform. Get detailed insights on performance, SEO, security, accessibility, and sustainability. Free website analysis with AI-powered recommendations.",
+  keywords: [
+    "website analysis",
+    "free website analyzer",
+    "SEO audit",
+    "website performance test",
+    "security scan",
+    "accessibility checker",
+    "sustainability analysis",
+    "website optimization",
+    "site audit tool",
+    "web analytics",
+  ],
+  openGraph: {
+    title: "WSfynder - Free Website Analysis & Intelligence Platform",
+    description:
+      "Get comprehensive website insights with our advanced analysis platform. Performance, SEO, security, and more.",
+    url: "https://wsfynder.com",
+    images: [
+      {
+        url: "/og-home.png",
+        width: 1200,
+        height: 630,
+        alt: "WSfynder Homepage - Website Analysis Platform",
+      },
+    ],
+  },
+  alternates: {
+    canonical: "https://wsfynder.com",
+  },
+}
 
 const features = [
   {
-    icon: Search,
-    title: "Intelligent Analysis",
-    description: "Deep website analysis with AI-powered insights and comprehensive data extraction.",
+    icon: Zap,
+    title: "Performance Analysis",
+    description: "Comprehensive speed and optimization metrics",
+    gradient: "from-orange-500 to-red-500",
   },
   {
-    icon: BarChart3,
-    title: "Performance Metrics",
-    description: "Detailed performance analysis including speed, SEO, security, and accessibility scores.",
+    icon: Search,
+    title: "SEO Optimization",
+    description: "In-depth search engine optimization insights",
+    gradient: "from-blue-500 to-indigo-500",
   },
   {
     icon: Shield,
-    title: "Security Assessment",
-    description: "Comprehensive security evaluation and vulnerability detection for enhanced protection.",
+    title: "Security Audit",
+    description: "Advanced security headers and vulnerability checks",
+    gradient: "from-green-500 to-emerald-500",
   },
   {
-    icon: Brain,
-    title: "AI Content Generation",
-    description: "Generate professional content based on website analysis with advanced AI technology.",
+    icon: Eye,
+    title: "Accessibility Testing",
+    description: "WCAG compliance and accessibility improvements",
+    gradient: "from-purple-500 to-violet-500",
   },
   {
-    icon: Globe,
-    title: "Hosting Intelligence",
-    description: "Detailed hosting provider analysis and infrastructure insights for optimization.",
+    icon: TreePine,
+    title: "Sustainability Metrics",
+    description: "Environmental impact and carbon footprint analysis",
+    gradient: "from-emerald-500 to-green-500",
   },
   {
-    icon: Zap,
-    title: "Real-time Results",
-    description: "Instant analysis results with detailed reports and actionable recommendations.",
+    icon: Smartphone,
+    title: "Mobile Optimization",
+    description: "Responsive design and mobile performance testing",
+    gradient: "from-pink-500 to-rose-500",
   },
 ]
 
-const benefits = [
-  "Comprehensive website analysis in seconds",
-  "AI-powered content generation",
-  "Security and performance insights",
-  "Hosting provider intelligence",
-  "SEO optimization recommendations",
-  "Export and share analysis results",
+const stats = [
+  { icon: Globe, value: "10M+", label: "Websites Analyzed" },
+  { icon: Users, value: "50K+", label: "Active Users" },
+  { icon: Star, value: "4.9/5", label: "User Rating" },
+  { icon: CheckCircle, value: "99.9%", label: "Uptime" },
 ]
 
 export default function HomePage() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative py-20 lg:py-32 overflow-hidden">
-        <div className="container relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <Badge variant="secondary" className="mb-6">
-              🚀 Intelligent Website Discovery
-            </Badge>
-
-            <h1 className="text-4xl lg:text-6xl font-bold tracking-tight mb-6">
-              Discover, Analyze, and
-              <span className="text-primary"> Generate</span>
+      <section className="relative py-20 px-4 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5"></div>
+        <div className="container mx-auto text-center relative z-10">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Advanced Website Analysis & Intelligence
             </h1>
-
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              WSfynder provides comprehensive website analysis, performance insights, and AI-powered content generation
-              to help you understand and optimize any website on the internet.
+            <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
+              Discover comprehensive insights about any website with WSfynder's powerful analysis platform. Get detailed
+              reports on performance, SEO, security, accessibility, and sustainability.
             </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Button size="lg" asChild>
-                <Link href="#analyze">
-                  Start Analysis <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild>
-                <Link href="/features">Learn More</Link>
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div>
-                <div className="text-2xl font-bold text-primary">10K+</div>
-                <div className="text-sm text-muted-foreground">Websites Analyzed</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-primary">50+</div>
-                <div className="text-sm text-muted-foreground">Data Points</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-primary">99.9%</div>
-                <div className="text-sm text-muted-foreground">Uptime</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-primary">24/7</div>
-                <div className="text-sm text-muted-foreground">Support</div>
-              </div>
+            <div className="flex flex-wrap justify-center gap-3 mb-12">
+              <Badge variant="secondary" className="px-4 py-2 text-sm">
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Free Analysis
+              </Badge>
+              <Badge variant="secondary" className="px-4 py-2 text-sm">
+                <Zap className="h-4 w-4 mr-2" />
+                Instant Results
+              </Badge>
+              <Badge variant="secondary" className="px-4 py-2 text-sm">
+                <FileText className="h-4 w-4 mr-2" />
+                AI-Powered Insights
+              </Badge>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Analysis Form Section */}
-      <section id="analyze" className="py-20 bg-muted/50">
-        <div className="container">
-          <div className="max-w-2xl mx-auto text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Analyze Any Website</h2>
-            <p className="text-muted-foreground">
-              Enter a website URL to get comprehensive analysis including performance, security, SEO, and hosting
-              information.
+      {/* Website Analysis Form */}
+      <section className="py-16 px-4 bg-white" aria-labelledby="analysis-heading">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h2 id="analysis-heading" className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
+              Analyze Any Website
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Enter a website URL below to get started with your comprehensive analysis
             </p>
           </div>
-
-          <div className="max-w-4xl mx-auto">
-            <Suspense
-              fallback={
-                <div className="flex justify-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              }
-            >
-              <WebsiteForm />
-            </Suspense>
-          </div>
+          <WebsiteForm />
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20">
-        <div className="container">
-          <div className="max-w-2xl mx-auto text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Powerful Features for Website Intelligence</h2>
-            <p className="text-muted-foreground">
-              Everything you need to understand, analyze, and optimize websites with professional-grade accuracy and
-              AI-powered insights.
+      <section className="py-20 px-4 bg-gray-50" aria-labelledby="features-heading">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <h2 id="features-heading" className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">
+              Comprehensive Analysis Features
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              WSfynder provides detailed insights across multiple dimensions of website performance and optimization
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                    <feature.icon className="h-6 w-6 text-primary" />
+              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white">
+                <CardHeader className="text-center pb-4">
+                  <div
+                    className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-r ${feature.gradient} flex items-center justify-center shadow-lg`}
+                  >
+                    <feature.icon className="h-8 w-8 text-white" />
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  <CardTitle className="text-xl font-bold text-gray-900">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-base">{feature.description}</CardDescription>
+                  <CardDescription className="text-center text-gray-600 leading-relaxed">
+                    {feature.description}
+                  </CardDescription>
                 </CardContent>
               </Card>
             ))}
@@ -156,71 +179,58 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="py-20 bg-muted/50">
-        <div className="container">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold mb-6">Why Choose WSfynder?</h2>
-              <p className="text-muted-foreground mb-8">
-                WSfynder combines advanced website analysis with AI-powered content generation to provide comprehensive
-                insights that help you make informed decisions about any website.
-              </p>
-
-              <ul className="space-y-4">
-                {benefits.map((benefit, index) => (
-                  <li key={index} className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                    <span>{benefit}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-8">
-                <Button asChild>
-                  <Link href="/features">
-                    Explore All Features <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-
-            <div className="relative">
-              <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl p-8">
-                <div className="w-full h-full bg-background rounded-xl shadow-lg p-6 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Brain className="h-8 w-8 text-primary" />
-                    </div>
-                    <h3 className="font-semibold mb-2">AI-Powered Analysis</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Advanced algorithms provide deep insights and actionable recommendations
-                    </p>
-                  </div>
+      {/* Stats Section */}
+      <section className="py-16 px-4 bg-gradient-to-r from-blue-600 to-purple-600" aria-labelledby="stats-heading">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h2 id="stats-heading" className="text-3xl md:text-4xl font-bold mb-4 text-white">
+              Trusted by Developers Worldwide
+            </h2>
+            <p className="text-lg text-blue-100 max-w-2xl mx-auto">
+              Join thousands of developers and businesses who trust WSfynder for their website analysis needs
+            </p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/20 flex items-center justify-center">
+                  <stat.icon className="h-8 w-8 text-white" />
                 </div>
+                <div className="text-3xl md:text-4xl font-bold text-white mb-2">{stat.value}</div>
+                <div className="text-blue-100">{stat.label}</div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20">
-        <div className="container">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-4">Ready to Discover Website Intelligence?</h2>
-            <p className="text-muted-foreground mb-8">
-              Join thousands of users who trust WSfynder for comprehensive website analysis and AI-powered content
-              generation.
+      <section className="py-20 px-4 bg-white" aria-labelledby="cta-heading">
+        <div className="container mx-auto text-center">
+          <div className="max-w-3xl mx-auto">
+            <h2 id="cta-heading" className="text-3xl md:text-4xl font-bold mb-6 text-gray-900">
+              Ready to Optimize Your Website?
+            </h2>
+            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+              Get started with WSfynder today and discover actionable insights to improve your website's performance,
+              SEO, security, and user experience.
             </p>
-
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild>
-                <Link href="#analyze">Start Free Analysis</Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild>
-                <Link href="/content-studio">Try Content Studio</Link>
-              </Button>
+              <a
+                href="#analysis-heading"
+                className="inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-medium rounded-lg shadow-lg transition-all duration-300"
+                aria-label="Start analyzing your website"
+              >
+                <BarChart3 className="h-5 w-5 mr-2" />
+                Start Free Analysis
+              </a>
+              <a
+                href="/features"
+                className="inline-flex items-center justify-center px-8 py-3 border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-medium rounded-lg transition-all duration-300"
+                aria-label="Learn more about WSfynder features"
+              >
+                Learn More
+              </a>
             </div>
           </div>
         </div>

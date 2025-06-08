@@ -12,7 +12,7 @@ import type { WebsiteData } from "@/types/website-data"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 
 interface ResultsSectionProps {
-  data: WebsiteData
+  data: WebsiteData | null | undefined
   isLoading: boolean
   isError: boolean
 }
@@ -97,13 +97,29 @@ export function ResultsSection({ data, isLoading, isError }: ResultsSectionProps
     )
   }
 
+  // If no data is available, show a message
   if (!data) {
-    return null
+    return (
+      <section className="container grid items-center justify-center gap-6 pt-20 pb-10">
+        <div className="flex flex-col gap-2">
+          <h2 className="scroll-m-20 pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0">
+            No Results Yet
+          </h2>
+          <p className="text-muted-foreground">Enter a website URL above to analyze it.</p>
+        </div>
+      </section>
+    )
+  }
+
+  // Ensure metrics exist with fallbacks
+  const metrics = data.metrics || {
+    carbonFootprint: 0,
+    pageWeight: 0,
   }
 
   return (
     <section className="container grid items-center justify-center gap-6 pt-20 pb-10">
-      <div className="flex justify-between w-full">
+      <div className="flex justify-between w-full flex-col md:flex-row gap-4">
         <div className="flex flex-col gap-2">
           <h2 className="scroll-m-20 pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0">
             Here are your results
@@ -152,12 +168,12 @@ export function ResultsSection({ data, isLoading, isError }: ResultsSectionProps
               <CardContent className="grid gap-4 md:grid-cols-2">
                 <div>
                   <p className="text-sm font-medium leading-none">Carbon Footprint</p>
-                  <p className="text-5xl font-bold">{data.metrics.carbonFootprint.toFixed(2)}g</p>
+                  <p className="text-5xl font-bold">{metrics.carbonFootprint.toFixed(2)}g</p>
                   <p className="text-sm text-muted-foreground">Estimated carbon footprint of your website.</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium leading-none">Page Size</p>
-                  <p className="text-5xl font-bold">{data.metrics.pageWeight.toFixed(2)}MB</p>
+                  <p className="text-5xl font-bold">{metrics.pageWeight.toFixed(2)}MB</p>
                   <p className="text-sm text-muted-foreground">Total size of all resources on your website.</p>
                 </div>
               </CardContent>
@@ -166,9 +182,9 @@ export function ResultsSection({ data, isLoading, isError }: ResultsSectionProps
 
           <TabsContent value="content-generation">
             <AiContentStudio
-              analysisId={data._id}
-              websiteUrl={data.url}
-              websiteTitle={data.title}
+              analysisId={data._id || ""}
+              websiteUrl={data.url || ""}
+              websiteTitle={data.title || ""}
               tone={selectedTone}
               onSignUpClick={() => {
                 // Handle sign up click
