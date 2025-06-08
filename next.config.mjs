@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    serverComponentsExternalPackages: ['@neondatabase/serverless']
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -7,12 +10,23 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
     unoptimized: true,
-    domains: ['localhost'],
   },
-  experimental: {
-    serverComponentsExternalPackages: ['@neondatabase/serverless'],
+  webpack: (config) => {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
+    };
+    return config;
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;
