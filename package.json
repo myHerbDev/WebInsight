@@ -44,6 +44,7 @@
     "@radix-ui/react-toggle-group": "latest",
     "@radix-ui/react-tooltip": "latest",
     "@tailwindcss/typography": "latest",
+    "@vercel/postgres": "latest",
     "ai": "latest",
     "autoprefixer": "^10.4.20",
     "cheerio": "latest",

@@ -26,6 +26,13 @@ export default function ContentStudioPage() {
       toast({ title: "Invalid URL", description: "Please enter a valid website URL.", variant: "destructive" })
       return
     }
+
+    // Clean and prepare URL
+    let cleanUrl = targetUrl.trim()
+    if (!cleanUrl.startsWith("http://") && !cleanUrl.startsWith("https://")) {
+      cleanUrl = "https://" + cleanUrl
+    }
+
     setIsLoadingAnalysis(true)
     setAnalysisError(null)
     setAnalysisData(null)
@@ -34,7 +41,7 @@ export default function ContentStudioPage() {
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: targetUrl }),
+        body: JSON.stringify({ url: cleanUrl }),
       })
       const data = await response.json()
       if (!response.ok) {
@@ -43,7 +50,7 @@ export default function ContentStudioPage() {
       setAnalysisData(data)
       toast({
         title: "Analysis Complete!",
-        description: `Successfully analyzed ${targetUrl}. You can now generate content.`,
+        description: `Successfully analyzed ${cleanUrl}. You can now generate content.`,
       })
     } catch (err: any) {
       setAnalysisError(err.message)

@@ -53,10 +53,42 @@ export default function HomePage() {
   }
 
   const featureCards = [
-    { title: "Intelligent Scraping", description: "Extract data with precision and ease.", icon: Search },
-    { title: "AI Content Generation", description: "Create diverse content types in moments.", icon: Sparkles },
-    { title: "Hosting Insights", description: "Manage and review hosting provider information.", icon: BarChart },
-    { title: "Secure & Reliable", description: "Built with modern security best practices.", icon: ShieldCheck },
+    {
+      title: "Performance Analysis",
+      description: "Deep dive into loading speeds, optimization scores, and technical performance metrics.",
+      icon: BarChart,
+      details: "Analyze page load times, resource optimization, mobile performance, and Core Web Vitals",
+    },
+    {
+      title: "Content Intelligence",
+      description: "Comprehensive content analysis including SEO, readability, and structure assessment.",
+      icon: Search,
+      details: "Extract keywords, analyze content quality, check heading structure, and evaluate SEO factors",
+    },
+    {
+      title: "Security & Hosting",
+      description: "Detailed hosting information, SSL certificates, and security vulnerability scanning.",
+      icon: ShieldCheck,
+      details: "Identify hosting providers, check SSL status, analyze security headers, and detect vulnerabilities",
+    },
+    {
+      title: "AI Content Generation",
+      description: "Transform analysis data into professional reports, blog posts, and marketing content.",
+      icon: Sparkles,
+      details: "Generate research reports, academic summaries, blog posts, and marketing copy using AI",
+    },
+    {
+      title: "Technology Detection",
+      description: "Identify frameworks, CMS platforms, analytics tools, and third-party integrations.",
+      icon: Search,
+      details: "Detect JavaScript frameworks, content management systems, analytics platforms, and plugins",
+    },
+    {
+      title: "Accessibility Audit",
+      description: "Evaluate website accessibility, mobile-friendliness, and user experience factors.",
+      icon: ShieldCheck,
+      details: "Check WCAG compliance, mobile responsiveness, navigation structure, and usability",
+    },
   ]
 
   return (
@@ -116,37 +148,50 @@ export default function HomePage() {
 
       {/* Feature cards only show if no analysis data, no loading, and no error */}
       {!analysisData && !isLoading && !error && (
-        <motion.div
-          className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8"
-          initial="hidden"
-          animate="visible"
-          variants={{
-            visible: { transition: { staggerChildren: 0.1, delayChildren: 0.4 } },
-            hidden: { opacity: 0 },
-          }}
-        >
-          {featureCards.map((feature, i) => (
-            <motion.div
-              key={i}
-              variants={{
-                hidden: { y: 20, opacity: 0 },
-                visible: { y: 0, opacity: 1 },
-              }}
-            >
-              <Card className="h-full hover:shadow-lg transition-shadow duration-300 bg-card/80 backdrop-blur-sm">
-                <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                  <div className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-3 rounded-lg w-fit">
-                    <feature.icon className="h-6 w-6 text-white" />
-                  </div>
-                  <CardTitle className="text-lg">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-sm">{feature.description}</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </motion.div>
+        <>
+          <motion.div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Comprehensive Website Analysis</h2>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              Our advanced analysis engine examines every aspect of your website, from performance and security to
+              content quality and SEO optimization. Get actionable insights to improve your digital presence.
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              visible: { transition: { staggerChildren: 0.1, delayChildren: 0.4 } },
+              hidden: { opacity: 0 },
+            }}
+          >
+            {featureCards.map((feature, i) => (
+              <motion.div
+                key={i}
+                variants={{
+                  hidden: { y: 20, opacity: 0 },
+                  visible: { y: 0, opacity: 1 },
+                }}
+              >
+                <Card className="h-full hover:shadow-lg transition-all duration-300 bg-card/80 backdrop-blur-sm hover:bg-card/90">
+                  <CardHeader className="flex flex-row items-start gap-4 pb-3">
+                    <div className="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 p-3 rounded-lg w-fit shrink-0">
+                      <feature.icon className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-lg mb-2">{feature.title}</CardTitle>
+                      <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-xs text-muted-foreground/80 leading-relaxed">{feature.details}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </motion.div>
+        </>
       )}
       <Separator className="my-16" />
       <div className="text-center text-muted-foreground text-sm">
