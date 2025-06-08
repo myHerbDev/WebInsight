@@ -1,30 +1,27 @@
 import Link from "next/link"
-import { cn } from "@/lib/utils"
+import { Search, Zap } from "lucide-react"
 
-interface LogoProps {
-  className?: string
-  showText?: boolean
-}
-
-export function Logo({ className, showText = true }: LogoProps) {
+export function Logo() {
   return (
-    <Link href="/" className={cn("flex items-center space-x-2", className)}>
-      <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="w-5 h-5 text-primary-foreground"
-        >
-          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-          <polyline points="3.27,6.96 12,12.01 20.73,6.96" />
-          <line x1="12" y1="22.08" x2="12" y2="12" />
-        </svg>
+    <Link
+      href="/"
+      className="flex items-center space-x-3 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg p-1"
+      aria-label="WSfynder - Go to homepage"
+    >
+      <div className="relative">
+        <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-green-600 rounded-xl flex items-center justify-center shadow-md">
+          <Search className="h-5 w-5 text-white" aria-hidden="true" />
+        </div>
+        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center">
+          <Zap className="h-2.5 w-2.5 text-white" aria-hidden="true" />
+        </div>
       </div>
-      {showText && <span className="font-bold text-xl text-foreground">WSfynder</span>}
+      <div className="flex flex-col">
+        <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-green-600 bg-clip-text text-transparent">
+          WSfynder
+        </span>
+        <span className="text-xs text-muted-foreground leading-none">Website Intelligence</span>
+      </div>
     </Link>
   )
 }

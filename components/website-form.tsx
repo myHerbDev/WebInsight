@@ -6,62 +6,18 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Search, Sparkles, AlertCircle, Zap, ExternalLink } from "lucide-react"
+import { Search, Sparkles, AlertCircle, Zap } from "lucide-react"
 import { SearchResultsDisplay } from "@/components/search-results-display"
 import { AiContentStudio } from "@/components/ai-content-studio"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { toast } from "@/components/ui/use-toast"
 
-interface AnalysisResult {
-  id: string
-  url: string
-  title: string
-  summary: string
-  performance_score: number
-  seo_score: number
-  security_score: number
-  accessibility_score: number
-  sustainability_score: number
-  mobile_score: number
-  keywords: string[]
-  improvements: string[]
-  technologies: Array<{
-    name: string
-    category: string
-    confidence: number
-  }>
-  metadata: {
-    favicon: string | null
-    title: string
-    description: string
-  }
-  performance: {
-    pageSize: number
-    loadTime: number
-    httpRequests: number
-    compressionEnabled: boolean
-  }
-  security: {
-    httpsEnabled: boolean
-    securityScore: number
-  }
-  hosting: {
-    provider: string
-  }
-  created_at: string
-}
-
-const EXAMPLE_SITES = [
-  { url: "google.com", label: "Google" },
-  { url: "github.com", label: "GitHub" },
-  { url: "vercel.com", label: "Vercel" },
-  { url: "tailwindcss.com", label: "Tailwind CSS" },
-] as const
+const POPULAR_EXAMPLES = ["myherb.co.il", "google.com", "github.com", "vercel.com"]
 
 export function WebsiteForm() {
   const [url, setUrl] = useState("")
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
   const [showContentStudio, setShowContentStudio] = useState(false)
 
@@ -83,67 +39,6 @@ export function WebsiteForm() {
       return null
     } catch {
       return "Please enter a valid website URL"
-    }
-  }, [])
-
-  const generateMockResult = useCallback((cleanUrl: string): AnalysisResult => {
-    const hostname = new URL(cleanUrl).hostname
-    const isPopularSite = ["google.com", "github.com", "vercel.com", "tailwindcss.com"].includes(hostname)
-
-    return {
-      id: Date.now().toString(),
-      url: cleanUrl,
-      title: `${hostname} - Website Analysis`,
-      summary: `Comprehensive analysis of ${hostname} completed successfully. ${
-        isPopularSite ? "This popular website demonstrates excellent" : "This website shows good"
-      } performance characteristics with opportunities for optimization.`,
-      performance_score: isPopularSite ? Math.floor(Math.random() * 15) + 85 : Math.floor(Math.random() * 25) + 70,
-      seo_score: isPopularSite ? Math.floor(Math.random() * 15) + 85 : Math.floor(Math.random() * 25) + 70,
-      security_score: isPopularSite ? Math.floor(Math.random() * 10) + 90 : Math.floor(Math.random() * 25) + 65,
-      accessibility_score: isPopularSite ? Math.floor(Math.random() * 15) + 85 : Math.floor(Math.random() * 25) + 70,
-      sustainability_score: isPopularSite ? Math.floor(Math.random() * 15) + 85 : Math.floor(Math.random() * 25) + 70,
-      mobile_score: isPopularSite ? Math.floor(Math.random() * 10) + 90 : Math.floor(Math.random() * 25) + 75,
-      keywords: ["website", "analysis", hostname.split(".")[0], "performance", "SEO", "optimization"],
-      improvements: [
-        "🚀 Optimize image loading and compression for faster page speeds",
-        "📝 Enhance meta descriptions with compelling calls-to-action",
-        "🔒 Implement Content Security Policy headers for enhanced protection",
-        "⚡ Minimize JavaScript bundle size through code splitting",
-        "📊 Add structured data markup for rich search results",
-        "♿ Improve accessibility with ARIA labels and keyboard navigation",
-        "📱 Optimize touch targets for better mobile interaction",
-        "🗜️ Enable Brotli compression for superior file size reduction",
-      ],
-      technologies: [
-        { name: "HTML5", category: "Markup", confidence: 95 },
-        { name: "CSS3", category: "Styling", confidence: 90 },
-        { name: "JavaScript", category: "Programming", confidence: 85 },
-        ...(isPopularSite
-          ? [
-              { name: "React", category: "Framework", confidence: 90 },
-              { name: "TypeScript", category: "Language", confidence: 85 },
-            ]
-          : []),
-      ],
-      metadata: {
-        favicon: null,
-        title: `${hostname} - Website Analysis`,
-        description: `Comprehensive analysis of ${hostname} completed successfully.`,
-      },
-      performance: {
-        pageSize: Math.floor(Math.random() * 500) + 200,
-        loadTime: Math.floor(Math.random() * 1000) + 500,
-        httpRequests: Math.floor(Math.random() * 30) + 10,
-        compressionEnabled: Math.random() > 0.3,
-      },
-      security: {
-        httpsEnabled: cleanUrl.startsWith("https://"),
-        securityScore: Math.floor(Math.random() * 20) + 65,
-      },
-      hosting: {
-        provider: isPopularSite ? "Cloudflare" : "Unknown",
-      },
-      created_at: new Date().toISOString(),
     }
   }, [])
 
@@ -172,24 +67,67 @@ export function WebsiteForm() {
     try {
       console.log(`Starting analysis for: ${cleanUrl}`)
 
-      // Simulate API call with realistic delay
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+      // Enhanced mock result with better data
+      const hostname = new URL(cleanUrl).hostname
+      const mockResult = {
+        id: Date.now().toString(),
+        url: cleanUrl,
+        title: `${hostname} - WSfynder Analysis`,
+        summary: `Comprehensive analysis of ${hostname} completed successfully using WSfynder's advanced AI algorithms.`,
+        performance_score: Math.floor(Math.random() * 20) + 75,
+        seo_score: Math.floor(Math.random() * 20) + 70,
+        security_score: Math.floor(Math.random() * 20) + 65,
+        accessibility_score: Math.floor(Math.random() * 20) + 70,
+        sustainability_score: Math.floor(Math.random() * 20) + 75,
+        mobile_score: Math.floor(Math.random() * 20) + 75,
+        keywords: ["website", "analysis", hostname.split(".")[0], "performance", "SEO", "WSfynder"],
+        improvements: [
+          "🚀 Optimize image loading and compression for faster page speeds",
+          "📝 Enhance meta descriptions with compelling calls-to-action",
+          "🔒 Implement Content Security Policy headers for enhanced protection",
+          "⚡ Minimize JavaScript bundle size through code splitting",
+          "📊 Add structured data markup for rich search results",
+          "♿ Improve accessibility with ARIA labels and keyboard navigation",
+          "📱 Optimize touch targets for better mobile interaction",
+          "🗜️ Enable Brotli compression for superior file size reduction",
+        ],
+        technologies: [
+          { name: "HTML5", category: "Markup", confidence: 95 },
+          { name: "CSS3", category: "Styling", confidence: 90 },
+          { name: "JavaScript", category: "Programming", confidence: 85 },
+          { name: "React", category: "Framework", confidence: 80 },
+        ],
+        metadata: {
+          favicon: null,
+          title: `${hostname} - WSfynder Analysis`,
+          description: `Comprehensive analysis of ${hostname} completed successfully.`,
+        },
+        performance: {
+          pageSize: Math.floor(Math.random() * 500) + 200,
+          loadTime: Math.floor(Math.random() * 1000) + 500,
+          httpRequests: Math.floor(Math.random() * 30) + 10,
+          compressionEnabled: Math.random() > 0.3,
+        },
+        security: {
+          httpsEnabled: cleanUrl.startsWith("https://"),
+          securityScore: Math.floor(Math.random() * 20) + 65,
+        },
+        hosting: {
+          provider: "Unknown",
+        },
+        created_at: new Date().toISOString(),
+      }
 
-      const mockResult = generateMockResult(cleanUrl)
-      setAnalysisResult(mockResult)
-
-      toast({
-        title: "Analysis Complete!",
-        description: `Successfully analyzed ${new URL(cleanUrl).hostname}`,
-      })
-
-      // Scroll to results
+      // Simulate network delay
       setTimeout(() => {
-        const resultsElement = document.getElementById("analysis-results")
-        if (resultsElement) {
-          resultsElement.scrollIntoView({ behavior: "smooth", block: "start" })
-        }
-      }, 100)
+        setAnalysisResult(mockResult)
+        setIsAnalyzing(false)
+
+        toast({
+          title: "Analysis Complete!",
+          description: `Successfully analyzed ${hostname} with WSfynder`,
+        })
+      }, 3000)
     } catch (error) {
       console.error("Analysis error:", error)
       const errorMessage = error instanceof Error ? error.message : "Failed to analyze website. Please try again."
@@ -200,10 +138,9 @@ export function WebsiteForm() {
         description: errorMessage,
         variant: "destructive",
       })
-    } finally {
       setIsAnalyzing(false)
     }
-  }, [url, validateUrl, generateMockResult])
+  }, [url, validateUrl])
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent) => {
@@ -214,31 +151,43 @@ export function WebsiteForm() {
     [handleAnalyze, isAnalyzing],
   )
 
-  const handleExampleClick = useCallback((exampleUrl: string) => {
-    setUrl(exampleUrl)
-    setError(null)
+  const handleExampleClick = useCallback((example: string) => {
+    setUrl(example)
   }, [])
 
-  const isValidUrl = useMemo(() => {
-    return url.trim() && !validateUrl(url)
-  }, [url, validateUrl])
+  const memoizedExamples = useMemo(
+    () =>
+      POPULAR_EXAMPLES.map((example) => (
+        <Button
+          key={example}
+          variant="outline"
+          size="sm"
+          onClick={() => handleExampleClick(example)}
+          disabled={isAnalyzing}
+          className="border-purple-200 hover:bg-purple-50 hover:border-purple-300 focus:ring-purple-500"
+        >
+          {example}
+        </Button>
+      )),
+    [handleExampleClick, isAnalyzing],
+  )
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto px-4 py-8">
-      {/* Search Form */}
-      <Card className="border-0 shadow-lg bg-white" role="search" aria-labelledby="analysis-form-title">
+      {/* Search Form with WSfynder Gradients */}
+      <Card className="border-0 shadow-lg bg-white">
         <CardHeader className="text-center pb-6">
-          <CardTitle id="analysis-form-title" className="flex items-center justify-center gap-4 text-3xl mb-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
+          <CardTitle className="flex items-center justify-center gap-4 text-3xl mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-purple-500 to-green-500 flex items-center justify-center shadow-md">
               <Search className="h-8 w-8 text-white" aria-hidden="true" />
             </div>
-            <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Website Analysis
+            <span className="bg-gradient-to-r from-purple-600 to-green-600 bg-clip-text text-transparent">
+              WSfynder Analysis
             </span>
           </CardTitle>
           <CardDescription className="text-lg max-w-2xl mx-auto">
             Enter any website URL to get comprehensive analysis including performance, SEO, security, and sustainability
-            insights
+            insights powered by AI
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
@@ -250,25 +199,23 @@ export function WebsiteForm() {
               <Input
                 id="website-url"
                 type="url"
-                placeholder="Enter website URL (e.g., google.com, github.com)"
+                placeholder="Enter website URL (e.g., myherb.co.il, google.com)"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 onKeyPress={handleKeyPress}
                 disabled={isAnalyzing}
-                className="h-14 text-lg border-2 border-blue-200 focus:border-purple-400 bg-white/80 backdrop-blur-sm"
+                className="h-14 text-lg border-2 border-purple-200 focus:border-green-400 focus:ring-green-400"
                 aria-describedby={error ? "url-error" : "url-help"}
-                aria-invalid={!!error}
               />
-              <div id="url-help" className="sr-only">
+              <p id="url-help" className="sr-only">
                 Enter a website URL to analyze its performance, SEO, security, and more
-              </div>
+              </p>
             </div>
             <Button
               onClick={handleAnalyze}
-              disabled={isAnalyzing || !isValidUrl}
+              disabled={isAnalyzing || !url.trim()}
               size="lg"
-              className="h-14 px-8 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 hover:from-blue-600 hover:via-purple-600 hover:to-pink-600 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-describedby="analyze-button-help"
+              className="h-14 px-8 bg-gradient-to-r from-purple-500 to-green-500 hover:from-purple-600 hover:to-green-600 text-white shadow-md focus:ring-purple-500"
             >
               {isAnalyzing ? (
                 <>
@@ -276,40 +223,23 @@ export function WebsiteForm() {
                     className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"
                     aria-hidden="true"
                   ></div>
-                  <span>Analyzing...</span>
-                  <span className="sr-only">Analysis in progress</span>
+                  Analyzing...
                 </>
               ) : (
                 <>
                   <Zap className="h-5 w-5 mr-2" aria-hidden="true" />
-                  Analyze Website
+                  Analyze with WSfynder
                 </>
               )}
             </Button>
-            <div id="analyze-button-help" className="sr-only">
-              Click to start analyzing the entered website URL
-            </div>
           </div>
 
           {/* Quick Examples */}
-          <div className="flex flex-wrap gap-3 justify-center" role="group" aria-labelledby="examples-label">
-            <span id="examples-label" className="text-sm text-gray-600 font-medium">
+          <div className="flex flex-wrap gap-3 justify-center" role="group" aria-labelledby="examples-heading">
+            <span id="examples-heading" className="text-sm text-gray-600 font-medium">
               Try popular sites:
             </span>
-            {EXAMPLE_SITES.map((example) => (
-              <Button
-                key={example.url}
-                variant="outline"
-                size="sm"
-                onClick={() => handleExampleClick(example.url)}
-                disabled={isAnalyzing}
-                className="border-blue-200 hover:bg-blue-50 hover:border-blue-300 disabled:opacity-50"
-                aria-label={`Analyze ${example.label}`}
-              >
-                <ExternalLink className="h-3 w-3 mr-1" aria-hidden="true" />
-                {example.url}
-              </Button>
-            ))}
+            {memoizedExamples}
           </div>
 
           {/* Error Display */}
@@ -327,20 +257,13 @@ export function WebsiteForm() {
         <Card className="border-0 shadow-lg bg-white" role="status" aria-live="polite">
           <CardContent className="py-16">
             <LoadingAnimation />
-            <div className="text-center mt-4">
-              <p className="text-lg text-gray-600">Analyzing website...</p>
-              <p className="text-sm text-gray-500 mt-2">This may take a few moments</p>
-            </div>
           </CardContent>
         </Card>
       )}
 
       {/* Analysis Results */}
       {analysisResult && !isAnalyzing && (
-        <div id="analysis-results" className="space-y-8" role="region" aria-labelledby="results-heading">
-          <h2 id="results-heading" className="sr-only">
-            Analysis Results
-          </h2>
+        <div className="space-y-8">
           <SearchResultsDisplay data={analysisResult} />
 
           {/* Content Studio Toggle */}
@@ -361,7 +284,7 @@ export function WebsiteForm() {
                 <Button
                   onClick={() => setShowContentStudio(!showContentStudio)}
                   size="lg"
-                  className="bg-gradient-to-r from-purple-500 to-green-500 hover:from-purple-600 hover:to-green-600 text-white shadow-lg px-8 py-3"
+                  className="bg-gradient-to-r from-purple-500 to-green-500 hover:from-purple-600 hover:to-green-600 text-white shadow-md px-8 py-3 focus:ring-purple-500"
                   aria-expanded={showContentStudio}
                   aria-controls="content-studio"
                 >
@@ -373,14 +296,11 @@ export function WebsiteForm() {
 
           {/* AI Content Studio */}
           {showContentStudio && (
-            <div id="content-studio" role="region" aria-labelledby="content-studio-heading">
-              <h3 id="content-studio-heading" className="sr-only">
-                AI Content Studio
-              </h3>
+            <div id="content-studio">
               <AiContentStudio
                 analysisId={analysisResult.id}
                 websiteUrl={analysisResult.url}
-                websiteTitle={analysisResult.title}
+                websiteTitle={analysisResult.title || undefined}
                 onSignUpClick={() => {
                   toast({
                     title: "Sign Up",

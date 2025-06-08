@@ -1,0 +1,24 @@
+# WSfynder Robots.txt
+User-agent: *
+Allow: /
+
+# Important pages
+Allow: /features
+Allow: /content-studio
+Allow: /hosting
+Allow: /pricing
+Allow: /about
+Allow: /contact
+
+# Sitemaps
+Sitemap: https://wsfynder.com/sitemap.xml
+Sitemap: https://wsfynder.com/sitemap-images.xml
+
+# Crawl-delay for better server performance
+Crawl-delay: 1
+
+# Block admin and API endpoints
+Disallow: /api/
+Disallow: /admin/
+Disallow: /private/
+Disallow: /_next/

@@ -16,14 +16,12 @@ const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
-  preload: true,
 })
 
 const robotoMono = Roboto_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
   display: "swap",
-  preload: false,
 })
 
 export const viewport: Viewport = {
@@ -32,74 +30,65 @@ export const viewport: Viewport = {
   maximumScale: 5,
   userScalable: true,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: light)", color: "#8b5cf6" },
     { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
   ],
+  colorScheme: "light dark",
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://wsfynder.com"),
   title: {
-    default: "WSfynder - Advanced Website Analysis & Intelligence Platform",
+    default: "WSfynder - Intelligent Website Analysis & AI Content Platform",
     template: "%s | WSfynder",
   },
   description:
-    "WSfynder is the ultimate website analysis platform providing comprehensive insights into performance, SEO, security, accessibility, and sustainability. Get detailed reports, AI-powered content generation, and actionable recommendations to optimize your website.",
+    "WSfynder provides intelligent website analysis, comprehensive performance insights, and AI-powered content generation. Analyze any website for SEO, security, performance, and sustainability metrics.",
   keywords: [
     "website analysis",
+    "WSfynder",
     "website analyzer",
     "SEO analysis",
-    "website performance",
-    "security audit",
-    "accessibility testing",
-    "sustainability metrics",
-    "website intelligence",
-    "site optimization",
-    "web analytics",
-    "WSfynder",
+    "performance testing",
+    "security scanner",
+    "AI content generation",
     "website insights",
-    "performance monitoring",
-    "technical SEO",
-    "website audit",
-    "digital marketing tools",
-    "web development tools",
-    "site speed test",
-    "mobile optimization",
-    "content analysis",
+    "web analytics",
+    "sustainability metrics",
+    "hosting analysis",
+    "website intelligence",
+    "web performance",
+    "site audit",
+    "digital analysis",
   ],
-  authors: [{ name: "WSfynder Team", url: "https://wsfynder.com" }, { name: "Website Intelligence Solutions" }],
+  authors: [{ name: "WSfynder Team" }],
   creator: "WSfynder",
   publisher: "WSfynder",
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
+  applicationName: "WSfynder",
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "https://wsfynder.com",
     siteName: "WSfynder",
-    title: "WSfynder - Advanced Website Analysis & Intelligence Platform",
+    title: "WSfynder - Intelligent Website Analysis & AI Content Platform",
     description:
-      "Discover comprehensive website insights with WSfynder's advanced analysis platform. Get detailed reports on performance, SEO, security, accessibility, and sustainability metrics.",
+      "Discover comprehensive website insights and generate professional content with WSfynder's advanced AI-powered analysis platform. Analyze performance, SEO, security, and sustainability.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og-image.jpg",
         width: 1200,
         height: 630,
         alt: "WSfynder - Website Analysis Platform",
-        type: "image/png",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "WSfynder - Advanced Website Analysis & Intelligence Platform",
-    description: "Unlock comprehensive website insights with WSfynder's intelligent analysis and optimization tools.",
-    images: ["/twitter-image.png"],
-    creator: "@wsfynder",
-    site: "@wsfynder",
+    site: "@WSfynder",
+    creator: "@WSfynder",
+    title: "WSfynder - Intelligent Website Analysis & AI Content Platform",
+    description:
+      "Unlock comprehensive website insights with WSfynder's intelligent analysis and AI-powered content generation tools.",
+    images: ["/twitter-image.jpg"],
   },
   robots: {
     index: true,
@@ -113,29 +102,10 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: "your-google-verification-code",
-    yandex: "your-yandex-verification-code",
-    yahoo: "your-yahoo-verification-code",
+    google: "google-site-verification-code",
   },
   alternates: {
     canonical: "https://wsfynder.com",
-    languages: {
-      "en-US": "https://wsfynder.com",
-      "es-ES": "https://wsfynder.com/es",
-      "fr-FR": "https://wsfynder.com/fr",
-    },
-  },
-  category: "technology",
-  classification: "Website Analysis Tools",
-  other: {
-    "apple-mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-status-bar-style": "default",
-    "apple-mobile-web-app-title": "WSfynder",
-    "application-name": "WSfynder",
-    "mobile-web-app-capable": "yes",
-    "msapplication-TileColor": "#8b5cf6",
-    "msapplication-config": "/browserconfig.xml",
-    "theme-color": "#8b5cf6",
   },
     generator: 'v0.dev'
 }
@@ -147,16 +117,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className={cn(inter.variable, robotoMono.variable)}>
-      <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-        <link rel="dns-prefetch" href="//fonts.gstatic.com" />
-      </head>
       <body className={cn("min-h-screen bg-background font-sans antialiased flex flex-col")}>
         <ThemeProvider
           attribute="class"
@@ -169,16 +129,11 @@ export default function RootLayout({
             <ErrorBoundary fallback={<div>Something went wrong. Please try refreshing.</div>}>
               <ParticleBackground />
               <Header />
-              <main className="flex-1 relative z-10" role="main">
+              <main className="flex-1 relative z-10">
                 <Suspense
                   fallback={
-                    <div
-                      className="flex h-[calc(100vh-8rem)] items-center justify-center"
-                      role="status"
-                      aria-label="Loading"
-                    >
+                    <div className="flex h-[calc(100vh-8rem)] items-center justify-center">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                      <span className="sr-only">Loading...</span>
                     </div>
                   }
                 >
