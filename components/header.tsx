@@ -14,6 +14,7 @@ const navigation = [
   { name: "Home", href: "/" },
   { name: "Features", href: "/features" },
   { name: "Content Studio", href: "/content-studio" },
+  { name: "Recommendations", href: "/recommendations" },
   { name: "Hosting Analysis", href: "/hosting" },
   { name: "Pricing", href: "/pricing" },
 ]

@@ -1,225 +1,226 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Target, Users, Heart, Globe, Zap, Shield, BarChart3, Brain, Star, TrendingUp } from "lucide-react"
 import Link from "next/link"
+import { Users, Target, Zap, Heart, Globe, Shield } from "lucide-react"
+import type { Metadata } from "next"
 
-const stats = [
-  { label: "Websites Analyzed", value: "10,000+", icon: Globe },
-  { label: "Data Points Collected", value: "50+", icon: BarChart3 },
-  { label: "AI Content Generated", value: "5,000+", icon: Brain },
-  { label: "User Satisfaction", value: "99%", icon: Star },
+export const metadata: Metadata = {
+  title: "About WSfynder | Intelligent Website Analysis Platform",
+  description:
+    "Learn about WSfynder's mission to provide intelligent website analysis and AI-powered content generation. Discover our story, values, and commitment to web optimization.",
+}
+
+const teamMembers = [
+  {
+    name: "Alex Chen",
+    role: "Founder & CEO",
+    bio: "Former Google engineer with 10+ years in web performance optimization.",
+    image: "/placeholder-user.jpg",
+  },
+  {
+    name: "Sarah Rodriguez",
+    role: "CTO",
+    bio: "AI/ML expert specializing in natural language processing and web analytics.",
+    image: "/placeholder-user.jpg",
+  },
+  {
+    name: "Mike Johnson",
+    role: "Head of Product",
+    bio: "UX designer and product strategist focused on developer tools.",
+    image: "/placeholder-user.jpg",
+  },
+  {
+    name: "Emily Davis",
+    role: "Lead Developer",
+    bio: "Full-stack developer passionate about performance and accessibility.",
+    image: "/placeholder-user.jpg",
+  },
 ]
 
 const values = [
   {
     icon: Target,
-    title: "Precision",
-    description: "We deliver accurate, comprehensive website analysis with attention to every detail.",
+    title: "Accuracy",
+    description: "We provide precise, reliable analysis backed by industry-standard metrics and best practices.",
   },
   {
     icon: Zap,
     title: "Speed",
-    description: "Lightning-fast analysis that provides insights in seconds, not minutes.",
+    description: "Fast analysis and instant insights to help you optimize your website without delay.",
   },
   {
     icon: Shield,
-    title: "Security",
-    description: "Your data and privacy are our top priority with enterprise-grade security.",
+    title: "Privacy",
+    description: "Your data is secure. We analyze websites without storing sensitive information.",
   },
   {
     icon: Heart,
     title: "User-Centric",
-    description: "Every feature is designed with our users' needs and experience in mind.",
-  },
-]
-
-const milestones = [
-  {
-    year: "2024",
-    title: "WSfynder Launch",
-    description: "Launched with comprehensive website analysis and AI content generation capabilities.",
+    description: "Every feature is designed with user experience and practical value in mind.",
   },
   {
-    year: "2024",
-    title: "AI Integration",
-    description: "Integrated advanced AI models for intelligent content generation and analysis.",
+    icon: Globe,
+    title: "Accessibility",
+    description: "Making web optimization tools accessible to everyone, regardless of technical expertise.",
   },
   {
-    year: "2024",
-    title: "Performance Optimization",
-    description: "Achieved sub-second analysis times with parallel processing architecture.",
+    icon: Users,
+    title: "Community",
+    description: "Building a community of developers and website owners focused on web excellence.",
   },
 ]
 
 export default function AboutPage() {
   return (
     <div className="container mx-auto px-4 py-12">
-      {/* Hero Section */}
-      <div className="text-center mb-16">
-        <Badge variant="secondary" className="mb-4">
-          About WSfynder
-        </Badge>
-        <h1 className="text-4xl md:text-5xl font-bold mb-6">
-          Intelligent Website Discovery
-          <span className="text-primary"> Redefined</span>
-        </h1>
-        <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-          WSfynder is the next-generation platform for website analysis and content generation, combining cutting-edge
-          AI technology with comprehensive data insights to help you understand and optimize any website on the
-          internet.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" asChild>
-            <Link href="/">Start Analysis</Link>
-          </Button>
-          <Button variant="outline" size="lg" asChild>
-            <Link href="/features">Explore Features</Link>
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats Section */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
-        {stats.map((stat, index) => (
-          <Card key={index} className="text-center">
-            <CardContent className="pt-6">
-              <stat.icon className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <div className="text-2xl font-bold text-primary mb-1">{stat.value}</div>
-              <div className="text-sm text-muted-foreground">{stat.label}</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Mission Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
-        <div>
-          <h2 className="text-3xl font-bold mb-6">Our Mission</h2>
-          <p className="text-muted-foreground mb-6 leading-relaxed">
-            At WSfynder, we believe that understanding websites shouldn't be complicated or time-consuming. Our mission
-            is to democratize website intelligence by providing powerful, AI-driven analysis tools that anyone can use
-            to gain deep insights into any website's performance, security, and optimization opportunities.
+      <div className="max-w-4xl mx-auto">
+        {/* Hero Section */}
+        <div className="text-center mb-16">
+          <h1 className="text-4xl font-bold mb-6">
+            <span className="bg-gradient-to-r from-purple-600 to-green-600 bg-clip-text text-transparent">
+              About WSfynder
+            </span>
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            We're on a mission to make website optimization accessible, intelligent, and actionable for everyone.
           </p>
-          <p className="text-muted-foreground mb-6 leading-relaxed">
-            We're building the future of website analysis, where comprehensive insights are just a click away, and where
-            AI-powered content generation transforms raw data into actionable intelligence.
-          </p>
-          <Button asChild>
-            <Link href="/content-studio">
-              Try AI Content Studio <Brain className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
         </div>
-        <div className="relative">
-          <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl p-8">
-            <div className="w-full h-full bg-background rounded-xl shadow-lg p-6 flex items-center justify-center">
-              <div className="text-center">
-                <Globe className="h-16 w-16 mx-auto mb-4 text-primary" />
-                <h3 className="font-semibold mb-2">Global Website Intelligence</h3>
-                <p className="text-sm text-muted-foreground">Analyzing websites worldwide with AI-powered precision</p>
-              </div>
-            </div>
+
+        {/* Mission Section */}
+        <Card className="mb-12">
+          <CardHeader>
+            <CardTitle className="text-2xl">Our Mission</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-lg text-muted-foreground leading-relaxed">
+              WSfynder was born from the frustration of using complex, expensive tools to analyze website performance.
+              We believe that every website owner, developer, and digital marketer should have access to
+              professional-grade analysis tools without the complexity or cost barriers.
+            </p>
+            <p className="text-lg text-muted-foreground leading-relaxed mt-4">
+              Our platform combines cutting-edge AI technology with comprehensive web analysis to provide actionable
+              insights that actually help improve websites. We're not just about numbers – we're about making the web
+              faster, more secure, and more accessible for everyone.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Values Section */}
+        <div className="mb-16">
+          <h2 className="text-3xl font-bold text-center mb-8">Our Values</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {values.map((value, index) => (
+              <Card key={index} className="text-center hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-green-500 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <value.icon className="h-6 w-6 text-white" />
+                  </div>
+                  <CardTitle className="text-lg">{value.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base">{value.description}</CardDescription>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
-      </div>
 
-      {/* Values Section */}
-      <div className="mb-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Our Values</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            The principles that guide everything we do at WSfynder
-          </p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {values.map((value, index) => (
-            <Card key={index} className="text-center">
-              <CardHeader>
-                <value.icon className="h-12 w-12 mx-auto mb-4 text-primary" />
-                <CardTitle className="text-xl">{value.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{value.description}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Timeline Section */}
-      <div className="mb-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Our Journey</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">Key milestones in WSfynder's development and growth</p>
-        </div>
-        <div className="space-y-8">
-          {milestones.map((milestone, index) => (
-            <div key={index} className="flex items-start space-x-4">
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
-                  {milestone.year.slice(-2)}
-                </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-semibold mb-2">{milestone.title}</h3>
-                <p className="text-muted-foreground">{milestone.description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Technology Section */}
-      <Card className="mb-16">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Powered by Advanced Technology</CardTitle>
-          <CardDescription>
-            WSfynder leverages cutting-edge technologies to deliver unparalleled website analysis
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <Brain className="h-12 w-12 mx-auto mb-4 text-primary" />
-              <h3 className="font-semibold mb-2">AI & Machine Learning</h3>
-              <p className="text-sm text-muted-foreground">
-                Advanced AI models for content generation and intelligent analysis
+        {/* Story Section */}
+        <Card className="mb-12">
+          <CardHeader>
+            <CardTitle className="text-2xl">Our Story</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4 text-muted-foreground">
+              <p>
+                WSfynder started in 2023 when our founder, Alex Chen, was working as a web performance consultant. Time
+                and again, clients would ask for simple, actionable insights about their websites, but existing tools
+                were either too complex, too expensive, or provided data without context.
+              </p>
+              <p>
+                The breakthrough came when we realized that AI could bridge the gap between raw data and actionable
+                insights. By combining comprehensive website analysis with intelligent content generation, we could
+                provide not just the "what" but also the "how" and "why" of website optimization.
+              </p>
+              <p>
+                Today, WSfynder serves thousands of users worldwide, from individual bloggers to enterprise development
+                teams. We're proud to be making professional-grade website analysis accessible to everyone.
               </p>
             </div>
-            <div className="text-center">
-              <Zap className="h-12 w-12 mx-auto mb-4 text-primary" />
-              <h3 className="font-semibold mb-2">High-Performance Computing</h3>
-              <p className="text-sm text-muted-foreground">Parallel processing for lightning-fast website analysis</p>
-            </div>
-            <div className="text-center">
-              <Shield className="h-12 w-12 mx-auto mb-4 text-primary" />
-              <h3 className="font-semibold mb-2">Enterprise Security</h3>
-              <p className="text-sm text-muted-foreground">Bank-grade security to protect your data and privacy</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* CTA Section */}
-      <div className="text-center">
-        <h2 className="text-3xl font-bold mb-4">Ready to Discover Website Intelligence?</h2>
-        <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Join thousands of users who trust WSfynder for comprehensive website analysis and AI-powered content
-          generation.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" asChild>
-            <Link href="/">
-              Start Free Analysis <TrendingUp className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-          <Button variant="outline" size="lg" asChild>
-            <Link href="/contact">
-              Contact Us <Users className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+        {/* Team Section */}
+        <div className="mb-16">
+          <h2 className="text-3xl font-bold text-center mb-8">Meet Our Team</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {teamMembers.map((member, index) => (
+              <Card key={index} className="hover:shadow-lg transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <img
+                      src={member.image || "/placeholder.svg"}
+                      alt={member.name}
+                      className="w-16 h-16 rounded-full object-cover"
+                    />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg">{member.name}</h3>
+                      <p className="text-primary font-medium mb-2">{member.role}</p>
+                      <p className="text-sm text-muted-foreground">{member.bio}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
+
+        {/* Stats Section */}
+        <Card className="mb-12 bg-gradient-to-r from-purple-50 to-green-50 border-0">
+          <CardContent className="p-8">
+            <h2 className="text-2xl font-bold text-center mb-8">WSfynder by the Numbers</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+              <div>
+                <div className="text-3xl font-bold text-primary mb-2">50K+</div>
+                <div className="text-sm text-muted-foreground">Websites Analyzed</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-primary mb-2">100+</div>
+                <div className="text-sm text-muted-foreground">Data Points</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-primary mb-2">99.9%</div>
+                <div className="text-sm text-muted-foreground">Uptime</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-primary mb-2">24/7</div>
+                <div className="text-sm text-muted-foreground">Support</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* CTA Section */}
+        <Card className="text-center">
+          <CardContent className="p-8">
+            <h3 className="text-2xl font-bold mb-4">Ready to Optimize Your Website?</h3>
+            <p className="text-muted-foreground mb-6">
+              Join thousands of users who trust WSfynder for intelligent website analysis and optimization.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                asChild
+                size="lg"
+                className="bg-gradient-to-r from-purple-600 to-green-600 hover:from-purple-700 hover:to-green-700"
+              >
+                <Link href="/">Start Free Analysis</Link>
+              </Button>
+              <Button variant="outline" size="lg" asChild>
+                <Link href="/contact">Contact Us</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
