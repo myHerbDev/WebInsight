@@ -1,15 +1,27 @@
 import { NextResponse } from "next/server"
-import { neon } from "@neondatabase/serverless"
-import { generateText } from "ai"
-import { groq } from "@ai-sdk/groq"
 
 // Only initialize database if URL is available
 let sql: any = null
 if (process.env.DATABASE_URL) {
   try {
+    const { neon } = require("@neondatabase/serverless")
     sql = neon(process.env.DATABASE_URL)
   } catch (error) {
     console.warn("Database connection failed, continuing without database:", error)
+  }
+}
+
+// Only initialize AI if API key is available
+let generateText: any = null
+let groq: any = null
+if (process.env.GROQ_API_KEY) {
+  try {
+    const aiModule = require("ai")
+    const groqModule = require("@ai-sdk/groq")
+    generateText = aiModule.generateText
+    groq = groqModule.groq
+  } catch (error) {
+    console.warn("AI modules not available, using fallback:", error)
   }
 }
 
@@ -71,7 +83,7 @@ export async function POST(request: Request) {
 
     // Generate content with AI or fallback
     try {
-      if (process.env.GROQ_API_KEY) {
+      if (process.env.GROQ_API_KEY && generateText && groq) {
         const prompt = createContentPrompt(analysis, contentType, tone || "professional", intention || "inform")
 
         const { text } = await generateText({
@@ -145,8 +157,8 @@ Create comprehensive, valuable content that incorporates these specific insights
 }
 
 function getFallbackContent(contentType: string, analysis: any, tone: string): string {
-  const websiteName = analysis.title || new URL(analysis.url).hostname
-  const websiteUrl = analysis.url
+  const websiteName = analysis.title || "Website"
+  const websiteUrl = analysis.url || "analyzed-website.com"
 
   const templates = {
     blog_post: `# ${websiteName}: A Comprehensive Website Analysis

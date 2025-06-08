@@ -1,7 +1,6 @@
 {
   "name": "wsfynder",
-  "version": "1.0.0",
-  "description": "WSfynder - Intelligent Website Analysis & Content Platform",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -42,16 +41,13 @@
     "@radix-ui/react-toggle": "latest",
     "@radix-ui/react-toggle-group": "latest",
     "@radix-ui/react-tooltip": "latest",
-    "ai": "latest",
     "cheerio": "latest",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "latest",
     "crypto": "latest",
     "date-fns": "latest",
-    "dns": "latest",
     "embla-carousel-react": "latest",
-    "framer-motion": "^11.11.17",
     "gcp-metadata": "latest",
     "input-otp": "latest",
     "kerberos": "latest",
@@ -74,31 +70,25 @@
     "vaul": "latest",
     "zod": "latest"
   },
+  "optionalDependencies": {
+    "@neondatabase/serverless": "^0.9.0",
+    "ai": "^3.0.0",
+    "@ai-sdk/groq": "^0.0.20",
+    "cheerio": "^1.0.0-rc.12",
+    "mongodb": "^6.0.0"
+  },
   "devDependencies": {
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "15.0.3",
+    "autoprefixer": "^10.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-next": "^15.0.0",
     "postcss": "^8.5",
-    "tailwindcss": "^3.4.14",
+    "tailwindcss": "^3.4.0",
     "typescript": "^5"
   },
-  "keywords": [
-    "website-analysis",
-    "ai-content-generation",
-    "performance-analysis",
-    "seo-tools",
-    "website-intelligence"
-  ],
-  "author": "WSfynder Team",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/your-username/wsfynder.git"
-  },
-  "bugs": {
-    "url": "https://github.com/your-username/wsfynder/issues"
-  },
-  "homepage": "https://wsfynder.vercel.app"
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }
