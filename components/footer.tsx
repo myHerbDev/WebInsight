@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Logo } from "@/components/logo"
-import { Github, Twitter, Linkedin, Rss, MessageSquare } from "lucide-react" // Added Rss, MessageSquare
+import { Github, Rss, MessageSquare, Heart } from "lucide-react"
 
 export function Footer() {
   const footerSections = [
@@ -11,7 +11,7 @@ export function Footer() {
         { label: "Pricing", href: "/pricing" },
         { label: "Integrations", href: "/integrations" },
         { label: "API Status", href: "/status" },
-        { label: "Content Studio", href: "/content-studio" }, // Added
+        { label: "Content Studio", href: "/content-studio" },
       ],
     },
     {
@@ -30,7 +30,7 @@ export function Footer() {
         { label: "Support Center", href: "/support" },
         { label: "Community Forum", href: "/community" },
         { label: "Tutorials", href: "/tutorials" },
-        { label: "Hosting Reviews", href: "/hosting" }, // Added
+        { label: "Hosting Reviews", href: "/hosting" },
       ],
     },
     {
@@ -45,11 +45,12 @@ export function Footer() {
   ]
 
   const socialLinks = [
-    { label: "GitHub", href: "https://github.com/myHerbDev/wscrapierr", icon: Github }, // Example actual link
-    { label: "Twitter", href: "https://twitter.com/wscrapierr", icon: Twitter }, // Example actual link
-    { label: "LinkedIn", href: "https://linkedin.com/company/wscrapierr", icon: Linkedin }, // Example actual link
-    { label: "Blog RSS", href: "/blog/rss.xml", icon: Rss }, // Example
-    { label: "Community", href: "/community", icon: MessageSquare }, // Example
+    { label: "GitHub Project", href: "https://github.com/myHerbDev/wscrapierr", icon: Github },
+    { label: "Sponsor myHerbDev", href: "https://github.com/sponsors/myHerbDev", icon: Heart },
+    // { label: "Twitter", href: "https://twitter.com/wscrapierr", icon: Twitter },
+    // { label: "LinkedIn", href: "https://linkedin.com/company/wscrapierr", icon: Linkedin },
+    { label: "Blog RSS", href: "/blog/rss.xml", icon: Rss },
+    { label: "Community", href: "/community", icon: MessageSquare },
   ]
 
   return (
@@ -81,11 +82,23 @@ export function Footer() {
           ))}
         </div>
 
-        <div className="border-t pt-8 flex flex-col sm:flex-row justify-between items-center">
-          <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} WScrapierr. All rights reserved.
-          </p>
-          <div className="flex items-center space-x-4 mt-4 sm:mt-0">
+        <div className="border-t pt-8 flex flex-col md:flex-row justify-between items-center">
+          <div className="text-sm text-muted-foreground text-center md:text-left">
+            <p>&copy; {new Date().getFullYear()} WScrapierr. All rights reserved.</p>
+            <p>
+              Made by{" "}
+              <Link
+                href="https://www.myherb.co.il"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary hover:underline"
+              >
+                myHerb
+              </Link>{" "}
+              (a part of DevSphere project).
+            </p>
+          </div>
+          <div className="flex items-center space-x-4 mt-4 md:mt-0">
             {socialLinks.map((social) => (
               <Link
                 key={social.label}
