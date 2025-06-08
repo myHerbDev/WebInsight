@@ -1,126 +1,186 @@
 # WSfynder - Intelligent Website Analysis & Content Platform
 
-WSfynder is a modern web application designed for intelligent website discovery, comprehensive analysis, and AI-powered content generation. It features a professional, intuitive interface focused on delivering actionable website insights.
+WSfynder is a comprehensive website analysis and content generation platform that helps you discover, analyze, and understand websites with AI-powered insights.
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+## 🚀 Features
 
-[![GitHub Sponsors](https://img.shields.io/github/sponsors/yourusername?style=for-the-badge&logo=githubsponsors)](https://github.com/sponsors/myHerbAI)
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/myherbdev/v0-modern-data-analysis-tool)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/gaTwn19OSeK)
+- **Intelligent Website Analysis**: Comprehensive analysis of performance, SEO, security, and accessibility
+- **AI Content Generation**: Transform analysis data into professional reports, blog posts, and marketing content
+- **Technology Detection**: Identify frameworks, CMS platforms, and third-party integrations
+- **Performance Insights**: Deep dive into loading speeds, optimization scores, and technical metrics
+- **Security Assessment**: Detailed security analysis and vulnerability scanning
+- **Mobile Optimization**: Comprehensive mobile-friendliness evaluation
 
-<div class="cta-box">
-  <h3>❤️ Support Open Source</h3>
-  <p>This project is maintained by volunteers who believe in the power of open source.</p>
-  <p>Your sponsorship helps us:</p>
-  <ul>
-    <li>🚀 Develop new features</li>
-    <li>🐛 Fix bugs faster</li>
-    <li>📚 Improve documentation</li>
-    <li>🌟 Ensure long-term sustainability</li>
-  </ul>
-  <a href="https://github.com/sponsors/myHerbAI" class="sponsor-button">Become a Sponsor</a>
-</div>
+## 🛠️ Tech Stack
 
-## Overview
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **UI Components**: shadcn/ui
+- **Database**: Vercel Postgres / Neon
+- **AI**: Groq AI for content generation
+- **Deployment**: Vercel
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
-
-## ✨ Features
-
-*   **Intelligent Website Discovery:** Find and analyze any website with comprehensive insights.
-*   **AI Content Generation:** Generate diverse content types including:
-  * Professional research reports
-  * Technical documentation  
-  * Marketing content
-  * Academic papers
-  * Case studies
-*   **Comprehensive Analysis:** Deep insights into performance, security, SEO, and technology stack.
-*   **Modern UI/UX:**
-  * Professional, intuitive interface
-  * Advanced analytics visualization
-  * Clean, responsive design
-*   **Advanced Features:** Professional-grade website intelligence and content creation.
-
-## Deployment
-
-Your project is live at:
-
-**[https://vercel.com/myherbdev/v0-modern-data-analysis-tool](https://vercel.com/myherbdev/v0-modern-data-analysis-tool)**
-
-## 🚀 Getting Started
+## 🏃‍♂️ Getting Started
 
 ### Prerequisites
 
-*   Node.js (version 18.x or later recommended)
-*   pnpm (or npm/yarn)
-
-### Environment Variables
-
-Create a `.env.local` file in the root of your project and add the necessary environment variables:
-
-\`\`\`env
-# Example
-DATABASE_URL="your_neon_database_url"
-GROQ_API_KEY="your_groq_api_key"
-# Add other necessary variables for Auth, AI services, etc.
-\`\`\`
+- Node.js 18+ 
+- pnpm (recommended) or npm
+- Vercel account for deployment
 
 ### Installation
 
-1.  Clone the repository:
-    \`\`\`bash
-    git clone https://github.com/your-username/wsfynder.git # Replace with your repo URL
-    cd wsfynder
-    \`\`\`
-2.  Install dependencies:
-    \`\`\`bash
-    pnpm install
-    \`\`\`
-3.  Run the development server:
-    \`\`\`bash
-    pnpm dev
-    \`\`\`
-    Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Clone the repository:
+\`\`\`bash
+git clone https://github.com/your-username/wsfynder.git
+cd wsfynder
+\`\`\`
 
-## 🛠️ Built With
+2. Install dependencies:
+\`\`\`bash
+pnpm install
+\`\`\`
 
-*   [Next.js](https://nextjs.org/) - React Framework
-*   [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS Framework
-*   [shadcn/ui](https://ui.shadcn.com/) - UI Components
-*   [Framer Motion](https://www.framer.com/motion/) - Animations
-*   [Lucide React](https://lucide.dev/) - Icons
-*   [Neon](https://neon.tech/) - Serverless Postgres
-*   [Groq](https://groq.com/) - AI Inference
+3. Set up environment variables:
+\`\`\`bash
+cp .env.example .env.local
+\`\`\`
+
+Fill in your environment variables:
+\`\`\`env
+# Database
+DATABASE_URL="your-postgres-connection-string"
+
+# AI Content Generation
+GROQ_API_KEY="your-groq-api-key"
+
+# Optional: Additional integrations
+MONGODB_URI="your-mongodb-connection-string"
+\`\`\`
+
+4. Run the development server:
+\`\`\`bash
+pnpm dev
+\`\`\`
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 📊 Database Setup
+
+WSfynder uses PostgreSQL for data storage. Run the included SQL scripts to set up your database:
+
+\`\`\`sql
+-- Run these scripts in order:
+scripts/populate-hosting-providers.sql
+scripts/001-create-hosting-feedback.sql
+\`\`\`
+
+## 🎨 Features Overview
+
+### Website Analysis
+- Performance metrics and optimization scores
+- SEO analysis and recommendations
+- Security assessment and vulnerability scanning
+- Technology stack detection
+- Mobile optimization evaluation
+- Accessibility compliance checking
+
+### AI Content Studio
+- Research reports (2000+ words)
+- Blog posts (1500+ words)
+- Case studies (1800+ words)
+- White papers (2500+ words)
+- Social media content
+- Email newsletters
+- Technical documentation
+
+### Content Customization
+- Multiple tone options (Professional, Casual, Academic, Creative, Technical, Persuasive)
+- Various intentions (Inform, Persuade, Entertain, Analyze, Promote, Instruct)
+- Category-based content types
+- Export functionality
+
+## 🚀 Deployment
+
+### Deploy to Vercel
+
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Add environment variables in Vercel dashboard
+4. Deploy!
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/your-username/wsfynder)
+
+### Environment Variables for Production
+
+\`\`\`env
+DATABASE_URL="your-production-postgres-url"
+GROQ_API_KEY="your-groq-api-key"
+NEXTAUTH_SECRET="your-nextauth-secret"
+NEXTAUTH_URL="https://your-domain.com"
+\`\`\`
+
+## 📝 API Documentation
+
+### Website Analysis API
+
+\`\`\`typescript
+POST /api/analyze
+{
+  "url": "https://example.com"
+}
+\`\`\`
+
+Returns comprehensive website analysis including:
+- Performance metrics
+- SEO factors
+- Security assessment
+- Technology detection
+- Content analysis
+
+### Content Generation API
+
+\`\`\`typescript
+POST /api/generate-content
+{
+  "analysisId": "123",
+  "contentType": "research_report",
+  "tone": "professional",
+  "intention": "inform"
+}
+\`\`\`
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE.md file for details (if applicable).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Become a Sponsor
+## 🙏 Acknowledgments
 
-Choose a sponsorship tier that best suits your level of support:
+- [shadcn/ui](https://ui.shadcn.com/) for the beautiful UI components
+- [Vercel](https://vercel.com/) for hosting and deployment
+- [Groq](https://groq.com/) for AI content generation
+- [Lucide](https://lucide.dev/) for the icon library
 
-| Tier       | Monthly Contribution | Benefits                                |
-|------------|-----------------------|-----------------------------------------|
-| 🥉 Bronze  | $5                   | Name listed in our sponsors section     |
-| 🥈 Silver  | $10                  | Logo in README + Bronze benefits        |
-| 🥇 Gold    | $25                  | Featured placement + Silver benefits    |
-| 💎 Platinum| $100                 | Custom rewards + Gold benefits          |
+## 📞 Support
 
-[Become a Sponsor](https://github.com/sponsors/myHerbAI)
+- 📧 Email: support@wsfynder.com
+- 💬 Discord: [Join our community](https://discord.gg/wsfynder)
+- 📖 Documentation: [docs.wsfynder.com](https://docs.wsfynder.com)
 
-## Build your app
+---
 
-Continue building your app on:
+Built with ❤️ by the WSfynder team
+\`\`\`
 
-**[https://v0.dev/chat/projects/gaTwn19OSeK](https://v0.dev/chat/projects/gaTwn19OSeK)**
-
-## How It Works
-
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
-
-[![Become a Sponsor!](https://img.shields.io/badge/Become%20a%20Sponsor-brightgreen)](http://github.com/sponsor/myHerbDev)
+**6. Fix Package.json**

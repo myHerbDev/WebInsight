@@ -1,117 +1,100 @@
 import Link from "next/link"
 import { Logo } from "@/components/logo"
-import { Github, Rss, MessageSquare, Heart } from "lucide-react"
 
 export function Footer() {
-  const footerSections = [
-    {
-      title: "Product",
-      links: [
-        { label: "Features", href: "/features" },
-        { label: "Pricing", href: "/pricing" },
-        { label: "Integrations", href: "/integrations" },
-        { label: "API Status", href: "/status" },
-        { label: "Content Studio", href: "/content-studio" },
-      ],
-    },
-    {
-      title: "Company",
-      links: [
-        { label: "About Us", href: "/about" },
-        { label: "Careers", href: "/careers" },
-        { label: "Blog", href: "/blog" },
-        { label: "Contact Us", href: "/contact" },
-      ],
-    },
-    {
-      title: "Resources",
-      links: [
-        { label: "Documentation", href: "/docs" },
-        { label: "Support Center", href: "/support" },
-        { label: "Community Forum", href: "/community" },
-        { label: "Tutorials", href: "/tutorials" },
-        { label: "Hosting Reviews", href: "/hosting" },
-      ],
-    },
-    {
-      title: "Legal",
-      links: [
-        { label: "Privacy Policy", href: "/privacy" },
-        { label: "Terms of Service", href: "/terms" },
-        { label: "Cookie Policy", href: "/cookies" },
-        { label: "Acceptable Use", href: "/acceptable-use" },
-      ],
-    },
-  ]
-
-  const socialLinks = [
-    { label: "GitHub Project", href: "https://github.com/myHerbDev/wsfynder", icon: Github },
-    { label: "Sponsor myHerbDev", href: "https://github.com/sponsors/myHerbDev", icon: Heart },
-    // { label: "Twitter", href: "https://twitter.com/wscrapierr", icon: Twitter },
-    // { label: "LinkedIn", href: "https://linkedin.com/company/wscrapierr", icon: Linkedin },
-    { label: "Blog RSS", href: "/blog/rss.xml", icon: Rss },
-    { label: "Community", href: "/community", icon: MessageSquare },
-  ]
-
   return (
-    <footer className="border-t bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70 relative z-10 mt-auto">
-      <div className="container mx-auto px-6 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 mb-8">
-          <div className="col-span-2 lg:col-span-2">
-            <Logo size="md" className="mb-4" />
-            <p className="text-muted-foreground text-sm max-w-xs">
-              Intelligent website discovery and analysis, powered by advanced AI technology.
+    <footer className="border-t bg-background">
+      <div className="container py-8 md:py-12">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
+          <div className="space-y-4">
+            <Logo size="md" />
+            <p className="text-sm text-muted-foreground max-w-xs">
+              WSfynder helps you discover, analyze, and understand websites with comprehensive insights and AI-powered
+              content generation.
             </p>
           </div>
-          {footerSections.map((section) => (
-            <div key={section.title}>
-              <h3 className="text-sm font-semibold text-foreground mb-3 tracking-wider uppercase">{section.title}</h3>
-              <ul className="space-y-2">
-                {section.links.map((link) => (
-                  <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">Product</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link href="/features" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Features
+                </Link>
+              </li>
+              <li>
+                <Link href="/content-studio" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Content Studio
+                </Link>
+              </li>
+              <li>
+                <Link href="/hosting" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Hosting Analysis
+                </Link>
+              </li>
+              <li>
+                <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Pricing
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">Company</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">
+                  About
+                </Link>
+              </li>
+              <li>
+                <Link href="/careers" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Careers
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Contact
+                </Link>
+              </li>
+              <li>
+                <Link href="/community" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Community
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">Legal</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link href="/cookies" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Cookie Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/acceptable-use" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Acceptable Use
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
 
-        <div className="border-t pt-8 flex flex-col md:flex-row justify-between items-center">
-          <div className="text-sm text-muted-foreground text-center md:text-left">
-            <p>&copy; {new Date().getFullYear()} WSfynder. All rights reserved.</p>
-            <p>
-              Made by{" "}
-              <Link
-                href="https://www.myherb.co.il"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-primary hover:underline"
-              >
-                myHerb
-              </Link>{" "}
-              (a part of DevSphere project).
-            </p>
-          </div>
-          <div className="flex items-center space-x-4 mt-4 md:mt-0">
-            {socialLinks.map((social) => (
-              <Link
-                key={social.label}
-                href={social.href}
-                target={social.href.startsWith("http") ? "_blank" : "_self"}
-                rel={social.href.startsWith("http") ? "noopener noreferrer" : ""}
-                className="text-muted-foreground hover:text-primary transition-colors"
-                aria-label={social.label}
-              >
-                <social.icon className="h-5 w-5" />
-              </Link>
-            ))}
-          </div>
+        <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
+          <p>&copy; 2024 WSfynder. All rights reserved. Built with ❤️ for website discovery and analysis.</p>
         </div>
       </div>
     </footer>
