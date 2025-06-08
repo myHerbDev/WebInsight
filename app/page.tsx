@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { Sparkles, Search, BarChart, ShieldCheck, Loader2 } from "lucide-react"
@@ -10,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "@/components/ui/use-toast"
 import type { WebsiteData } from "@/types/website-data"
-import { SearchResultsDisplay } from "@/components/search-results-display"
+import { SearchResultsDisplay } from "@/components/search-results-display" // Ensure this path is correct
 import { Separator } from "@/components/ui/separator"
 
 export default function HomePage() {
@@ -20,7 +19,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null)
 
   const handleAnalyze = async (event?: React.FormEvent<HTMLFormElement>) => {
-    if (event) event.preventDefault() // Prevent form submission if called from form
+    if (event) event.preventDefault()
 
     if (!url.trim()) {
       toast({ title: "Invalid URL", description: "Please enter a valid website URL.", variant: "destructive" })
@@ -28,7 +27,7 @@ export default function HomePage() {
     }
     setIsLoading(true)
     setError(null)
-    setAnalysisData(null) // Clear previous results
+    setAnalysisData(null)
 
     try {
       const response = await fetch("/api/analyze", {
@@ -36,13 +35,14 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url }),
       })
-      const data = await response.json()
+      const data: WebsiteData = await response.json() // Type assertion
       if (!response.ok) {
         console.error("Analysis API Error:", data)
+        // @ts-ignore
         throw new Error(data.error || data.message || "Failed to analyze website.")
       }
+      console.log("API Response Data:", data) // For debugging
       setAnalysisData(data)
-      // toast({ title: "Analysis Complete!", description: `Successfully analyzed ${url}` });
     } catch (err: any) {
       console.error("Handle Analyze Error:", err)
       setError(err.message)
@@ -104,31 +104,17 @@ export default function HomePage() {
         </form>
       </motion.div>
 
-      {isLoading && (
-        <div className="flex flex-col items-center justify-center text-center my-12">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <p className="text-muted-foreground">Analyzing {url}...</p>
-          <p className="text-sm text-muted-foreground/80">This might take a moment.</p>
-        </div>
-      )}
+      {/* Results display area */}
+      <motion.div
+        initial={false} // No initial animation for this container itself
+        animate={{ opacity: analysisData || error || isLoading ? 1 : 0 }}
+        transition={{ duration: 0.3 }}
+        className="w-full"
+      >
+        <SearchResultsDisplay results={analysisData} isLoading={isLoading} error={error} />
+      </motion.div>
 
-      {error && !isLoading && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-2xl mx-auto my-8 p-6 bg-destructive/10 border border-destructive/30 rounded-lg text-center"
-        >
-          <h3 className="text-lg font-semibold text-destructive mb-2">Analysis Failed</h3>
-          <p className="text-destructive/80">{error}</p>
-        </motion.div>
-      )}
-
-      {analysisData && !isLoading && !error && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-          <SearchResultsDisplay analysisData={analysisData} />
-        </motion.div>
-      )}
-
+      {/* Feature cards only show if no analysis data, no loading, and no error */}
       {!analysisData && !isLoading && !error && (
         <motion.div
           className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8"
@@ -136,6 +122,7 @@ export default function HomePage() {
           animate="visible"
           variants={{
             visible: { transition: { staggerChildren: 0.1, delayChildren: 0.4 } },
+            hidden: { opacity: 0 },
           }}
         >
           {featureCards.map((feature, i) => (
