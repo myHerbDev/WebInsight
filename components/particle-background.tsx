@@ -79,9 +79,15 @@ export function ParticleBackground() {
   }, [drawParticles])
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none opacity-70" // Ensure it's behind content
-    />
+    <div className="fixed inset-0 -z-10 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/20 via-purple-50/20 to-pink-50/20 dark:from-blue-950/20 dark:via-purple-950/20 dark:to-pink-950/20" />
+      <div className="absolute top-0 left-1/4 w-72 h-72 bg-purple-300/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob" />
+      <div className="absolute top-0 right-1/4 w-72 h-72 bg-yellow-300/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000" />
+      <div className="absolute -bottom-8 left-1/3 w-72 h-72 bg-pink-300/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000" />
+      <canvas
+        ref={canvasRef}
+        className="fixed top-0 left-0 w-full h-full -z-20 pointer-events-none opacity-70" // Ensure it's behind content
+      />
+    </div>
   )
 }

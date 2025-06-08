@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "target": "es5",
     "lib": ["dom", "dom.iterable", "es6"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -21,7 +22,6 @@
     "paths": {
       "@/*": ["./*"]
     },
-    "target": "es2017",
     "forceConsistentCasingInFileNames": true
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

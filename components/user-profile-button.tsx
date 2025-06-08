@@ -23,7 +23,16 @@ export function UserProfileButton() {
   }
 
   if (!user) {
-    return null // Or a login button, handled by Header
+    return (
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/login">Sign In</Link>
+        </Button>
+        <Button size="sm" asChild>
+          <Link href="/signup">Sign Up</Link>
+        </Button>
+      </div>
+    )
   }
 
   const handleLogout = async () => {
