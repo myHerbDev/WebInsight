@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['@neondatabase/serverless']
-  },
+  serverExternalPackages: ['@neondatabase/serverless'],
   eslint: {
     ignoreDuringBuilds: true,
   },
