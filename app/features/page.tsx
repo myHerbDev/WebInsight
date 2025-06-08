@@ -17,7 +17,7 @@ const features = [
     icon: BarChart,
     title: "In-Depth Website Audits",
     description:
-      "Go beyond surface-level checks. WScrapierr dives deep into SEO, performance, security, technologies, and more.",
+      "Go beyond surface-level checks. WSfynder dives deep into SEO, performance, security, technologies, and more.",
     details: [
       "Content structure and keyword analysis.",
       "Core Web Vitals and performance bottlenecks.",
@@ -65,11 +65,11 @@ export default function FeaturesPage() {
       <header className="text-center mb-12 md:mb-16">
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
           <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            WScrapierr Features
+            WSfynder Features
           </span>
         </h1>
         <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          Discover the powerful capabilities WScrapierr offers to analyze, understand, and generate content from any
+          Discover the powerful capabilities WSfynder offers to analyze, understand, and generate content from any
           website.
         </p>
       </header>
@@ -101,12 +101,8 @@ export default function FeaturesPage() {
       <section className="mt-16 md:mt-24 text-center">
         <h2 className="text-3xl font-semibold mb-6">Ready to Get Started?</h2>
         <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-          Experience the magic of WScrapierr. Analyze your first website today and unlock a new level of web
-          intelligence.
+          Experience the magic of WSfynder. Analyze your first website today and unlock a new level of web intelligence.
         </p>
-        {/* <Button size="lg" asChild className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white hover:opacity-90">
-          <Link href="/">Analyze a Website</Link>
-        </Button> */}
       </section>
     </div>
   )

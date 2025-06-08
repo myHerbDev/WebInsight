@@ -1,42 +1,30 @@
 "use client"
 
-import { CardDescription } from "@/components/ui/card"
-
-import React from "react"
+import type React from "react"
+import { useState } from "react"
 import type { WebsiteData } from "@/types/website-data"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import {
   Globe,
   Server,
-  ShieldCheck,
-  Zap,
-  Leaf,
-  BarChart3,
-  Users,
-  LinkIcon,
   AlertTriangle,
-  CheckCircle,
-  Info,
-  FileText,
-  Palette,
-  Keyboard,
-  Smartphone,
-  Share2,
-  Cpu,
-  Eye,
-  ZoomIn,
-  Anchor,
-  CodeXml,
-  ListChecks,
-  Rss,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  ExternalLink,
+  Star,
+  Gauge,
+  Search,
+  Code,
+  Lock,
+  Loader2,
 } from "lucide-react"
 import { format, parseISO } from "date-fns"
-import { Progress } from "@/components/ui/progress"
+import { toast } from "@/components/ui/use-toast"
 import Link from "next/link"
-import { Loader2, ExternalLink, Download } from "lucide-react"
 
 interface SearchResultsDisplayProps {
   results: WebsiteData | null
@@ -44,245 +32,281 @@ interface SearchResultsDisplayProps {
   error: string | null
 }
 
-const IconMap = {
-  Globe: <Globe className="h-5 w-5 text-blue-500" />,
-  Server: <Server className="h-5 w-5 text-green-500" />,
-  ShieldCheck: <ShieldCheck className="h-5 w-5 text-red-500" />,
-  Zap: <Zap className="h-5 w-5 text-yellow-500" />,
-  Leaf: <Leaf className="h-5 w-5 text-emerald-500" />,
-  BarChart3: <BarChart3 className="h-5 w-5 text-purple-500" />,
-  Users: <Users className="h-5 w-5 text-teal-500" />,
-  LinkIcon: <LinkIcon className="h-5 w-5 text-indigo-500" />,
-  AlertTriangle: <AlertTriangle className="h-5 w-5 text-orange-500" />,
-  CheckCircle: <CheckCircle className="h-5 w-5 text-green-600" />,
-  Info: <Info className="h-5 w-5 text-sky-500" />,
-  FileText: <FileText className="h-5 w-5 text-slate-500" />,
-  Palette: <Palette className="h-5 w-5 text-pink-500" />,
-  Keyboard: <Keyboard className="h-5 w-5 text-gray-500" />,
-  Smartphone: <Smartphone className="h-5 w-5 text-cyan-500" />,
-  Share2: <Share2 className="h-5 w-5 text-lime-500" />,
-  Cpu: <Cpu className="h-5 w-5 text-fuchsia-500" />,
-  Eye: <Eye className="h-5 w-5 text-rose-500" />,
-  ZoomIn: <ZoomIn className="h-5 w-5 text-amber-500" />,
-  Anchor: <Anchor className="h-5 w-5 text-violet-500" />,
-  CodeXml: <CodeXml className="h-5 w-5 text-orange-600" />,
-  ListChecks: <ListChecks className="h-5 w-5 text-blue-600" />,
-  Rss: <Rss className="h-5 w-5 text-red-600" />,
-}
-
-const DetailItem: React.FC<{
-  label: string
-  value?: string | number | boolean | null | undefined | React.ReactNode
-  icon?: keyof typeof IconMap
-  className?: string
-  isBoolean?: boolean
-  unit?: string
-  link?: string
-  subItems?: React.ReactNode // For nested lists or complex values
-}> = ({ label, value, icon, className, isBoolean, unit, link, subItems }) => {
-  if (value === undefined || value === null || value === "") {
-    if (!isBoolean && !subItems) return null // Allow boolean false to be shown
-  }
-
-  let displayValue: React.ReactNode = value as React.ReactNode
-  if (isBoolean) {
-    displayValue = value ? (
-      <CheckCircle className="h-5 w-5 text-green-500" />
-    ) : (
-      <AlertTriangle className="h-5 w-5 text-red-500" />
-    )
-  } else if (typeof value === "string" && (value.startsWith("http://") || value.startsWith("https://"))) {
-    displayValue = (
-      <a href={value} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">
-        {value}
-      </a>
-    )
-  } else if (link && typeof value === "string") {
-    displayValue = (
-      <a href={link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">
-        {value}
-      </a>
-    )
-  } else if (typeof value === "number" && unit) {
-    displayValue = `${value.toLocaleString()} ${unit}`
-  } else if (Array.isArray(value)) {
-    displayValue = (
-      <div className="flex flex-wrap gap-1">
-        {value.map((item, index) => (
-          <Badge key={index} variant="secondary" className="text-xs">
-            {String(item)}
-          </Badge>
-        ))}
-      </div>
-    )
-  } else if (typeof value === "object" && value !== null && !React.isValidElement(value)) {
-    // Simple object rendering
-    displayValue = (
-      <pre className="text-xs whitespace-pre-wrap break-all bg-muted p-2 rounded-md">
-        {JSON.stringify(value, null, 2)}
-      </pre>
-    )
-  }
-
-  return (
-    <div className={`py-3 sm:grid sm:grid-cols-3 sm:gap-4 ${className}`}>
-      <dt className="text-sm font-medium text-muted-foreground flex items-center">
-        {icon && IconMap[icon] && <span className="mr-2 shrink-0">{IconMap[icon]}</span>}
-        {label}
-      </dt>
-      <dd className="mt-1 text-sm text-foreground sm:mt-0 sm:col-span-2 break-words">
-        {displayValue}
-        {subItems}
-      </dd>
-    </div>
-  )
-}
-
-const SectionCard: React.FC<{
+interface AnalysisSection {
+  id: string
   title: string
-  icon?: keyof typeof IconMap
-  children: React.ReactNode
-  description?: string
-}> = ({ title, icon, children, description }) => (
-  <Card className="shadow-md">
-    <CardHeader>
-      <CardTitle className="flex items-center text-xl">
-        {icon && IconMap[icon] && <span className="mr-3">{IconMap[icon]}</span>}
-        {title}
-      </CardTitle>
-      {description && <CardDescription>{description}</CardDescription>}
-    </CardHeader>
-    <CardContent>
-      <dl className="divide-y divide-border">{children}</dl>
-    </CardContent>
-  </Card>
+  icon: React.ReactNode
+  items: Array<{
+    label: string
+    value: string | number | boolean | null | undefined
+    type?: "text" | "number" | "boolean" | "score" | "url" | "array"
+    unit?: string
+    color?: "green" | "yellow" | "red" | "blue" | "purple"
+  }>
+}
+
+const formatValue = (value: any, type?: string, unit?: string): string => {
+  if (value === null || value === undefined || value === "") return "N/A"
+
+  switch (type) {
+    case "boolean":
+      return value ? "✓ Yes" : "✗ No"
+    case "score":
+      return `${value}/100`
+    case "number":
+      return unit ? `${value.toLocaleString()} ${unit}` : value.toLocaleString()
+    case "array":
+      return Array.isArray(value) ? value.join(", ") : String(value)
+    case "url":
+      return value
+    default:
+      return String(value)
+  }
+}
+
+const getScoreColor = (score: number): string => {
+  if (score >= 80) return "text-green-600"
+  if (score >= 60) return "text-yellow-600"
+  return "text-red-600"
+}
+
+const ScoreIndicator: React.FC<{ score: number; label: string }> = ({ score, label }) => (
+  <div className="flex items-center space-x-2">
+    <div className={`text-2xl font-bold ${getScoreColor(score)}`}>{score}</div>
+    <div className="text-sm text-muted-foreground">{label}</div>
+  </div>
 )
 
-const ScoreDisplay: React.FC<{ score: number | null | undefined; label: string; max?: number }> = ({
-  score,
-  label,
-  max = 100,
-}) => {
-  if (score === null || score === undefined) return <DetailItem label={label} value="N/A" />
-  const percentage = (score / max) * 100
-  let colorClass = "bg-green-500"
-  if (percentage < 40) colorClass = "bg-red-500"
-  else if (percentage < 70) colorClass = "bg-yellow-500"
-
-  return (
-    <div className="py-3">
-      <div className="flex justify-between mb-1">
-        <span className="text-sm font-medium text-muted-foreground">{label}</span>
-        <span className={`text-sm font-semibold ${colorClass.replace("bg-", "text-")}`}>
-          {score}/{max}
-        </span>
-      </div>
-      <Progress value={percentage} className={`h-2 ${colorClass}`} indicatorClassName={colorClass} />
-    </div>
-  )
-}
-
 export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({ results, isLoading, error }) => {
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
+  const [copySuccess, setCopySuccess] = useState(false)
+
+  const toggleSection = (sectionId: string) => {
+    const newExpanded = new Set(expandedSections)
+    if (newExpanded.has(sectionId)) {
+      newExpanded.delete(sectionId)
+    } else {
+      newExpanded.add(sectionId)
+    }
+    setExpandedSections(newExpanded)
+  }
+
+  const copyResults = async () => {
+    if (!results) return
+
+    const formattedResults = `
+WSfynder Analysis Results
+========================
+
+Website: ${results.url}
+Title: ${results.metadata?.title || "N/A"}
+Description: ${results.metadata?.description || "N/A"}
+Analysis Date: ${results.analysisDate ? format(parseISO(results.analysisDate), "PPP p") : "N/A"}
+
+Performance Scores:
+- Performance: ${results.performance?.lighthouseScore?.performance || 0}/100
+- SEO: ${results.performance?.lighthouseScore?.seo || 0}/100
+- Accessibility: ${results.performance?.lighthouseScore?.accessibility || 0}/100
+- Best Practices: ${results.performance?.lighthouseScore?.bestPractices || 0}/100
+
+Security:
+- HTTPS Enabled: ${results.security?.httpsEnabled ? "Yes" : "No"}
+- SSL Issuer: ${results.security?.sslIssuer || "N/A"}
+
+Hosting:
+- Provider: ${results.hosting?.provider || "N/A"}
+- IP Address: ${results.hosting?.ipAddress || "N/A"}
+- Location: ${results.hosting?.location || "N/A"}
+
+Content Analysis:
+- Word Count: ${results.contentAnalysis?.wordCount || 0}
+- Images: ${results.contentAnalysis?.imagesCount || 0}
+- Videos: ${results.contentAnalysis?.videosCount || 0}
+
+Technologies:
+${results.technologies?.map((tech) => `- ${tech.name} (${tech.category})`).join("\n") || "None detected"}
+
+Generated by WSfynder - Intelligent Website Analysis Platform
+Visit: https://wsfynder.vercel.app
+    `.trim()
+
+    try {
+      await navigator.clipboard.writeText(formattedResults)
+      setCopySuccess(true)
+      toast({
+        title: "Results Copied!",
+        description: "Analysis results have been copied to your clipboard in formatted text.",
+      })
+      setTimeout(() => setCopySuccess(false), 2000)
+    } catch (error) {
+      toast({
+        title: "Copy Failed",
+        description: "Unable to copy results. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Analyzing website...</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="max-w-4xl mx-auto mt-8">
+        <Card className="border-0 shadow-sm">
+          <CardContent className="flex items-center justify-center py-16">
+            <div className="text-center space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Analyzing website...</h3>
+                <p className="text-sm text-muted-foreground">
+                  Our AI is performing comprehensive analysis including performance, security, and content evaluation.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
   if (error) {
     return (
-      <Card>
-        <CardContent className="py-12">
-          <div className="text-center">
-            <p className="text-destructive mb-4">Analysis failed: {error}</p>
-            <p className="text-muted-foreground">Please try again with a different URL.</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="max-w-4xl mx-auto mt-8">
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="py-8">
+            <div className="text-center space-y-4">
+              <AlertTriangle className="h-12 w-12 text-red-500 mx-auto" />
+              <div>
+                <h3 className="text-lg font-semibold text-red-900">Analysis Failed</h3>
+                <p className="text-red-700 mt-2">{error}</p>
+                <p className="text-sm text-red-600 mt-2">
+                  Please check the URL and try again. The website might be inaccessible or blocking automated analysis.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
   if (!results) return null
 
-  const {
-    url,
-    analysisDate,
-    metadata,
-    hosting,
-    performance,
-    security,
-    sustainability,
-    technologies,
-    domain,
-    links,
-    contentAnalysis,
-    accessibility,
-    mobileFriendliness,
-    socialPresence,
-    traffic,
-  } = results
+  const { url, metadata, hosting, performance, security, contentAnalysis, technologies, links } = results
+
+  const analysisData: AnalysisSection[] = [
+    {
+      id: "performance",
+      title: "Performance Analysis",
+      icon: <Gauge className="h-5 w-5" />,
+      items: [
+        { label: "Performance Score", value: performance?.lighthouseScore?.performance, type: "score" },
+        { label: "Page Size", value: performance?.pageSize, type: "number", unit: "KB" },
+        { label: "HTTP Requests", value: performance?.httpRequests, type: "number" },
+        { label: "Load Time", value: performance?.loadTime, type: "number", unit: "ms" },
+        { label: "Compression Enabled", value: performance?.compressionEnabled, type: "boolean" },
+        { label: "Caching Enabled", value: performance?.cachingEnabled, type: "boolean" },
+      ],
+    },
+    {
+      id: "seo",
+      title: "SEO & Content",
+      icon: <Search className="h-5 w-5" />,
+      items: [
+        { label: "SEO Score", value: performance?.lighthouseScore?.seo, type: "score" },
+        { label: "Word Count", value: contentAnalysis?.wordCount, type: "number" },
+        { label: "Images Count", value: contentAnalysis?.imagesCount, type: "number" },
+        { label: "Missing Alt Text", value: contentAnalysis?.imagesMissingAlt, type: "number" },
+        { label: "Internal Links", value: links?.internalLinks, type: "number" },
+        { label: "External Links", value: links?.externalLinks, type: "number" },
+      ],
+    },
+    {
+      id: "security",
+      title: "Security & Privacy",
+      icon: <Lock className="h-5 w-5" />,
+      items: [
+        { label: "HTTPS Enabled", value: security?.httpsEnabled, type: "boolean" },
+        { label: "SSL Issuer", value: security?.sslIssuer, type: "text" },
+        { label: "TLS Version", value: security?.tlsVersion, type: "text" },
+        { label: "Mixed Content", value: security?.mixedContent, type: "boolean" },
+        {
+          label: "Security Headers",
+          value: security?.httpHeaders ? Object.keys(security.httpHeaders).length : 0,
+          type: "number",
+        },
+      ],
+    },
+    {
+      id: "hosting",
+      title: "Hosting & Infrastructure",
+      icon: <Server className="h-5 w-5" />,
+      items: [
+        { label: "Hosting Provider", value: hosting?.provider, type: "text" },
+        { label: "IP Address", value: hosting?.ipAddress, type: "text" },
+        { label: "Server Location", value: hosting?.location, type: "text" },
+        { label: "Response Time", value: hosting?.responseTime, type: "number", unit: "ms" },
+        { label: "Server Type", value: hosting?.serverType, type: "text" },
+      ],
+    },
+    {
+      id: "technologies",
+      title: "Technologies Detected",
+      icon: <Code className="h-5 w-5" />,
+      items:
+        technologies?.map((tech) => ({
+          label: tech.name,
+          value: `${tech.category}${tech.version ? ` v${tech.version}` : ""}`,
+          type: "text" as const,
+        })) || [],
+    },
+  ]
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              {metadata?.title || "Website Analysis"}
-              {url && (
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href={url} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4" />
-                  </Link>
-                </Button>
+    <div className="max-w-4xl mx-auto mt-8 space-y-6">
+      {/* Google-style main result */}
+      <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+        <CardContent className="p-6">
+          {/* Header with favicon and title */}
+          <div className="flex items-start space-x-4 mb-4">
+            <div className="flex-shrink-0">
+              {metadata?.favicon ? (
+                <img
+                  src={metadata.favicon || "/placeholder.svg"}
+                  alt="Website favicon"
+                  className="w-8 h-8 rounded-sm"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none"
+                  }}
+                />
+              ) : (
+                <Globe className="w-8 h-8 text-muted-foreground" />
               )}
-            </CardTitle>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center space-x-2 mb-1">
+                <h1 className="text-2xl font-normal text-blue-600 hover:underline cursor-pointer">
+                  <Link href={url} target="_blank" rel="noopener noreferrer">
+                    {metadata?.title || "Website Analysis"}
+                  </Link>
+                </h1>
+                <ExternalLink className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="text-sm text-green-700 mb-2">{url}</div>
+              {metadata?.description && (
+                <p className="text-sm text-muted-foreground leading-relaxed">{metadata.description}</p>
+              )}
+            </div>
+            <Button variant="outline" size="sm" onClick={copyResults} className="flex items-center space-x-2">
+              <Copy className="h-4 w-4" />
+              <span>{copySuccess ? "Copied!" : "Copy Results"}</span>
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{performance?.lighthouseScore?.performance || 0}%</div>
-              <div className="text-sm text-muted-foreground">Performance</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{performance?.lighthouseScore?.seo || 0}%</div>
-              <div className="text-sm text-muted-foreground">SEO</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{security?.httpsEnabled ? 100 : 0}%</div>
-              <div className="text-sm text-muted-foreground">Security</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{accessibility?.ariaAttributesPresent ? 100 : 0}%</div>
-              <div className="text-sm text-muted-foreground">Accessibility</div>
-            </div>
-          </div>
 
-          {metadata?.description && (
-            <div className="mb-4">
-              <h3 className="font-semibold mb-2">Summary</h3>
-              <p className="text-muted-foreground">{metadata.description}</p>
-            </div>
-          )}
-
+          {/* Keywords */}
           {metadata?.keywords && metadata.keywords.length > 0 && (
             <div className="mb-4">
-              <h3 className="font-semibold mb-2">Keywords</h3>
               <div className="flex flex-wrap gap-2">
-                {metadata.keywords.slice(0, 10).map((keyword: string, index: number) => (
-                  <Badge key={index} variant="secondary">
+                {metadata.keywords.slice(0, 8).map((keyword: string, index: number) => (
+                  <Badge key={index} variant="secondary" className="text-xs">
                     {keyword}
                   </Badge>
                 ))}
@@ -290,364 +314,96 @@ export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({ resu
             </div>
           )}
 
-          <div className="flex gap-2 mt-6">
-            <Button asChild>
-              <Link href="/content-studio">Generate Content</Link>
+          {/* Quick scores */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+            <ScoreIndicator score={performance?.lighthouseScore?.performance || 0} label="Performance" />
+            <ScoreIndicator score={performance?.lighthouseScore?.seo || 0} label="SEO" />
+            <ScoreIndicator score={performance?.lighthouseScore?.accessibility || 0} label="Accessibility" />
+            <ScoreIndicator score={performance?.lighthouseScore?.bestPractices || 0} label="Best Practices" />
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex flex-wrap gap-2">
+            <Button asChild size="sm">
+              <Link href="/content-studio">
+                <Star className="h-4 w-4 mr-2" />
+                Generate Content
+              </Link>
             </Button>
-            <Button variant="outline" asChild>
-              <Link href="/hosting">View Hosting Info</Link>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/hosting">
+                <Server className="h-4 w-4 mr-2" />
+                Hosting Details
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href={url} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Visit Site
+              </Link>
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1 h-auto flex-wrap">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="content">Content & SEO</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="tech">Technologies</TabsTrigger>
-          <TabsTrigger value="hosting">Hosting & Domain</TabsTrigger>
-          <TabsTrigger value="links">Links</TabsTrigger>
-          <TabsTrigger value="mobile">Mobile</TabsTrigger>
-          <TabsTrigger value="accessibility">Accessibility</TabsTrigger>
-          <TabsTrigger value="social">Social</TabsTrigger>
-          {/* <TabsTrigger value="sustainability">Sustainability</TabsTrigger> */}
-          {/* <TabsTrigger value="traffic">Traffic (Ext. API)</TabsTrigger> */}
-        </TabsList>
-
-        <div className="mt-4 space-y-6">
-          <TabsContent value="overview">
-            <SectionCard title="General Information" icon="Info">
-              <DetailItem label="Main Title" value={metadata?.title} />
-              <DetailItem label="Language" value={metadata?.language} />
-              <DetailItem label="Character Set" value={metadata?.charSet} />
-              <DetailItem label="Viewport" value={metadata?.viewport} />
-              <DetailItem label="Theme Color" value={metadata?.themeColor} />
-              <DetailItem label="Generator" value={metadata?.generator} />
-              <DetailItem label="Robots Meta Tag" value={metadata?.robots} />
-              <DetailItem label="Canonical URL" value={metadata?.canonicalUrl} />
-            </SectionCard>
-            {performance?.lighthouseScore && (
-              <SectionCard
-                title="Lighthouse Scores (Estimated)"
-                icon="Zap"
-                description="Scores from 0-100, higher is better."
-              >
-                <ScoreDisplay score={performance.lighthouseScore.performance} label="Performance" />
-                <ScoreDisplay score={performance.lighthouseScore.accessibility} label="Accessibility" />
-                <ScoreDisplay score={performance.lighthouseScore.bestPractices} label="Best Practices" />
-                <ScoreDisplay score={performance.lighthouseScore.seo} label="SEO" />
-              </SectionCard>
-            )}
-          </TabsContent>
-
-          <TabsContent value="content">
-            <SectionCard
-              title="Content Analysis"
-              icon="FileText"
-              description="Analysis of the textual content and structure."
-            >
-              <DetailItem label="Word Count" value={contentAnalysis?.wordCount} />
-              <DetailItem label="Character Count" value={contentAnalysis?.charCount} />
-              <DetailItem label="Images Count" value={contentAnalysis?.imagesCount} />
-              <DetailItem label="Images Missing Alt Text" value={contentAnalysis?.imagesMissingAlt} />
-              <DetailItem label="Videos Count" value={contentAnalysis?.videosCount} />
-              <DetailItem
-                label="Readability (Flesch-Kincaid Grade)"
-                value={contentAnalysis?.readabilityScore?.fleschKincaidGrade}
-              />
-              <DetailItem label="Sentiment Score" value={contentAnalysis?.sentiment?.score} />
-              <DetailItem label="Sentiment Label" value={contentAnalysis?.sentiment?.label} />
-              <DetailItem label="Detected Languages" value={contentAnalysis?.languageVariety} />
-            </SectionCard>
-            <SectionCard title="SEO Elements" icon="ZoomIn" description="Key on-page SEO factors.">
-              <DetailItem label="Meta Keywords" value={metadata?.keywords} />
-              <DetailItem
-                label="Robots.txt Rules"
-                value={contentAnalysis?.robotsTxtRules}
-                isBoolean={false}
-                subItems={
-                  contentAnalysis?.hasRobotsTxt === false ? (
-                    <span className="text-xs text-muted-foreground ml-2">(robots.txt not found or inaccessible)</span>
-                  ) : null
-                }
-              />
-              <DetailItem
-                label="Sitemap.xml Entries"
-                value={contentAnalysis?.sitemapEntries}
-                isBoolean={false}
-                subItems={
-                  contentAnalysis?.hasSitemapXml === false ? (
-                    <span className="text-xs text-muted-foreground ml-2">(sitemap.xml not found or inaccessible)</span>
-                  ) : null
-                }
-              />
-              <DetailItem
-                label="Duplicate Content % (Est.)"
-                value={contentAnalysis?.duplicateContentPercentage}
-                unit="%"
-              />
-            </SectionCard>
-            {contentAnalysis?.headingsStructure && Object.keys(contentAnalysis.headingsStructure).length > 0 && (
-              <SectionCard title="Headings Structure" icon="ListChecks">
-                {Object.entries(contentAnalysis.headingsStructure).map(([level, headings]) => (
-                  <div key={level} className="py-2">
-                    <dt className="text-sm font-medium text-muted-foreground uppercase">{level}</dt>
-                    <dd className="mt-1 text-sm text-foreground">
-                      <ul className="list-disc pl-5 space-y-1">
-                        {headings.map((h, i) => (
-                          <li key={i} className="truncate" title={h.text}>
-                            {h.text}
-                          </li>
-                        ))}
-                      </ul>
-                    </dd>
+      {/* Detailed analysis sections */}
+      <div className="space-y-4">
+        {analysisData.map((section) => (
+          <Card key={section.id} className="border-0 shadow-sm">
+            <Collapsible open={expandedSections.has(section.id)} onOpenChange={() => toggleSection(section.id)}>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center space-x-3 text-lg">
+                      {section.icon}
+                      <span>{section.title}</span>
+                    </CardTitle>
+                    {expandedSections.has(section.id) ? (
+                      <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    )}
                   </div>
-                ))}
-              </SectionCard>
-            )}
-            {metadata?.jsonLd && metadata.jsonLd.length > 0 && (
-              <SectionCard title="JSON-LD Structured Data" icon="CodeXml">
-                {metadata.jsonLd.map((item, index) => (
-                  <pre key={index} className="text-xs whitespace-pre-wrap break-all bg-muted p-2 rounded-md mb-2">
-                    {JSON.stringify(item, null, 2)}
-                  </pre>
-                ))}
-              </SectionCard>
-            )}
-          </TabsContent>
-
-          <TabsContent value="performance">
-            <SectionCard
-              title="Performance Metrics"
-              icon="Zap"
-              description="Data related to website speed and resource loading. Some metrics require browser-based tools for accuracy."
-            >
-              <DetailItem label="Page Size (HTML)" value={performance?.pageSize} unit="KB" />
-              <DetailItem label="HTTP Requests (Est.)" value={performance?.httpRequests} />
-              <DetailItem label="Time to First Byte (TTFB)" value={performance?.ttfb} unit="ms" />
-              <DetailItem label="First Contentful Paint (FCP)" value={performance?.fcp} unit="ms" />
-              <DetailItem label="Largest Contentful Paint (LCP)" value={performance?.lcp} unit="ms" />
-              <DetailItem label="Cumulative Layout Shift (CLS)" value={performance?.cls} />
-              <DetailItem label="Speed Index" value={performance?.speedIndex} unit="ms" />
-              <DetailItem label="Time to Interactive" value={performance?.interactiveTime} unit="ms" />
-            </SectionCard>
-            <SectionCard title="Resource Counts" icon="BarChart3">
-              <DetailItem label="HTML Documents" value={performance?.resourceCounts?.html} />
-              <DetailItem label="CSS Files" value={performance?.resourceCounts?.css} />
-              <DetailItem label="JavaScript Files" value={performance?.resourceCounts?.js} />
-              <DetailItem label="Images" value={performance?.resourceCounts?.images} />
-              <DetailItem label="Fonts" value={performance?.resourceCounts?.fonts} />
-              <DetailItem label="Videos" value={performance?.resourceCounts?.videos} />
-            </SectionCard>
-            <SectionCard title="Optimization Factors" icon="Cpu">
-              <DetailItem label="Uses Gzip Compression" value={performance?.compression?.usesGzip} isBoolean />
-              <DetailItem label="Uses Brotli Compression" value={performance?.compression?.usesBrotli} isBoolean />
-              <DetailItem label="Caching Headers Present" value={performance?.caching?.hasCachingHeaders} isBoolean />
-              <DetailItem label="Cache Policy" value={performance?.caching?.cachePolicy} />
-              <DetailItem label="Optimizable Images Found" value={performance?.imageOptimization?.optimizableImages} />
-              <DetailItem
-                label="Potential Savings from Images"
-                value={performance?.imageOptimization?.potentialSavingsKb}
-                unit="KB"
-              />
-            </SectionCard>
-          </TabsContent>
-
-          <TabsContent value="security">
-            <SectionCard
-              title="Security Analysis"
-              icon="ShieldCheck"
-              description="Assessment of website security features."
-            >
-              <DetailItem label="HTTPS Enabled" value={security?.httpsEnabled} isBoolean />
-              <DetailItem label="SSL Issuer" value={security?.sslIssuer} />
-              <DetailItem
-                label="SSL Valid From"
-                value={security?.sslValidFrom ? format(parseISO(security.sslValidFrom), "PPP") : "N/A"}
-              />
-              <DetailItem
-                label="SSL Expiry Date"
-                value={security?.sslExpiryDate ? format(parseISO(security.sslExpiryDate), "PPP") : "N/A"}
-              />
-              <DetailItem label="TLS Version" value={security?.tlsVersion} />
-              <DetailItem label="Mixed Content Found" value={security?.mixedContent} isBoolean />
-              <DetailItem label="Server Signature" value={security?.serverSignature} />
-              <DetailItem
-                label="Content Security Policy (CSP)"
-                value={security?.csp ? "Present" : "Not Found"}
-                subItems={
-                  security?.csp && (
-                    <pre className="text-xs whitespace-pre-wrap break-all bg-muted p-2 rounded-md mt-1">
-                      {security.csp}
-                    </pre>
-                  )
-                }
-              />
-              <DetailItem label="HSTS Enabled" value={security?.hsts} isBoolean />
-              <DetailItem label="DNSSEC Enabled" value={security?.dnssecEnabled} isBoolean />
-            </SectionCard>
-            {security?.httpHeaders && Object.keys(security.httpHeaders).length > 0 && (
-              <SectionCard title="Key Security Headers" icon="ListChecks">
-                {Object.entries(security.httpHeaders).map(([key, val]) => (
-                  <DetailItem key={key} label={key} value={String(val)} />
-                ))}
-              </SectionCard>
-            )}
-            {security?.cookies && security.cookies.length > 0 && (
-              <SectionCard title="Cookie Security" icon="Info">
-                {security.cookies.map((cookie, index) => (
-                  <div key={index} className="py-2 border-b last:border-b-0">
-                    <p className="font-medium text-sm">{cookie.name}</p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs mt-1">
-                      <DetailItem label="Secure" value={cookie.secure} isBoolean className="py-0" />
-                      <DetailItem label="HttpOnly" value={cookie.httpOnly} isBoolean className="py-0" />
-                      <DetailItem label="SameSite" value={cookie.sameSite || "N/A"} className="py-0" />
-                    </div>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {section.items.map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0"
+                      >
+                        <span className="text-sm font-medium text-muted-foreground">{item.label}</span>
+                        <span
+                          className={`text-sm font-medium ${
+                            item.type === "score" && typeof item.value === "number"
+                              ? getScoreColor(item.value)
+                              : item.type === "boolean"
+                                ? item.value
+                                  ? "text-green-600"
+                                  : "text-red-600"
+                                : "text-foreground"
+                          }`}
+                        >
+                          {formatValue(item.value, item.type, item.unit)}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </SectionCard>
-            )}
-            {security?.vulnerabilitiesFound && security.vulnerabilities && security.vulnerabilities.length > 0 && (
-              <SectionCard title="Potential Vulnerabilities (Basic Scan)" icon="AlertTriangle">
-                {security.vulnerabilities.map((vuln, index) => (
-                  <DetailItem key={index} label={vuln.name} value={`Severity: ${vuln.severity}`} />
-                ))}
-              </SectionCard>
-            )}
-          </TabsContent>
+                </CardContent>
+              </CollapsibleContent>
+            </Collapsible>
+          </Card>
+        ))}
+      </div>
 
-          <TabsContent value="tech">
-            <SectionCard
-              title="Detected Technologies"
-              icon="Cpu"
-              description="Software and tools identified on the website."
-            >
-              {technologies && technologies.length > 0 ? (
-                technologies.map((tech, index) => (
-                  <DetailItem
-                    key={index}
-                    label={tech.name}
-                    value={`${tech.category}${tech.version ? ` (v${tech.version})` : ""}${tech.confidence ? ` - ${tech.confidence}% conf.` : ""}`}
-                  />
-                ))
-              ) : (
-                <p className="text-muted-foreground">No specific technologies detected with high confidence.</p>
-              )}
-            </SectionCard>
-          </TabsContent>
-
-          <TabsContent value="hosting">
-            <SectionCard title="Hosting Information" icon="Server">
-              <DetailItem label="Hosting Provider" value={hosting?.provider} />
-              <DetailItem label="IP Address" value={hosting?.ipAddress} />
-              <DetailItem label="IP Organization" value={hosting?.ipOrganization} />
-              <DetailItem label="ASN" value={hosting?.asn} />
-              <DetailItem label="Server Location" value={hosting?.location} />
-              <DetailItem label="Country Code" value={hosting?.countryCode} />
-              <DetailItem label="Server Software" value={hosting?.serverType} />
-            </SectionCard>
-            <SectionCard
-              title="Domain Information"
-              icon="Globe"
-              description="Details about the domain registration (requires WHOIS data)."
-            >
-              <DetailItem label="Registrar" value={domain?.registrar} />
-              <DetailItem
-                label="Registration Date"
-                value={domain?.registrationDate ? format(parseISO(domain.registrationDate), "PPP") : "N/A"}
-              />
-              <DetailItem
-                label="Expiry Date"
-                value={domain?.expiryDate ? format(parseISO(domain.expiryDate), "PPP") : "N/A"}
-              />
-              <DetailItem label="Domain Age" value={domain?.domainAge} />
-              <DetailItem label="Nameservers" value={domain?.nameservers} />
-              <DetailItem label="Domain Status" value={domain?.status} />
-            </SectionCard>
-            {domain?.dnsRecords && (
-              <SectionCard title="Basic DNS Records" icon="Rss">
-                <DetailItem label="A Records" value={domain.dnsRecords.A} />
-                <DetailItem label="AAAA Records" value={domain.dnsRecords.AAAA} />
-                <DetailItem label="CNAME Record" value={domain.dnsRecords.CNAME} />
-                <DetailItem
-                  label="MX Records"
-                  value={domain.dnsRecords.MX?.map((mx) => `${mx.priority} ${mx.exchange}`).join(", ")}
-                />
-                <DetailItem label="NS Records" value={domain.dnsRecords.NS} />
-                <DetailItem label="TXT Records" value={domain.dnsRecords.TXT} />
-              </SectionCard>
-            )}
-          </TabsContent>
-
-          <TabsContent value="links">
-            <SectionCard title="Link Analysis" icon="Anchor" description="Overview of internal and external links.">
-              <DetailItem label="Internal Links" value={links?.internalLinks} />
-              <DetailItem label="External Links" value={links?.externalLinks} />
-              <DetailItem label="Nofollow Links" value={links?.nofollowLinks} />
-              <DetailItem
-                label="Broken Links (Est.)"
-                value={links?.brokenLinks}
-                icon={links && links.brokenLinks && links.brokenLinks > 0 ? "AlertTriangle" : "CheckCircle"}
-              />
-            </SectionCard>
-          </TabsContent>
-
-          <TabsContent value="mobile">
-            <SectionCard
-              title="Mobile Friendliness"
-              icon="Smartphone"
-              description="Basic checks for mobile usability. Full audit requires dedicated tools."
-            >
-              <DetailItem label="Viewport Meta Present" value={mobileFriendliness?.viewportMetaPresent} isBoolean />
-              <DetailItem
-                label="Is Mobile Friendly (Basic Check)"
-                value={mobileFriendliness?.isMobileFriendly}
-                isBoolean
-              />
-              <DetailItem
-                label="Adequate Tap Target Sizes (Conceptual)"
-                value={mobileFriendliness?.tapTargetSizeAdequate}
-                isBoolean
-              />
-              <DetailItem
-                label="Adequate Font Sizes (Conceptual)"
-                value={mobileFriendliness?.fontSizeAdequate}
-                isBoolean
-              />
-            </SectionCard>
-          </TabsContent>
-
-          <TabsContent value="accessibility">
-            <SectionCard
-              title="Accessibility (Basic Checks)"
-              icon="Eye"
-              description="Initial checks for web accessibility. Full audit requires dedicated tools."
-            >
-              <DetailItem label="ARIA Attributes Present" value={accessibility?.ariaAttributesPresent} isBoolean />
-              <DetailItem label="Image Alt Text Coverage" value={accessibility?.imageAltTextCoverage} unit="%" />
-              <DetailItem label="Form Label Coverage (Est.)" value={accessibility?.formLabelCoverage} unit="%" />
-              <DetailItem label="Keyboard Navigable (Conceptual)" value={accessibility?.keyboardNavigable} isBoolean />
-              <DetailItem label="WCAG Conformance (Est.)" value={accessibility?.wcagConformanceLevel} />
-              <DetailItem label="Contrast Ratio Issues (Conceptual)" value={accessibility?.contrastRatioIssues} />
-            </SectionCard>
-          </TabsContent>
-
-          <TabsContent value="social">
-            <SectionCard title="Social Presence" icon="Share2" description="Detected links to social media profiles.">
-              <DetailItem label="Facebook" value={socialPresence?.facebook} />
-              <DetailItem label="Twitter / X" value={socialPresence?.twitter} />
-              <DetailItem label="LinkedIn" value={socialPresence?.linkedin} />
-              <DetailItem label="Instagram" value={socialPresence?.instagram} />
-              <DetailItem label="YouTube" value={socialPresence?.youtube} />
-              {/* Add more social platforms if included in SocialPresence type */}
-            </SectionCard>
-          </TabsContent>
-        </div>
-      </Tabs>
-      <p className="text-xs text-muted-foreground mt-4 text-center">Generated by WSfynder Analytics</p>
+      {/* Footer */}
+      <div className="text-center py-4">
+        <p className="text-xs text-muted-foreground">
+          Analysis powered by WSfynder • {results.analysisDate && format(parseISO(results.analysisDate), "PPP p")}
+        </p>
+      </div>
     </div>
   )
 }

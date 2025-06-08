@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { Logo } from "@/components/logo"
+import { ExternalLink, Heart } from "lucide-react"
 
 const footerLinks = {
   product: [
@@ -37,6 +38,18 @@ export function Footer() {
             <p className="mt-4 text-sm text-muted-foreground">
               Intelligent website discovery and analysis platform powered by advanced AI technology.
             </p>
+
+            {/* Sponsor Button */}
+            <div className="mt-4">
+              <iframe
+                src="https://github.com/sponsors/myHerbDev/button"
+                title="Sponsor myHerbDev"
+                height="32"
+                width="114"
+                style={{ border: 0, borderRadius: "6px" }}
+                className="rounded-md"
+              />
+            </div>
           </div>
 
           <div>
@@ -105,9 +118,39 @@ export function Footer() {
         </div>
 
         <div className="mt-8 pt-8 border-t">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} WSfynder. All rights reserved.</p>
-            <p className="text-sm text-muted-foreground mt-2 md:mt-0">Built with ❤️ for intelligent website discovery</p>
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
+              <p className="text-sm text-muted-foreground">
+                © {new Date().getFullYear()} WSfynder. All rights reserved.
+              </p>
+              <div className="flex items-center space-x-1 text-sm text-muted-foreground">
+                <span>Made by</span>
+                <Link
+                  href="https://www.myherb.co.il"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-primary hover:underline inline-flex items-center space-x-1"
+                >
+                  <span>myHerb</span>
+                  <ExternalLink className="h-3 w-3" />
+                </Link>
+                <span>(DevSphere project)</span>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <Link
+                href="https://github.com/sponsors/myHerbDev"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Heart className="h-4 w-4" />
+                <span>Sponsor</span>
+                <ExternalLink className="h-3 w-3" />
+              </Link>
+              <p className="text-sm text-muted-foreground">Built with ❤️ for intelligent website discovery</p>
+            </div>
           </div>
         </div>
       </div>
