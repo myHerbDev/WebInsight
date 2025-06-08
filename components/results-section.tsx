@@ -165,7 +165,16 @@ export function ResultsSection({ data, isLoading, isError }: ResultsSectionProps
           </TabsContent>
 
           <TabsContent value="content-generation">
-            <AiContentStudio analysisId={data._id} tone={selectedTone} />
+            <AiContentStudio
+              analysisId={data._id}
+              websiteUrl={data.url}
+              websiteTitle={data.title}
+              tone={selectedTone}
+              onSignUpClick={() => {
+                // Handle sign up click
+                window.open("/signup", "_blank")
+              }}
+            />
           </TabsContent>
         </div>
       </Tabs>

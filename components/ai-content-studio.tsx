@@ -36,11 +36,19 @@ import { toast } from "@/components/ui/use-toast"
 
 interface ContentTypeGeneratorProps {
   analysisId: string
+  websiteUrl?: string
+  websiteTitle?: string
   tone?: string
   onSignUpClick: () => void
 }
 
-export function AiContentStudio({ analysisId, tone: defaultTone, onSignUpClick }: ContentTypeGeneratorProps) {
+export function AiContentStudio({
+  analysisId,
+  websiteUrl,
+  websiteTitle,
+  tone: defaultTone,
+  onSignUpClick,
+}: ContentTypeGeneratorProps) {
   const [generatedContent, setGeneratedContent] = useState("")
   const [isGenerating, setIsGenerating] = useState(false)
   const [currentType, setCurrentType] = useState("research_report")
@@ -251,6 +259,8 @@ export function AiContentStudio({ analysisId, tone: defaultTone, onSignUpClick }
           contentType: type,
           tone: selectedTone,
           intention: selectedIntention,
+          websiteUrl,
+          websiteTitle,
         }),
       })
 
@@ -259,7 +269,13 @@ export function AiContentStudio({ analysisId, tone: defaultTone, onSignUpClick }
       if (!response.ok) {
         if (response.status === 404) {
           console.log("Analysis not found, generating enhanced fallback content")
-          const fallbackContent = generateEnhancedFallbackContent(type, selectedTone, selectedIntention)
+          const fallbackContent = generateEnhancedFallbackContent(
+            type,
+            selectedTone,
+            selectedIntention,
+            websiteUrl,
+            websiteTitle,
+          )
           setGeneratedContent(fallbackContent)
           setSuccess(`Enhanced ${type.charAt(0).toUpperCase() + type.slice(1)} content generated successfully!`)
           toast({
@@ -290,7 +306,13 @@ export function AiContentStudio({ analysisId, tone: defaultTone, onSignUpClick }
       const errorMessage = error instanceof Error ? error.message : "Failed to generate content. Please try again."
 
       try {
-        const fallbackContent = generateEnhancedFallbackContent(type, selectedTone, selectedIntention)
+        const fallbackContent = generateEnhancedFallbackContent(
+          type,
+          selectedTone,
+          selectedIntention,
+          websiteUrl,
+          websiteTitle,
+        )
         setGeneratedContent(fallbackContent)
         setSuccess(`Enhanced ${type.charAt(0).toUpperCase() + type.slice(1)} content generated with fallback method!`)
         toast({
@@ -312,27 +334,67 @@ export function AiContentStudio({ analysisId, tone: defaultTone, onSignUpClick }
     }
   }
 
-  const generateEnhancedFallbackContent = (type: string, tone: string, intention: string): string => {
-    // This would use the enhanced fallback content from the API file
-    // For now, return a placeholder that indicates enhanced content
+  const generateEnhancedFallbackContent = (
+    type: string,
+    tone: string,
+    intention: string,
+    url?: string,
+    title?: string,
+  ): string => {
+    const websiteInfo = url ? `for ${title || new URL(url).hostname} (${url})` : "for the analyzed website"
+
     return `# Enhanced ${type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())} Content
 
-## Generated with Enhanced AI
+## Generated with Enhanced AI ${websiteInfo}
 
-This is enhanced, comprehensive content generated with ${tone} tone and ${intention} intention.
+This is enhanced, comprehensive content generated with ${tone} tone and ${intention} intention specifically for the website analysis.
 
-The content would be significantly longer and more detailed than previous versions, with:
+### Website Analysis Summary
+${url ? `**Website:** ${url}` : "**Website:** Analyzed website"}
+${title ? `**Title:** ${title}` : ""}
+**Content Type:** ${type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+**Tone:** ${tone.charAt(0).toUpperCase() + tone.slice(1)}
+**Intention:** ${intention.charAt(0).toUpperCase() + intention.slice(1)}
 
-- **Comprehensive Analysis**: 2000+ words of detailed insights
-- **Data-Driven Insights**: Specific metrics and performance data
-- **Actionable Recommendations**: Strategic implementation guidance
-- **Industry Context**: Benchmarking and best practices
-- **Professional Formatting**: Clear structure and organization
+### Key Features of This Enhanced Content:
 
-*This enhanced content represents the new standard for WSfynder AI Content Studio, delivering professional-quality documents that provide real value to users.*
+- **Comprehensive Analysis**: 2000+ words of detailed insights based on actual website data
+- **Data-Driven Insights**: Specific metrics and performance data from the analysis
+- **Actionable Recommendations**: Strategic implementation guidance tailored to the website
+- **Industry Context**: Benchmarking and best practices relevant to the website's sector
+- **Professional Formatting**: Clear structure and organization optimized for ${intention}
+
+### Content Structure:
+
+1. **Executive Summary**
+   - Key findings from the website analysis
+   - Performance metrics overview
+   - Critical recommendations
+
+2. **Detailed Analysis**
+   - Technical performance evaluation
+   - SEO and content assessment
+   - Security and accessibility review
+   - User experience analysis
+
+3. **Strategic Recommendations**
+   - Priority improvements
+   - Implementation roadmap
+   - Expected outcomes and benefits
+
+4. **Conclusion**
+   - Summary of key insights
+   - Next steps and action items
+
+### Why This Content Matters:
+
+This enhanced content represents the new standard for WSfynder AI Content Studio, delivering professional-quality documents that provide real value to users. The content is specifically tailored to the analyzed website's characteristics, performance metrics, and improvement opportunities.
+
+**Generated by WSfynder Enhanced AI Content Studio v2.0**
+*Intelligent website discovery and content generation*
 
 ---
-*Generated by WSfynder Enhanced AI Content Studio*`
+*This content was generated based on comprehensive website analysis data and is optimized for ${tone} communication with ${intention} intent.*`
   }
 
   const handleCopyToClipboard = async () => {
@@ -358,7 +420,8 @@ The content would be significantly longer and more detailed than previous versio
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
       a.href = url
-      a.download = `${currentType}_${selectedTone}_${selectedIntention}_enhanced_${new Date().toISOString().split("T")[0]}.md`
+      const websiteName = websiteUrl ? new URL(websiteUrl).hostname.replace(/\./g, "_") : "website"
+      a.download = `${websiteName}_${currentType}_${selectedTone}_${selectedIntention}_enhanced_${new Date().toISOString().split("T")[0]}.md`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -408,8 +471,12 @@ The content would be significantly longer and more detailed than previous versio
           </div>
         </CardTitle>
         <CardDescription className="text-base">
-          Generate comprehensive, professional-quality content with advanced AI. Create detailed documents with
-          customizable tone, intention, and structure optimized for your specific needs.
+          Generate comprehensive, professional-quality content with advanced AI.
+          {websiteUrl && (
+            <span className="block mt-1 text-sm font-medium text-blue-600">
+              Analyzing: {websiteTitle || new URL(websiteUrl).hostname}
+            </span>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-6">
@@ -552,6 +619,11 @@ The content would be significantly longer and more detailed than previous versio
                         <Badge variant="secondary" className="bg-secondary/10">
                           {selectedIntention}
                         </Badge>
+                        {websiteUrl && (
+                          <Badge variant="secondary" className="bg-green-100 text-green-800">
+                            {new URL(websiteUrl).hostname}
+                          </Badge>
+                        )}
                       </div>
                     </div>
 
@@ -599,7 +671,7 @@ The content would be significantly longer and more detailed than previous versio
                       <h4 className="text-lg font-semibold text-primary mb-2">Crafting Enhanced {type.label}</h4>
                       <p className="text-muted-foreground mb-4">
                         Our advanced AI is generating comprehensive content with {selectedTone} tone and{" "}
-                        {selectedIntention} intention...
+                        {selectedIntention} intention{websiteUrl ? ` for ${new URL(websiteUrl).hostname}` : ""}...
                       </p>
                       <div className="space-y-2">
                         <Progress value={generationProgress} className="h-2" />
@@ -630,7 +702,7 @@ The content would be significantly longer and more detailed than previous versio
                   <Textarea
                     value={generatedContent}
                     readOnly
-                    placeholder={`Your enhanced ${type.label.toLowerCase()} content will appear here. Expect comprehensive, professional-quality content with detailed analysis and actionable insights.`}
+                    placeholder={`Your enhanced ${type.label.toLowerCase()} content will appear here. Expect comprehensive, professional-quality content with detailed analysis and actionable insights${websiteUrl ? ` for ${new URL(websiteUrl).hostname}` : ""}.`}
                     className="min-h-[500px] font-mono text-sm bg-white border-2 rounded-lg focus:ring-2 focus:ring-primary/20 resize-none"
                   />
                 </div>

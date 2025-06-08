@@ -1,408 +1,573 @@
 "use client"
 
-import type React from "react"
 import { useState } from "react"
-import type { WebsiteData } from "@/types/website-data"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Progress } from "@/components/ui/progress"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import {
   Globe,
-  Server,
-  AlertTriangle,
+  Shield,
+  Zap,
+  Search,
+  ExternalLink,
+  Copy,
   ChevronDown,
   ChevronUp,
-  Copy,
-  ExternalLink,
-  Star,
-  Gauge,
-  Search,
+  Server,
   Code,
-  Lock,
-  Loader2,
+  Eye,
+  TreePine,
+  FileText,
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  Recycle,
 } from "lucide-react"
-import { format, parseISO } from "date-fns"
 import { toast } from "@/components/ui/use-toast"
-import Link from "next/link"
+import type { WebsiteData } from "@/types/website-data"
 
 interface SearchResultsDisplayProps {
-  results: WebsiteData | null
+  data: WebsiteData
   isLoading: boolean
-  error: string | null
+  isError: boolean
 }
 
-interface AnalysisSection {
-  id: string
-  title: string
-  icon: React.ReactNode
-  items: Array<{
-    label: string
-    value: string | number | boolean | null | undefined
-    type?: "text" | "number" | "boolean" | "score" | "url" | "array"
-    unit?: string
-    color?: "green" | "yellow" | "red" | "blue" | "purple"
-  }>
-}
+export function SearchResultsDisplay({ data, isLoading, isError }: SearchResultsDisplayProps) {
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({})
 
-const formatValue = (value: any, type?: string, unit?: string): string => {
-  if (value === null || value === undefined || value === "") return "N/A"
-
-  switch (type) {
-    case "boolean":
-      return value ? "✓ Yes" : "✗ No"
-    case "score":
-      return `${value}/100`
-    case "number":
-      return unit ? `${value.toLocaleString()} ${unit}` : value.toLocaleString()
-    case "array":
-      return Array.isArray(value) ? value.join(", ") : String(value)
-    case "url":
-      return value
-    default:
-      return String(value)
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }))
   }
-}
 
-const getScoreColor = (score: number): string => {
-  if (score >= 80) return "text-green-600"
-  if (score >= 60) return "text-yellow-600"
-  return "text-red-600"
-}
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return "text-green-600"
+    if (score >= 60) return "text-yellow-600"
+    return "text-red-600"
+  }
 
-const ScoreIndicator: React.FC<{ score: number; label: string }> = ({ score, label }) => (
-  <div className="flex items-center space-x-2">
-    <div className={`text-2xl font-bold ${getScoreColor(score)}`}>{score}</div>
-    <div className="text-sm text-muted-foreground">{label}</div>
-  </div>
-)
+  const getScoreIcon = (score: number) => {
+    if (score >= 80) return <CheckCircle className="h-4 w-4 text-green-600" />
+    if (score >= 60) return <AlertTriangle className="h-4 w-4 text-yellow-600" />
+    return <XCircle className="h-4 w-4 text-red-600" />
+  }
 
-export const SearchResultsDisplay: React.FC<SearchResultsDisplayProps> = ({ results, isLoading, error }) => {
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
-  const [copySuccess, setCopySuccess] = useState(false)
+  const calculateSustainabilityMetrics = (data: WebsiteData) => {
+    // Calculate based on page size and carbon footprint
+    const pageSizeKB = data.performance?.pageSize || 0
+    const carbonFootprint = data.metrics?.carbonFootprint || 0
 
-  const toggleSection = (sectionId: string) => {
-    const newExpanded = new Set(expandedSections)
-    if (newExpanded.has(sectionId)) {
-      newExpanded.delete(sectionId)
-    } else {
-      newExpanded.add(sectionId)
+    // Estimates: 1 page view = ~4.6g CO2, 1 sheet of paper = ~5g CO2
+    // Average tree absorbs ~22kg CO2 per year
+    const annualPageViews = 10000 // Estimated annual page views
+    const totalCarbonKg = (carbonFootprint * annualPageViews) / 1000
+    const paperSheetsSaved = Math.round(totalCarbonKg * 200) // Rough conversion
+    const treesSaved = (totalCarbonKg / 22).toFixed(2)
+
+    return {
+      paperSheetsSaved,
+      treesSaved: Number.parseFloat(treesSaved),
+      carbonSavedKg: totalCarbonKg.toFixed(2),
     }
-    setExpandedSections(newExpanded)
   }
 
   const copyResults = async () => {
-    if (!results) return
+    if (!data) return
+
+    const sustainability = calculateSustainabilityMetrics(data)
 
     const formattedResults = `
-WSfynder Analysis Results
-========================
+🌐 WSfynder Analysis Results
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Website: ${results.url}
-Title: ${results.metadata?.title || "N/A"}
-Description: ${results.metadata?.description || "N/A"}
-Analysis Date: ${results.analysisDate ? format(parseISO(results.analysisDate), "PPP p") : "N/A"}
+📊 WEBSITE OVERVIEW
+• URL: ${data.url}
+• Title: ${data.title || "No title found"}
+• Description: ${data.summary || "No description available"}
 
-Performance Scores:
-- Performance: ${results.performance?.lighthouseScore?.performance || 0}/100
-- SEO: ${results.performance?.lighthouseScore?.seo || 0}/100
-- Accessibility: ${results.performance?.lighthouseScore?.accessibility || 0}/100
-- Best Practices: ${results.performance?.lighthouseScore?.bestPractices || 0}/100
+🎯 PERFORMANCE SCORES
+• Performance: ${data.performance_score || 0}/100
+• SEO: ${data.seoAnalysis?.seoScore || 0}/100
+• Accessibility: ${data.accessibility?.accessibilityScore || 0}/100
+• Security: ${data.security?.securityScore || 0}/100
 
-Security:
-- HTTPS Enabled: ${results.security?.httpsEnabled ? "Yes" : "No"}
-- SSL Issuer: ${results.security?.sslIssuer || "N/A"}
+🌱 SUSTAINABILITY IMPACT
+• Paper Sheets Saved Annually: ${sustainability.paperSheetsSaved.toLocaleString()}
+• Trees Saved Annually: ${sustainability.treesSaved}
+• Carbon Footprint: ${data.metrics?.carbonFootprint || 0}g CO2
+• Carbon Saved: ${sustainability.carbonSavedKg}kg CO2/year
 
-Hosting:
-- Provider: ${results.hosting?.provider || "N/A"}
-- IP Address: ${results.hosting?.ipAddress || "N/A"}
-- Location: ${results.hosting?.location || "N/A"}
+📈 TECHNICAL DETAILS
+• Page Size: ${data.performance?.pageSize || 0}KB
+• Load Time: ${data.performance?.loadTime || "N/A"}ms
+• Images: ${data.contentAnalysis?.imagesCount || 0}
+• Word Count: ${data.contentAnalysis?.wordCount || 0}
 
-Content Analysis:
-- Word Count: ${results.contentAnalysis?.wordCount || 0}
-- Images: ${results.contentAnalysis?.imagesCount || 0}
-- Videos: ${results.contentAnalysis?.videosCount || 0}
+🔒 SECURITY & HOSTING
+• HTTPS: ${data.security?.httpsEnabled ? "✅ Enabled" : "❌ Disabled"}
+• Hosting: ${data.hosting?.provider || "Unknown"}
+• IP Address: ${data.hosting?.ipAddress || "Unknown"}
 
-Technologies:
-${results.technologies?.map((tech) => `- ${tech.name} (${tech.category})`).join("\n") || "None detected"}
+🛠️ TECHNOLOGIES
+${
+  data.technologies
+    ?.slice(0, 5)
+    .map((tech) => `• ${tech.name} (${tech.category})`)
+    .join("\n") || "• No technologies detected"
+}
 
-Generated by WSfynder - Intelligent Website Analysis Platform
-Visit: https://wsfynder.vercel.app
+📝 TOP IMPROVEMENTS
+${
+  data.improvements
+    ?.slice(0, 5)
+    .map((imp) => `• ${imp}`)
+    .join("\n") || "• No improvements suggested"
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Generated by WSfynder - Intelligent Website Discovery
+${new Date().toLocaleString()}
     `.trim()
 
     try {
       await navigator.clipboard.writeText(formattedResults)
-      setCopySuccess(true)
       toast({
         title: "Results Copied!",
-        description: "Analysis results have been copied to your clipboard in formatted text.",
+        description: "Analysis results have been copied to your clipboard in a structured format.",
       })
-      setTimeout(() => setCopySuccess(false), 2000)
     } catch (error) {
       toast({
         title: "Copy Failed",
-        description: "Unable to copy results. Please try again.",
+        description: "Unable to copy to clipboard. Please try again.",
         variant: "destructive",
       })
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="max-w-4xl mx-auto mt-8">
-        <Card className="border-0 shadow-sm">
-          <CardContent className="flex items-center justify-center py-16">
-            <div className="text-center space-y-4">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-              <div className="space-y-2">
-                <h3 className="text-lg font-medium">Analyzing website...</h3>
-                <p className="text-sm text-muted-foreground">
-                  Our AI is performing comprehensive analysis including performance, security, and content evaluation.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
+  if (isLoading || isError || !data) {
+    return null
   }
 
-  if (error) {
-    return (
-      <div className="max-w-4xl mx-auto mt-8">
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="py-8">
-            <div className="text-center space-y-4">
-              <AlertTriangle className="h-12 w-12 text-red-500 mx-auto" />
-              <div>
-                <h3 className="text-lg font-semibold text-red-900">Analysis Failed</h3>
-                <p className="text-red-700 mt-2">{error}</p>
-                <p className="text-sm text-red-600 mt-2">
-                  Please check the URL and try again. The website might be inaccessible or blocking automated analysis.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  if (!results) return null
-
-  const { url, metadata, hosting, performance, security, contentAnalysis, technologies, links } = results
-
-  const analysisData: AnalysisSection[] = [
-    {
-      id: "performance",
-      title: "Performance Analysis",
-      icon: <Gauge className="h-5 w-5" />,
-      items: [
-        { label: "Performance Score", value: performance?.lighthouseScore?.performance, type: "score" },
-        { label: "Page Size", value: performance?.pageSize, type: "number", unit: "KB" },
-        { label: "HTTP Requests", value: performance?.httpRequests, type: "number" },
-        { label: "Load Time", value: performance?.loadTime, type: "number", unit: "ms" },
-        { label: "Compression Enabled", value: performance?.compressionEnabled, type: "boolean" },
-        { label: "Caching Enabled", value: performance?.cachingEnabled, type: "boolean" },
-      ],
-    },
-    {
-      id: "seo",
-      title: "SEO & Content",
-      icon: <Search className="h-5 w-5" />,
-      items: [
-        { label: "SEO Score", value: performance?.lighthouseScore?.seo, type: "score" },
-        { label: "Word Count", value: contentAnalysis?.wordCount, type: "number" },
-        { label: "Images Count", value: contentAnalysis?.imagesCount, type: "number" },
-        { label: "Missing Alt Text", value: contentAnalysis?.imagesMissingAlt, type: "number" },
-        { label: "Internal Links", value: links?.internalLinks, type: "number" },
-        { label: "External Links", value: links?.externalLinks, type: "number" },
-      ],
-    },
-    {
-      id: "security",
-      title: "Security & Privacy",
-      icon: <Lock className="h-5 w-5" />,
-      items: [
-        { label: "HTTPS Enabled", value: security?.httpsEnabled, type: "boolean" },
-        { label: "SSL Issuer", value: security?.sslIssuer, type: "text" },
-        { label: "TLS Version", value: security?.tlsVersion, type: "text" },
-        { label: "Mixed Content", value: security?.mixedContent, type: "boolean" },
-        {
-          label: "Security Headers",
-          value: security?.httpHeaders ? Object.keys(security.httpHeaders).length : 0,
-          type: "number",
-        },
-      ],
-    },
-    {
-      id: "hosting",
-      title: "Hosting & Infrastructure",
-      icon: <Server className="h-5 w-5" />,
-      items: [
-        { label: "Hosting Provider", value: hosting?.provider, type: "text" },
-        { label: "IP Address", value: hosting?.ipAddress, type: "text" },
-        { label: "Server Location", value: hosting?.location, type: "text" },
-        { label: "Response Time", value: hosting?.responseTime, type: "number", unit: "ms" },
-        { label: "Server Type", value: hosting?.serverType, type: "text" },
-      ],
-    },
-    {
-      id: "technologies",
-      title: "Technologies Detected",
-      icon: <Code className="h-5 w-5" />,
-      items:
-        technologies?.map((tech) => ({
-          label: tech.name,
-          value: `${tech.category}${tech.version ? ` v${tech.version}` : ""}`,
-          type: "text" as const,
-        })) || [],
-    },
-  ]
+  const sustainability = calculateSustainabilityMetrics(data)
 
   return (
-    <div className="max-w-4xl mx-auto mt-8 space-y-6">
-      {/* Google-style main result */}
-      <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
-        <CardContent className="p-6">
-          {/* Header with favicon and title */}
-          <div className="flex items-start space-x-4 mb-4">
+    <div className="space-y-6 max-w-6xl mx-auto">
+      {/* Main Result Card - Google Style */}
+      <Card className="border-0 shadow-lg bg-gradient-to-r from-white to-blue-50">
+        <CardContent className="p-8">
+          <div className="flex items-start gap-4">
+            {/* Favicon */}
             <div className="flex-shrink-0">
-              {metadata?.favicon ? (
+              {data.metadata?.favicon ? (
                 <img
-                  src={metadata.favicon || "/placeholder.svg"}
+                  src={data.metadata.favicon || "/placeholder.svg"}
                   alt="Website favicon"
-                  className="w-8 h-8 rounded-sm"
+                  className="w-8 h-8 rounded"
                   onError={(e) => {
                     e.currentTarget.style.display = "none"
                   }}
                 />
               ) : (
-                <Globe className="w-8 h-8 text-muted-foreground" />
+                <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                  <Globe className="h-4 w-4 text-blue-600" />
+                </div>
               )}
             </div>
+
             <div className="flex-1 min-w-0">
-              <div className="flex items-center space-x-2 mb-1">
-                <h1 className="text-2xl font-normal text-blue-600 hover:underline cursor-pointer">
-                  <Link href={url} target="_blank" rel="noopener noreferrer">
-                    {metadata?.title || "Website Analysis"}
-                  </Link>
-                </h1>
-                <ExternalLink className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="text-sm text-green-700 mb-2">{url}</div>
-              {metadata?.description && (
-                <p className="text-sm text-muted-foreground leading-relaxed">{metadata.description}</p>
-              )}
-            </div>
-            <Button variant="outline" size="sm" onClick={copyResults} className="flex items-center space-x-2">
-              <Copy className="h-4 w-4" />
-              <span>{copySuccess ? "Copied!" : "Copy Results"}</span>
-            </Button>
-          </div>
+              {/* Title - Google Style */}
+              <h2 className="text-2xl font-normal text-blue-600 hover:text-blue-800 cursor-pointer mb-1 truncate">
+                {data.title || new URL(data.url).hostname}
+              </h2>
 
-          {/* Keywords */}
-          {metadata?.keywords && metadata.keywords.length > 0 && (
-            <div className="mb-4">
+              {/* URL - Google Style */}
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-green-700 text-sm">{data.url}</span>
+                <Button variant="ghost" size="sm" asChild className="h-6 w-6 p-0">
+                  <a href={data.url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </Button>
+              </div>
+
+              {/* Description */}
+              <p className="text-gray-700 text-sm leading-relaxed mb-4">
+                {data.summary || data.metadata?.description || "No description available for this website."}
+              </p>
+
+              {/* Quick Scores */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${getScoreColor(data.performance_score || 0)}`}>
+                    {data.performance_score || 0}
+                  </div>
+                  <div className="text-xs text-gray-500">Performance</div>
+                </div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${getScoreColor(data.seoAnalysis?.seoScore || 0)}`}>
+                    {data.seoAnalysis?.seoScore || 0}
+                  </div>
+                  <div className="text-xs text-gray-500">SEO</div>
+                </div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${getScoreColor(data.accessibility?.accessibilityScore || 0)}`}>
+                    {data.accessibility?.accessibilityScore || 0}
+                  </div>
+                  <div className="text-xs text-gray-500">Accessibility</div>
+                </div>
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${getScoreColor(data.security?.securityScore || 0)}`}>
+                    {data.security?.securityScore || 0}
+                  </div>
+                  <div className="text-xs text-gray-500">Security</div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
               <div className="flex flex-wrap gap-2">
-                {metadata.keywords.slice(0, 8).map((keyword: string, index: number) => (
-                  <Badge key={index} variant="secondary" className="text-xs">
-                    {keyword}
-                  </Badge>
-                ))}
+                <Button variant="outline" size="sm" onClick={copyResults}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Results
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={data.url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Visit Site
+                  </a>
+                </Button>
               </div>
             </div>
-          )}
-
-          {/* Quick scores */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
-            <ScoreIndicator score={performance?.lighthouseScore?.performance || 0} label="Performance" />
-            <ScoreIndicator score={performance?.lighthouseScore?.seo || 0} label="SEO" />
-            <ScoreIndicator score={performance?.lighthouseScore?.accessibility || 0} label="Accessibility" />
-            <ScoreIndicator score={performance?.lighthouseScore?.bestPractices || 0} label="Best Practices" />
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex flex-wrap gap-2">
-            <Button asChild size="sm">
-              <Link href="/content-studio">
-                <Star className="h-4 w-4 mr-2" />
-                Generate Content
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/hosting">
-                <Server className="h-4 w-4 mr-2" />
-                Hosting Details
-              </Link>
-            </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link href={url} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Visit Site
-              </Link>
-            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Detailed analysis sections */}
-      <div className="space-y-4">
-        {analysisData.map((section) => (
-          <Card key={section.id} className="border-0 shadow-sm">
-            <Collapsible open={expandedSections.has(section.id)} onOpenChange={() => toggleSection(section.id)}>
-              <CollapsibleTrigger asChild>
-                <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+      {/* Sustainability Impact Card */}
+      <Card className="border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-green-800">
+            <TreePine className="h-5 w-5" />
+            Environmental Impact
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-2">
+                <FileText className="h-8 w-8 text-green-600" />
+              </div>
+              <div className="text-2xl font-bold text-green-700">
+                {sustainability.paperSheetsSaved.toLocaleString()}
+              </div>
+              <div className="text-sm text-green-600">Paper Sheets Saved Annually</div>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-2">
+                <TreePine className="h-8 w-8 text-green-600" />
+              </div>
+              <div className="text-2xl font-bold text-green-700">{sustainability.treesSaved}</div>
+              <div className="text-sm text-green-600">Trees Saved Annually</div>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-2">
+                <Recycle className="h-8 w-8 text-green-600" />
+              </div>
+              <div className="text-2xl font-bold text-green-700">{sustainability.carbonSavedKg}kg</div>
+              <div className="text-sm text-green-600">CO₂ Saved Annually</div>
+            </div>
+          </div>
+          <div className="mt-4 p-3 bg-green-100 rounded-lg">
+            <p className="text-sm text-green-800 text-center">
+              🌱 This website's optimized design helps save approximately{" "}
+              <strong>{sustainability.treesSaved} trees</strong> worth of carbon absorption annually through reduced
+              digital carbon footprint.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Analysis Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Performance Analysis */}
+        <Card>
+          <Collapsible open={expandedSections.performance} onOpenChange={() => toggleSection("performance")}>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-orange-500" />
+                    Performance Analysis
+                  </div>
+                  {expandedSections.performance ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </CardTitle>
+                <CardDescription>Speed, optimization, and technical performance metrics</CardDescription>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-0">
+                <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center space-x-3 text-lg">
-                      {section.icon}
-                      <span>{section.title}</span>
-                    </CardTitle>
-                    {expandedSections.has(section.id) ? (
-                      <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                    )}
+                    <span className="text-sm font-medium">Overall Score</span>
+                    <div className="flex items-center gap-2">
+                      {getScoreIcon(data.performance_score || 0)}
+                      <span className={`font-bold ${getScoreColor(data.performance_score || 0)}`}>
+                        {data.performance_score || 0}/100
+                      </span>
+                    </div>
                   </div>
-                </CardHeader>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {section.items.map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0"
-                      >
-                        <span className="text-sm font-medium text-muted-foreground">{item.label}</span>
-                        <span
-                          className={`text-sm font-medium ${
-                            item.type === "score" && typeof item.value === "number"
-                              ? getScoreColor(item.value)
-                              : item.type === "boolean"
-                                ? item.value
-                                  ? "text-green-600"
-                                  : "text-red-600"
-                                : "text-foreground"
-                          }`}
-                        >
-                          {formatValue(item.value, item.type, item.unit)}
-                        </span>
+                  <Progress value={data.performance_score || 0} className="h-2" />
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">Page Size:</span>
+                      <span className="ml-2 font-medium">{data.performance?.pageSize || 0}KB</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Load Time:</span>
+                      <span className="ml-2 font-medium">{data.performance?.loadTime || "N/A"}ms</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">HTTP Requests:</span>
+                      <span className="ml-2 font-medium">{data.performance?.httpRequests || 0}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Compression:</span>
+                      <span className="ml-2 font-medium">
+                        {data.performance?.compressionEnabled ? "✅ Enabled" : "❌ Disabled"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
+
+        {/* SEO & Content Analysis */}
+        <Card>
+          <Collapsible open={expandedSections.seo} onOpenChange={() => toggleSection("seo")}>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Search className="h-5 w-5 text-blue-500" />
+                    SEO & Content
+                  </div>
+                  {expandedSections.seo ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </CardTitle>
+                <CardDescription>Search optimization and content structure analysis</CardDescription>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-0">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">SEO Score</span>
+                    <div className="flex items-center gap-2">
+                      {getScoreIcon(data.seoAnalysis?.seoScore || 0)}
+                      <span className={`font-bold ${getScoreColor(data.seoAnalysis?.seoScore || 0)}`}>
+                        {data.seoAnalysis?.seoScore || 0}/100
+                      </span>
+                    </div>
+                  </div>
+                  <Progress value={data.seoAnalysis?.seoScore || 0} className="h-2" />
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">Word Count:</span>
+                      <span className="ml-2 font-medium">{data.contentAnalysis?.wordCount || 0}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Images:</span>
+                      <span className="ml-2 font-medium">{data.contentAnalysis?.imagesCount || 0}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">H1 Tags:</span>
+                      <span className="ml-2 font-medium">{data.seoAnalysis?.h1Count || 0}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Internal Links:</span>
+                      <span className="ml-2 font-medium">{data.links?.internalLinks || 0}</span>
+                    </div>
+                  </div>
+
+                  {data.keywords && data.keywords.length > 0 && (
+                    <div>
+                      <span className="text-sm font-medium text-gray-700">Keywords:</span>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {data.keywords.slice(0, 6).map((keyword, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {keyword}
+                          </Badge>
+                        ))}
                       </div>
-                    ))}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
+
+        {/* Security Analysis */}
+        <Card>
+          <Collapsible open={expandedSections.security} onOpenChange={() => toggleSection("security")}>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-green-500" />
+                    Security & Privacy
                   </div>
-                </CardContent>
-              </CollapsibleContent>
-            </Collapsible>
-          </Card>
-        ))}
+                  {expandedSections.security ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </CardTitle>
+                <CardDescription>Security headers, SSL, and privacy protection</CardDescription>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-0">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Security Score</span>
+                    <div className="flex items-center gap-2">
+                      {getScoreIcon(data.security?.securityScore || 0)}
+                      <span className={`font-bold ${getScoreColor(data.security?.securityScore || 0)}`}>
+                        {data.security?.securityScore || 0}/100
+                      </span>
+                    </div>
+                  </div>
+                  <Progress value={data.security?.securityScore || 0} className="h-2" />
+
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500">HTTPS:</span>
+                      <span
+                        className={`font-medium ${data.security?.httpsEnabled ? "text-green-600" : "text-red-600"}`}
+                      >
+                        {data.security?.httpsEnabled ? "✅ Enabled" : "❌ Disabled"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500">Mixed Content:</span>
+                      <span
+                        className={`font-medium ${!data.security?.mixedContent ? "text-green-600" : "text-red-600"}`}
+                      >
+                        {!data.security?.mixedContent ? "✅ Clean" : "❌ Detected"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500">Security Headers:</span>
+                      <span className="font-medium">
+                        {data.security?.httpHeaders ? Object.keys(data.security.httpHeaders).length : 0} found
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
+
+        {/* Hosting & Infrastructure */}
+        <Card>
+          <Collapsible open={expandedSections.hosting} onOpenChange={() => toggleSection("hosting")}>
+            <CollapsibleTrigger asChild>
+              <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Server className="h-5 w-5 text-purple-500" />
+                    Hosting & Infrastructure
+                  </div>
+                  {expandedSections.hosting ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </CardTitle>
+                <CardDescription>Server details, hosting provider, and infrastructure</CardDescription>
+              </CardHeader>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <CardContent className="pt-0">
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Provider:</span>
+                    <span className="font-medium">{data.hosting?.provider || "Unknown"}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">IP Address:</span>
+                    <span className="font-medium font-mono text-xs">{data.hosting?.ipAddress || "Unknown"}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Response Time:</span>
+                    <span className="font-medium">{data.hosting?.responseTime || "N/A"}ms</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">Location:</span>
+                    <span className="font-medium">{data.hosting?.location || "Unknown"}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
       </div>
 
-      {/* Footer */}
-      <div className="text-center py-4">
-        <p className="text-xs text-muted-foreground">
-          Analysis powered by WSfynder • {results.analysisDate && format(parseISO(results.analysisDate), "PPP p")}
-        </p>
+      {/* Technologies & Improvements */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Technologies */}
+        {data.technologies && data.technologies.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Code className="h-5 w-5 text-indigo-500" />
+                Technologies Detected
+              </CardTitle>
+              <CardDescription>Frameworks, libraries, and tools powering this website</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {data.technologies.slice(0, 8).map((tech, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div>
+                      <span className="font-medium">{tech.name}</span>
+                      {tech.version && <span className="text-gray-500 text-sm ml-2">v{tech.version}</span>}
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      {tech.category}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Improvements */}
+        {data.improvements && data.improvements.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5 text-amber-500" />
+                Recommended Improvements
+              </CardTitle>
+              <CardDescription>Actionable suggestions to enhance website performance</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {data.improvements.slice(0, 6).map((improvement, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-amber-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span className="text-sm text-gray-700 leading-relaxed">{improvement}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )
