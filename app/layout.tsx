@@ -36,22 +36,24 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://wscrapierr.vercel.app"), // Replace with your actual domain
+  metadataBase: new URL("https://wsfynder.vercel.app"), // Replace with your actual domain
   title: {
-    default: "WScrapierr - Intelligent Web Scraping & Content Platform",
-    template: "%s | WScrapierr",
+    default: "WSfynder - Intelligent Website Analysis & Content Platform",
+    template: "%s | WSfynder",
   },
   description:
-    "WScrapierr offers intelligent web scraping, data analysis, and AI-powered content generation with a Google-inspired, magic-like interface.",
+    "WSfynder offers intelligent website analysis, comprehensive data insights, and AI-powered content generation with professional-grade accuracy.",
   keywords: [
-    "web scraping",
+    "website analysis",
+    "website finder",
     "data extraction",
     "content generation",
     "AI platform",
-    "WScrapierr",
-    "automation",
+    "WSfynder",
+    "website insights",
     "data analysis",
     "hosting information",
+    "website intelligence",
   ],
   authors: [{ name: "WScrapierr Team", url: "https://wscrapierr.vercel.app" }],
   creator: "WScrapierr",
@@ -59,23 +61,25 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://wscrapierr.vercel.app",
-    siteName: "WScrapierr",
-    title: "WScrapierr - Intelligent Web Scraping & Content Platform",
-    description: "Experience the magic of intelligent web scraping and AI content generation with WScrapierr.",
+    url: "https://wsfynder.vercel.app",
+    siteName: "WSfynder",
+    title: "WSfynder - Intelligent Website Analysis & Content Platform",
+    description:
+      "Discover comprehensive website insights and generate professional content with WSfynder's advanced AI-powered analysis platform.",
     images: [
       {
-        url: "/og-image.png", // Will need to create this
+        url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "WScrapierr Platform Interface",
+        alt: "WSfynder Platform Interface",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "WScrapierr - Intelligent Web Scraping & Content Platform",
-    description: "Unlock the power of the web with WScrapierr's magical scraping and content tools.",
+    title: "WSfynder - Intelligent Website Analysis & Content Platform",
+    description:
+      "Unlock comprehensive website insights with WSfynder's intelligent analysis and content generation tools.",
     images: ["/og-image.png"], // Will need to create this
     // creator: "@wscrapierr_handle", // Replace with actual Twitter handle
   },
@@ -105,7 +109,7 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange={false}
-          storageKey="wscrapierr-theme"
+          storageKey="wsfynder-theme"
         >
           <AuthProvider>
             <ErrorBoundary fallback={<p>Something went wrong. Please try refreshing.</p>}>

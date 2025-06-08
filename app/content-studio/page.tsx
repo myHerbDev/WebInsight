@@ -65,12 +65,12 @@ export default function ContentStudioPage() {
       <header className="mb-10 text-center">
         <h1 className="text-4xl md:text-5xl font-bold mb-4">
           <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            WScrapierr Content Studio
+            WSfynder Content Studio
           </span>
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          Transform website data into compelling content. Analyze any URL and let our AI craft various content types for
-          you.
+          Transform website insights into compelling content. Analyze any URL and let our AI craft various content types
+          for you.
         </p>
       </header>
 

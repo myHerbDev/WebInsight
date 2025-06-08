@@ -1,6 +1,6 @@
-# WScrapierr - Intelligent Web Scraping & Content Platform
+# WSfynder - Intelligent Website Analysis & Content Platform
 
-WScrapierr is a modern web application designed for intelligent web scraping, data analysis, and AI-powered content generation. It features a Google-inspired, "Magic-like" user interface with a focus on clean design and intuitive user experience.
+WSfynder is a modern web application designed for intelligent website discovery, comprehensive analysis, and AI-powered content generation. It features a professional, intuitive interface focused on delivering actionable website insights.
 
 *Automatically synced with your [v0.dev](https://v0.dev) deployments*
 
@@ -28,20 +28,19 @@ Any changes you make to your deployed app will be automatically pushed to this r
 
 ## ✨ Features
 
-*   **Intelligent Web Scraping:** (Future Feature) Extract data from websites with precision.
+*   **Intelligent Website Discovery:** Find and analyze any website with comprehensive insights.
 *   **AI Content Generation:** Generate diverse content types including:
-    *   Scholarship and academic research summaries
-    *   Document generation
-    *   Article creation
-    *   Analytical test reports
-    *   Case study development
-*   **Hosting Information Management:** Input, manage, and review information about various hosting providers.
-*   **User Feedback System:** Provide and view feedback on hosting providers.
+  * Professional research reports
+  * Technical documentation  
+  * Marketing content
+  * Academic papers
+  * Case studies
+*   **Comprehensive Analysis:** Deep insights into performance, security, SEO, and technology stack.
 *   **Modern UI/UX:**
-    *   Google-inspired, "Magic-like" interface.
-    *   Particle animations for enhanced visual appeal.
-    *   Clean, minimalist design.
-*   **Comprehensive Navigation:** Easy access to all application features.
+  * Professional, intuitive interface
+  * Advanced analytics visualization
+  * Clean, responsive design
+*   **Advanced Features:** Professional-grade website intelligence and content creation.
 
 ## Deployment
 
@@ -71,8 +70,8 @@ GROQ_API_KEY="your_groq_api_key"
 
 1.  Clone the repository:
     \`\`\`bash
-    git clone https://github.com/your-username/wscrapierr.git # Replace with your repo URL
-    cd wscrapierr
+    git clone https://github.com/your-username/wsfynder.git # Replace with your repo URL
+    cd wsfynder
     \`\`\`
 2.  Install dependencies:
     \`\`\`bash

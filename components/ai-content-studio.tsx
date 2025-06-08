@@ -317,7 +317,7 @@ export function AiContentStudio({ analysisId, tone: defaultTone, onSignUpClick }
     // For now, return a placeholder that indicates enhanced content
     return `# Enhanced ${type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())} Content
 
-## Generated with Enhanced WSfynder AI
+## Generated with Enhanced AI
 
 This is enhanced, comprehensive content generated with ${tone} tone and ${intention} intention.
 

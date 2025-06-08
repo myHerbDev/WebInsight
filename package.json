@@ -1,6 +1,6 @@
 {
-  "name": "wscrapierr",
-  "version": "1.0.0",
+  "name": "wsfynder",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -45,7 +45,7 @@
     "@radix-ui/react-tooltip": "latest",
     "@tailwindcss/typography": "latest",
     "@vercel/postgres": "latest",
-    "ai": "latest",
+    "ai": "3.4.0",
     "autoprefixer": "^10.4.20",
     "cheerio": "latest",
     "class-variance-authority": "^0.7.1",
@@ -64,6 +64,7 @@
     "mongodb-client-encryption": "latest",
     "next": "15.2.4",
     "next-themes": "latest",
+    "openai": "latest",
     "react": "^19",
     "react-day-picker": "latest",
     "react-dom": "^19",
@@ -76,6 +77,7 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "latest",
+    "ws": "latest",
     "zod": "^3.24.1"
   },
   "devDependencies": {

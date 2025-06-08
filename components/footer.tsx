@@ -45,7 +45,7 @@ export function Footer() {
   ]
 
   const socialLinks = [
-    { label: "GitHub Project", href: "https://github.com/myHerbDev/wscrapierr", icon: Github },
+    { label: "GitHub Project", href: "https://github.com/myHerbDev/wsfynder", icon: Github },
     { label: "Sponsor myHerbDev", href: "https://github.com/sponsors/myHerbDev", icon: Heart },
     // { label: "Twitter", href: "https://twitter.com/wscrapierr", icon: Twitter },
     // { label: "LinkedIn", href: "https://linkedin.com/company/wscrapierr", icon: Linkedin },
@@ -60,7 +60,7 @@ export function Footer() {
           <div className="col-span-2 lg:col-span-2">
             <Logo size="md" className="mb-4" />
             <p className="text-muted-foreground text-sm max-w-xs">
-              Intelligent web scraping and content generation, magically simplified.
+              Intelligent website discovery and analysis, powered by advanced AI technology.
             </p>
           </div>
           {footerSections.map((section) => (
@@ -84,7 +84,7 @@ export function Footer() {
 
         <div className="border-t pt-8 flex flex-col md:flex-row justify-between items-center">
           <div className="text-sm text-muted-foreground text-center md:text-left">
-            <p>&copy; {new Date().getFullYear()} WScrapierr. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} WSfynder. All rights reserved.</p>
             <p>
               Made by{" "}
               <Link

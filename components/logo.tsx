@@ -58,7 +58,7 @@ export function Logo({ size = "md", className = "", showText = true }: LogoProps
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1, duration: 0.3 }}
         >
-          WScrapierr
+          WSfynder
         </motion.span>
       )}
     </Link>

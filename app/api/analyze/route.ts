@@ -10,7 +10,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "URL is required" }, { status: 400 })
     }
 
-    console.log(`Analyzing website: ${url}`)
+    console.log(`WSfynder analyzing website: ${url}`)
 
     const analysisResult = await analyzeWebsite(url)
 
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       if (result.length > 0) {
         savedAnalysisId = result[0].id
         analysisResult._id = savedAnalysisId
-        console.log(`Analysis saved with ID: ${savedAnalysisId}`)
+        console.log(`WSfynder analysis saved with ID: ${savedAnalysisId}`)
       }
     } catch (dbError) {
       console.error("Error saving analysis to database:", dbError)

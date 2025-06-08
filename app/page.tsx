@@ -59,28 +59,28 @@ export default function HomePage() {
     }
   }
 
-  const wscrapierrFeatures = [
+  const wsfinderFeatures = [
     {
-      title: "Lightning-Fast Analysis",
-      description: "Get comprehensive website insights in seconds",
+      title: "Intelligent Discovery",
+      description: "Find comprehensive website insights instantly",
       icon: Zap,
       color: "from-yellow-400 to-orange-500",
     },
     {
-      title: "AI-Powered Intelligence",
-      description: "Advanced AI algorithms for deep website understanding",
+      title: "AI-Powered Analysis",
+      description: "Advanced algorithms for deep website understanding",
       icon: Brain,
       color: "from-purple-400 to-pink-500",
     },
     {
-      title: "Global Reach",
-      description: "Analyze websites from anywhere in the world",
+      title: "Global Website Finder",
+      description: "Discover and analyze websites from anywhere",
       icon: Globe,
       color: "from-blue-400 to-cyan-500",
     },
     {
-      title: "Smart Content Generation",
-      description: "Transform analysis into professional documents",
+      title: "Smart Content Creation",
+      description: "Transform insights into professional documents",
       icon: FileText,
       color: "from-green-400 to-emerald-500",
     },
@@ -135,11 +135,12 @@ export default function HomePage() {
       >
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
           <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            WScrapierr
+            WSfynder
           </span>
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Unlock the web's potential. Magically scrape data and generate content with AI-powered intelligence.
+          Find and analyze any website with intelligent insights. Generate professional content with AI-powered
+          precision.
         </p>
       </motion.div>
 
@@ -151,7 +152,7 @@ export default function HomePage() {
         className="mb-12"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {wscrapierrFeatures.map((feature, i) => (
+          {wsfinderFeatures.map((feature, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, scale: 0.9 }}
@@ -260,7 +261,10 @@ export default function HomePage() {
       <Separator className="my-16" />
 
       <div className="text-center text-muted-foreground text-sm">
-        <p>WScrapierr helps you analyze websites, understand their structure, and generate insightful content.</p>
+        <p>
+          WSfynder helps you discover, analyze, and understand websites with comprehensive insights and AI-powered
+          content generation.
+        </p>
         <p>Powered by cutting-edge AI and web technologies.</p>
       </div>
     </div>
