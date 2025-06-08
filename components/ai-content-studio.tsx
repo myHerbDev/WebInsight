@@ -1,342 +1,390 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { toast } from "sonner"
-import { LoadingAnimation } from "./loading-animation"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Sparkles, FileText, Copy, Download, Loader2, Lock } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
 
-// Define types for content generation
-interface ContentGenerationProps {
-  websiteUrl?: string
+interface AiContentStudioProps {
+  analysisId: string
+  websiteUrl: string
   websiteTitle?: string
+  onSignUpClick: () => void
 }
 
-export function AIContentStudio({ websiteUrl = "", websiteTitle = "" }: ContentGenerationProps) {
+export function AiContentStudio({ analysisId, websiteUrl, websiteTitle, onSignUpClick }: AiContentStudioProps) {
+  const [activeTab, setActiveTab] = useState("blog-post")
   const [prompt, setPrompt] = useState("")
-  const [generatedContent, setGeneratedContent] = useState("")
   const [isGenerating, setIsGenerating] = useState(false)
+  const [generatedContent, setGeneratedContent] = useState<string | null>(null)
   const [contentType, setContentType] = useState("blog-post")
-  const [contentHistory, setContentHistory] = useState<string[]>([])
-  const [structureTemplate, setStructureTemplate] = useState("")
-  const [activeTab, setActiveTab] = useState("generate")
-  const [websiteData, setWebsiteData] = useState({
-    url: websiteUrl || "",
-    title: websiteTitle || "Your Website",
-  })
+  const [contentTone, setContentTone] = useState("professional")
+  const [contentLength, setContentLength] = useState("medium")
 
-  // Update website data when props change
-  useEffect(() => {
-    if (websiteUrl || websiteTitle) {
-      setWebsiteData({
-        url: websiteUrl || websiteData.url,
-        title: websiteTitle || websiteData.title,
-      })
-
-      // Set default prompt based on website data
-      if (!prompt && (websiteUrl || websiteTitle)) {
-        const siteName = websiteTitle || websiteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "")
-        setPrompt(`Write a comprehensive article about ${siteName} focusing on its key features and benefits.`)
-      }
-    }
-  }, [websiteUrl, websiteTitle])
-
-  const contentTypeOptions = {
-    "blog-post": "Blog Post",
-    "product-description": "Product Description",
-    "landing-page": "Landing Page Copy",
-    "social-media": "Social Media Post",
-    "email-newsletter": "Email Newsletter",
-    "press-release": "Press Release",
-    "seo-content": "SEO Content",
-    "technical-documentation": "Technical Documentation",
-  }
-
-  const structureTemplates = {
-    "blog-post": `# [TITLE]\n\n## Introduction\n\n## Main Point 1\n\n## Main Point 2\n\n## Main Point 3\n\n## Conclusion`,
-    "product-description": `# [PRODUCT NAME]\n\n## Overview\n\n## Key Features\n\n## Benefits\n\n## Technical Specifications\n\n## Pricing\n\n## Call to Action`,
-    "landing-page": `# [HEADLINE]\n\n## Hero Section\n\n## Features\n\n## Benefits\n\n## Testimonials\n\n## Pricing\n\n## FAQ\n\n## Call to Action`,
-    "social-media": `# [HEADLINE]\n\n## Hook\n\n## Main Message\n\n## Call to Action\n\n## Hashtags`,
-    "email-newsletter": `# [SUBJECT LINE]\n\n## Greeting\n\n## Main Content\n\n## Promotional Section\n\n## Call to Action\n\n## Footer`,
-    "press-release": `# [HEADLINE]\n\n## Dateline\n\n## Introduction\n\n## Body\n\n## Company Information\n\n## Contact Information`,
-    "seo-content": `# [SEO TITLE]\n\n## Introduction with Keywords\n\n## Main Section 1\n\n## Main Section 2\n\n## Main Section 3\n\n## FAQ Section\n\n## Conclusion with Call to Action`,
-    "technical-documentation": `# [DOCUMENT TITLE]\n\n## Overview\n\n## Prerequisites\n\n## Installation\n\n## Configuration\n\n## Usage Examples\n\n## API Reference\n\n## Troubleshooting\n\n## Conclusion`,
-  }
-
-  const handleContentTypeChange = (value: string) => {
-    setContentType(value)
-    setStructureTemplate(structureTemplates[value as keyof typeof structureTemplates] || "")
-  }
-
-  const generateContent = async () => {
-    if (!prompt.trim()) {
-      toast.error("Please enter a prompt")
-      return
-    }
-
+  const handleGenerate = async () => {
     setIsGenerating(true)
+    setGeneratedContent(null)
 
     try {
-      // Prepare the request with website data
-      const requestData = {
-        prompt,
-        contentType,
-        structureTemplate:
-          structureTemplate || structureTemplates[contentType as keyof typeof structureTemplates] || "",
-        websiteUrl: websiteData.url,
-        websiteTitle: websiteData.title,
-      }
+      // Simulate API call with timeout
+      setTimeout(() => {
+        const hostname = new URL(websiteUrl).hostname
+        const title = websiteTitle || hostname
 
-      // Log the request for debugging
-      console.log("Generating content with:", requestData)
+        let content = ""
+        if (contentType === "blog-post") {
+          content = `# ${prompt || `The Ultimate Guide to ${title}`}
 
-      const response = await fetch("/api/generate-content", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
-      })
+## Introduction
 
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status}`)
-      }
+Welcome to our comprehensive guide about ${title}. In this article, we'll explore the key aspects that make this website stand out and how it can benefit your business or personal needs.
 
-      const data = await response.json()
+## What Makes ${hostname} Special
 
-      if (data.content) {
-        setGeneratedContent(data.content)
-        setContentHistory((prev) => [data.content, ...prev].slice(0, 10))
-        toast.success("Content generated successfully!")
-        setActiveTab("preview")
-      } else {
-        // Use fallback content if API fails
-        const fallbackContent = generateFallbackContent(requestData)
-        setGeneratedContent(fallbackContent)
-        setContentHistory((prev) => [fallbackContent, ...prev].slice(0, 10))
-        toast.success("Content generated with local templates!")
-        setActiveTab("preview")
-      }
+${hostname} offers a unique approach to [industry/niche] with its innovative features and user-friendly interface. The platform stands out for its:
+
+- Intuitive design and navigation
+- Comprehensive feature set
+- Excellent performance metrics
+- Strong security implementation
+- Mobile-friendly experience
+
+## Key Benefits
+
+When using ${hostname}, users can expect:
+
+1. **Streamlined Workflows**: The platform simplifies complex processes
+2. **Enhanced Productivity**: Tools designed to save time and effort
+3. **Data-Driven Insights**: Comprehensive analytics and reporting
+4. **Seamless Integration**: Works well with other popular tools
+5. **Responsive Support**: Quick assistance when needed
+
+## How to Get Started
+
+Getting started with ${hostname} is straightforward:
+
+1. Create an account
+2. Set up your profile
+3. Explore the dashboard
+4. Configure your preferences
+5. Start using the core features
+
+## Conclusion
+
+${hostname} represents a powerful solution for [target audience] looking to improve their [relevant processes]. With its combination of user-friendly design and robust functionality, it's positioned as a leading option in the market.
+
+*This content was generated by myHerb Insight based on website analysis.*`
+        } else if (contentType === "product-description") {
+          content = `# ${prompt || `Introducing ${title}`}
+
+## Product Overview
+
+${title} offers a comprehensive solution designed to meet the needs of modern [users/businesses]. This powerful platform combines ease of use with advanced functionality.
+
+## Key Features
+
+- **Intuitive Interface**: Navigate with ease through a thoughtfully designed user experience
+- **Powerful Analytics**: Gain valuable insights through comprehensive data visualization
+- **Seamless Integration**: Works perfectly with your existing tools and workflows
+- **Mobile Optimization**: Access all features on any device, anywhere
+- **Enterprise-Grade Security**: Rest easy knowing your data is protected
+
+## Why Choose ${hostname}
+
+${hostname} stands out from competitors by offering:
+
+1. Superior performance metrics
+2. Enhanced user experience
+3. Comprehensive feature set
+4. Excellent support options
+5. Competitive pricing structure
+
+## Perfect For
+
+This solution is ideal for:
+- Small to medium businesses
+- Enterprise organizations
+- Professional service providers
+- E-commerce operations
+- Educational institutions
+
+## Get Started Today
+
+Experience the difference that ${hostname} can make for your [business/personal needs]. Visit ${websiteUrl} to learn more or start your free trial.
+
+*This product description was generated by myHerb Insight based on website analysis.*`
+        } else {
+          content = `# ${prompt || `About ${title}`}
+
+## Our Mission
+
+At ${hostname}, we're dedicated to providing exceptional [products/services] that help our customers achieve their goals. Our mission is to deliver outstanding value through innovation, quality, and customer-focused solutions.
+
+## Who We Are
+
+Founded with a passion for excellence, ${hostname} has grown to become a trusted name in the [industry/niche]. Our team of dedicated professionals brings together decades of experience to create solutions that truly make a difference.
+
+## Our Approach
+
+We believe in:
+
+- **Innovation**: Constantly exploring new ideas and technologies
+- **Quality**: Maintaining the highest standards in everything we do
+- **Integrity**: Building relationships based on trust and transparency
+- **Customer Focus**: Putting our users' needs at the center of our decisions
+- **Continuous Improvement**: Always seeking ways to enhance our offerings
+
+## Our Services
+
+${hostname} specializes in providing:
+
+1. Comprehensive [product/service] solutions
+2. Expert consultation and support
+3. Customized implementations
+4. Ongoing maintenance and updates
+5. Training and educational resources
+
+## Connect With Us
+
+We'd love to hear from you! Visit ${websiteUrl} to learn more about how we can help you achieve your goals.
+
+*This about page content was generated by myHerb Insight based on website analysis.*`
+        }
+
+        setGeneratedContent(content)
+        setIsGenerating(false)
+
+        toast({
+          title: "Content Generated!",
+          description: "Your AI-generated content is ready.",
+        })
+      }, 3000)
     } catch (error) {
-      console.error("Error generating content:", error)
-
-      // Generate fallback content
-      const fallbackContent = generateFallbackContent({
-        prompt,
-        contentType,
-        structureTemplate:
-          structureTemplate || structureTemplates[contentType as keyof typeof structureTemplates] || "",
-        websiteUrl: websiteData.url,
-        websiteTitle: websiteData.title,
-      })
-
-      setGeneratedContent(fallbackContent)
-      setContentHistory((prev) => [fallbackContent, ...prev].slice(0, 10))
-      toast.success("Content generated with local templates!")
-      setActiveTab("preview")
-    } finally {
+      console.error("Generation error:", error)
       setIsGenerating(false)
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate content. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
-  // Generate fallback content when API fails
-  const generateFallbackContent = (requestData: any) => {
-    const { prompt, contentType, structureTemplate, websiteUrl, websiteTitle } = requestData
+  const copyContent = async () => {
+    if (!generatedContent) return
 
-    // Extract domain name for better fallback content
-    const domainName = websiteUrl
-      ? new URL(websiteUrl.startsWith("http") ? websiteUrl : `https://${websiteUrl}`).hostname.replace("www.", "")
-      : "example.com"
-    const siteName = websiteTitle || domainName
-
-    // Generate a title based on the prompt and website
-    const title = prompt.includes("?")
-      ? prompt.split("?")[0] + "?"
-      : `${contentTypeOptions[contentType as keyof typeof contentTypeOptions]} About ${siteName}`
-
-    // Generate paragraphs based on content type
-    let content = ""
-
-    switch (contentType) {
-      case "blog-post":
-        content = `# ${title.replace(/^write a |create a |generate a /i, "")}\n\n`
-        content += `## Introduction\n\n${siteName} offers a comprehensive solution for businesses looking to enhance their online presence. In this article, we'll explore the key features and benefits that make ${siteName} stand out in the market.\n\n`
-        content += `## Key Features\n\n${siteName} provides a robust set of features designed to streamline your workflow and improve productivity. From intuitive user interfaces to powerful backend capabilities, every aspect has been carefully crafted to deliver an exceptional experience.\n\n`
-        content += `## Benefits for Businesses\n\nImplementing ${siteName} can lead to significant improvements in efficiency and cost savings. Many organizations have reported increased customer satisfaction and higher conversion rates after adopting this solution.\n\n`
-        content += `## Real-World Applications\n\nAcross various industries, ${siteName} has proven its value through practical applications. Case studies demonstrate how businesses have leveraged its capabilities to overcome challenges and achieve their goals.\n\n`
-        content += `## Future Developments\n\nThe team behind ${siteName} continues to innovate, with exciting new features on the roadmap. Upcoming releases promise to further enhance the platform's capabilities and address evolving market needs.\n\n`
-        content += `## Conclusion\n\n${siteName} represents a significant advancement in the field, offering a powerful yet accessible solution for businesses of all sizes. By adopting this platform, organizations can position themselves for success in an increasingly competitive landscape.`
-        break
-
-      case "product-description":
-        content = `# ${siteName} - Professional Solution for Modern Businesses\n\n`
-        content += `## Overview\n\n${siteName} is a cutting-edge solution designed to address the complex challenges faced by today's businesses. With its intuitive interface and powerful features, it streamlines operations and enhances productivity across your organization.\n\n`
-        content += `## Key Features\n\n- Intuitive dashboard with real-time analytics\n- Seamless integration with existing systems\n- Advanced security protocols to protect sensitive data\n- Customizable workflows to match your business processes\n- Comprehensive reporting capabilities\n- Mobile accessibility for on-the-go management\n\n`
-        content += `## Benefits\n\n- Reduce operational costs by up to 30%\n- Improve team productivity and collaboration\n- Enhance customer satisfaction through faster response times\n- Gain valuable insights from comprehensive analytics\n- Scale effortlessly as your business grows\n\n`
-        content += `## Technical Specifications\n\n- Cloud-based architecture with 99.9% uptime guarantee\n- Enterprise-grade security with end-to-end encryption\n- API access for custom integrations\n- Regular updates and feature enhancements\n- Dedicated support team available 24/7\n\n`
-        content += `## Pricing\n\nFlexible pricing options are available to suit businesses of all sizes, from startups to enterprise organizations. Contact our sales team for a customized quote tailored to your specific needs.\n\n`
-        content += `## Call to Action\n\nDiscover how ${siteName} can transform your business operations. Schedule a demo today and see the difference for yourself.`
-        break
-
-      case "landing-page":
-        content = `# Transform Your Business with ${siteName}\n\n`
-        content += `## Hero Section\n\nRevolutionize your approach with ${siteName} - the all-in-one solution for modern businesses seeking growth and efficiency.\n\n`
-        content += `## Features\n\n### Seamless Integration\nConnect with your existing tools and systems without disruption.\n\n### Powerful Analytics\nGain actionable insights with our comprehensive reporting dashboard.\n\n### Enterprise Security\nProtect your valuable data with industry-leading security protocols.\n\n### Scalable Architecture\nGrow confidently knowing our platform evolves with your business needs.\n\n`
-        content += `## Benefits\n\n- Increase operational efficiency by up to 40%\n- Reduce costs and maximize ROI\n- Improve team collaboration and productivity\n- Enhance customer satisfaction and loyalty\n- Make data-driven decisions with confidence\n\n`
-        content += `## Testimonials\n\n"${siteName} has completely transformed how we operate. We've seen remarkable improvements in efficiency and customer satisfaction." - Jane Smith, CEO\n\n"The implementation was smooth, and the results were immediate. Our team adapted quickly and now can't imagine working without it." - John Davis, Operations Director\n\n`
-        content += `## Pricing\n\n### Starter: $49/month\nPerfect for small businesses just getting started\n\n### Professional: $99/month\nIdeal for growing companies with expanding needs\n\n### Enterprise: Custom pricing\nTailored solutions for large organizations with complex requirements\n\n`
-        content += `## FAQ\n\n**Q: How long does implementation take?**\nA: Most customers are up and running within 48 hours.\n\n**Q: Is training provided?**\nA: Yes, comprehensive training is included with all plans.\n\n**Q: Can I integrate with my existing tools?**\nA: We offer seamless integration with most popular business applications.\n\n`
-        content += `## Call to Action\n\nReady to transform your business? Start your free 14-day trial today - no credit card required.`
-        break
-
-      default:
-        // Generic content for other types
-        content = structureTemplate.replace("[TITLE]", title.replace(/^write a |create a |generate a /i, ""))
-        content += `\n\nThis comprehensive content about ${siteName} covers all the essential aspects you need to know. The platform offers innovative solutions designed to address modern challenges while providing exceptional value to users.`
-        content += `\n\n${siteName} stands out in the market due to its intuitive design, powerful features, and commitment to customer success. Whether you're a small business or a large enterprise, you'll find the tools and support needed to achieve your goals.`
-        content += `\n\nFor more information, visit ${websiteUrl || domainName} and discover how this solution can transform your approach.`
+    try {
+      await navigator.clipboard.writeText(generatedContent)
+      toast({
+        title: "Copied!",
+        description: "Content copied to clipboard.",
+      })
+    } catch (error) {
+      toast({
+        title: "Copy Failed",
+        description: "Unable to copy to clipboard.",
+        variant: "destructive",
+      })
     }
+  }
 
-    return content
+  const downloadContent = () => {
+    if (!generatedContent) return
+
+    const element = document.createElement("a")
+    const file = new Blob([generatedContent], { type: "text/markdown" })
+    element.href = URL.createObjectURL(file)
+    element.download = `${contentType}-${new Date().toISOString().split("T")[0]}.md`
+    document.body.appendChild(element)
+    element.click()
+    document.body.removeChild(element)
+
+    toast({
+      title: "Downloaded!",
+      description: "Content downloaded as Markdown file.",
+    })
   }
 
   return (
-    <Card className="w-full max-w-6xl mx-auto">
+    <Card className="border-0 shadow-lg bg-white">
       <CardHeader>
-        <CardTitle className="text-2xl">AI Content Studio</CardTitle>
-        <CardDescription>
-          Generate high-quality content for your website using AI
-          {websiteData.url && ` - Currently analyzing: ${websiteData.url}`}
-        </CardDescription>
+        <CardTitle className="flex items-center gap-3 text-2xl">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-purple-500 to-green-500 flex items-center justify-center">
+            <Sparkles className="h-5 w-5 text-white" />
+          </div>
+          <span className="bg-gradient-to-r from-purple-600 to-green-600 bg-clip-text text-transparent">
+            AI Content Studio
+          </span>
+        </CardTitle>
+        <CardDescription>Generate professional content based on your website analysis</CardDescription>
       </CardHeader>
-      <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-3 mb-4">
-            <TabsTrigger value="generate">Generate</TabsTrigger>
-            <TabsTrigger value="preview">Preview</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
+      <CardContent className="space-y-6">
+        <Tabs defaultValue="blog-post" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid grid-cols-3 mb-6">
+            <TabsTrigger
+              value="blog-post"
+              className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700"
+            >
+              Blog Post
+            </TabsTrigger>
+            <TabsTrigger
+              value="product-description"
+              className="data-[state=active]:bg-green-100 data-[state=active]:text-green-700"
+            >
+              Product Description
+            </TabsTrigger>
+            <TabsTrigger
+              value="about-page"
+              className="data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700"
+            >
+              About Page
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="generate" className="space-y-4">
-            <div className="grid gap-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {["blog-post", "product-description", "about-page"].map((tab) => (
+            <TabsContent key={tab} value={tab} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <Label htmlFor="content-type">Content Type</Label>
-                  <Select value={contentType} onValueChange={handleContentTypeChange}>
-                    <SelectTrigger id="content-type">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Content Type</label>
+                  <Select value={contentType} onValueChange={setContentType}>
+                    <SelectTrigger>
                       <SelectValue placeholder="Select content type" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(contentTypeOptions).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="blog-post">Blog Post</SelectItem>
+                      <SelectItem value="product-description">Product Description</SelectItem>
+                      <SelectItem value="about-page">About Page</SelectItem>
+                      <SelectItem value="landing-page" disabled>
+                        Landing Page (Premium)
+                      </SelectItem>
+                      <SelectItem value="case-study" disabled>
+                        Case Study (Premium)
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <Label htmlFor="website-url">Website URL (Optional)</Label>
-                  <Input
-                    id="website-url"
-                    value={websiteData.url}
-                    onChange={(e) => setWebsiteData({ ...websiteData, url: e.target.value })}
-                    placeholder="https://example.com"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Content Tone</label>
+                  <Select value={contentTone} onValueChange={setContentTone}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select tone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="professional">Professional</SelectItem>
+                      <SelectItem value="conversational">Conversational</SelectItem>
+                      <SelectItem value="enthusiastic">Enthusiastic</SelectItem>
+                      <SelectItem value="technical">Technical</SelectItem>
+                      <SelectItem value="persuasive">Persuasive</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="prompt">Prompt</Label>
-                <Textarea
-                  id="prompt"
+                <label className="block text-sm font-medium text-gray-700 mb-2">Custom Prompt (Optional)</label>
+                <Input
+                  placeholder={`Enter a title or prompt for your ${
+                    tab === "blog-post"
+                      ? "blog post"
+                      : tab === "product-description"
+                        ? "product description"
+                        : "about page"
+                  }`}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Write a blog post about the benefits of using our product..."
-                  className="min-h-[100px]"
                 />
               </div>
 
               <div>
-                <Label htmlFor="structure-template">Structure Template (Optional)</Label>
-                <Textarea
-                  id="structure-template"
-                  value={structureTemplate}
-                  onChange={(e) => setStructureTemplate(e.target.value)}
-                  placeholder="# [TITLE]&#10;&#10;## Introduction&#10;&#10;## Main Points&#10;&#10;## Conclusion"
-                  className="min-h-[150px] font-mono text-sm"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Content Length</label>
+                <Select value={contentLength} onValueChange={setContentLength}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select length" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="short">Short (~300 words)</SelectItem>
+                    <SelectItem value="medium">Medium (~600 words)</SelectItem>
+                    <SelectItem value="long">Long (~1000 words)</SelectItem>
+                    <SelectItem value="comprehensive" disabled>
+                      Comprehensive (~2000 words) (Premium)
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-          </TabsContent>
 
-          <TabsContent value="preview">
-            {generatedContent ? (
-              <div className="prose max-w-none dark:prose-invert">
-                <div className="bg-muted p-4 rounded-md overflow-auto max-h-[600px]">
-                  <pre className="whitespace-pre-wrap">{generatedContent}</pre>
+              <div className="flex justify-center">
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating}
+                  size="lg"
+                  className="bg-gradient-to-r from-purple-500 to-green-500 hover:from-purple-600 hover:to-green-600 text-white shadow-md px-8"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-5 w-5 mr-2" />
+                      Generate Content
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              {generatedContent && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Generated Content</h3>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={copyContent}>
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copy
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={downloadContent}>
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 overflow-auto max-h-[500px]">
+                    <pre className="whitespace-pre-wrap font-mono text-sm">{generatedContent}</pre>
+                  </div>
+                </div>
+              )}
+
+              <div className="bg-purple-50 p-6 rounded-lg border border-purple-200">
+                <div className="flex items-start gap-4">
+                  <div className="bg-gradient-to-r from-purple-500 to-green-500 rounded-full p-2">
+                    <Lock className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium text-purple-800 mb-2">Unlock Premium Features</h3>
+                    <p className="text-purple-700 mb-4">
+                      Sign up for a premium account to access advanced content generation features, including SEO
+                      optimization, custom templates, and more.
+                    </p>
+                    <Button
+                      onClick={onSignUpClick}
+                      variant="outline"
+                      className="border-2 border-purple-300 text-purple-700 hover:bg-purple-100"
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Sign Up for Premium
+                    </Button>
+                  </div>
                 </div>
               </div>
-            ) : (
-              <div className="text-center p-8 text-muted-foreground">Generate content to see preview</div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="history">
-            {contentHistory.length > 0 ? (
-              <div className="space-y-4">
-                {contentHistory.map((content, index) => (
-                  <Card key={index} className="overflow-hidden">
-                    <CardHeader className="p-4">
-                      <CardTitle className="text-sm">Generated Content #{contentHistory.length - index}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-4 max-h-[200px] overflow-auto">
-                      <pre className="whitespace-pre-wrap text-xs">{content.substring(0, 300)}...</pre>
-                    </CardContent>
-                    <CardFooter className="p-4 pt-0 flex justify-end">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setGeneratedContent(content)
-                          setActiveTab("preview")
-                        }}
-                      >
-                        View
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center p-8 text-muted-foreground">No content history yet</div>
-            )}
-          </TabsContent>
+            </TabsContent>
+          ))}
         </Tabs>
       </CardContent>
-
-      <Separator />
-
-      <CardFooter className="flex justify-between p-6">
-        <div className="text-sm text-muted-foreground">{websiteData.url && `Analyzing: ${websiteData.url}`}</div>
-        <Button onClick={generateContent} disabled={isGenerating || !prompt.trim()} className="ml-auto">
-          {isGenerating ? (
-            <>
-              <LoadingAnimation size="sm" className="mr-2" />
-              Generating...
-            </>
-          ) : (
-            "Generate Content"
-          )}
-        </Button>
-      </CardFooter>
     </Card>
   )
 }
