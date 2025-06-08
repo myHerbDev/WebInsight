@@ -73,8 +73,8 @@ export default function PricingPage() {
           </span>
         </h1>
         <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          Choose the WScrapierr plan that best fits your needs. Unlock powerful web analysis and content generation
-          tools today.
+          Choose the WSfynder plan that best fits your needs. Unlock powerful web analysis and content generation tools
+          today.
         </p>
       </header>
 

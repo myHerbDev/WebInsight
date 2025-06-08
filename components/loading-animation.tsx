@@ -1,146 +1,154 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
+import { cn } from "@/lib/utils"
 
-export function LoadingAnimation() {
-  const [progress, setProgress] = useState(0)
+interface LoadingAnimationProps {
+  className?: string
+}
+
+export function LoadingAnimation({ className }: LoadingAnimationProps) {
   const [currentStep, setCurrentStep] = useState(0)
+  const [progress, setProgress] = useState(0)
 
   const steps = [
-    "Fetching website data...",
-    "Analyzing performance metrics...",
-    "Scanning security headers...",
-    "Detecting technologies...",
-    "Calculating sustainability scores...",
-    "Generating insights...",
-    "Finalizing analysis...",
+    { text: "🔍 Scanning website structure...", emoji: "🔍" },
+    { text: "⚡ Analyzing performance metrics...", emoji: "⚡" },
+    { text: "🔒 Evaluating security measures...", emoji: "🔒" },
+    { text: "📊 Processing SEO data...", emoji: "📊" },
+    { text: "🎨 Reviewing design elements...", emoji: "🎨" },
+    { text: "📱 Testing mobile compatibility...", emoji: "📱" },
+    { text: "🌱 Calculating sustainability impact...", emoji: "🌱" },
+    { text: "✨ Generating insights...", emoji: "✨" },
   ]
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const stepInterval = setInterval(() => {
+      setCurrentStep((prev) => (prev + 1) % steps.length)
+    }, 2000)
+
+    const progressInterval = setInterval(() => {
       setProgress((prev) => {
-        const newProgress = prev + Math.random() * 8 + 2
-        if (newProgress >= 100) {
-          clearInterval(interval)
-          return 100
-        }
-        return newProgress
+        if (prev >= 95) return 95
+        return prev + Math.random() * 8
       })
     }, 300)
 
-    const stepInterval = setInterval(() => {
-      setCurrentStep((prev) => (prev + 1) % steps.length)
-    }, 1200)
-
     return () => {
-      clearInterval(interval)
       clearInterval(stepInterval)
+      clearInterval(progressInterval)
     }
-  }, [])
+  }, [steps.length])
 
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-8">
+    <div className={cn("flex flex-col items-center justify-center space-y-8 py-12", className)}>
       {/* Main Loading Animation */}
-      <div className="relative w-32 h-32 mb-8">
+      <div className="relative">
         {/* Outer Ring */}
-        <div className="absolute inset-0 rounded-full border-4 border-gradient-to-r from-blue-200 to-purple-200"></div>
+        <div className="w-32 h-32 border-4 border-blue-200 rounded-full animate-spin-slow">
+          <div className="absolute top-0 left-0 w-4 h-4 bg-blue-500 rounded-full animate-bounce"></div>
+        </div>
 
-        {/* Animated Rings */}
-        <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 animate-spin"></div>
-        <div
-          className="absolute inset-2 rounded-full border-4 border-transparent border-r-purple-500 animate-spin animate-reverse"
-          style={{ animationDuration: "1.5s" }}
-        ></div>
-        <div
-          className="absolute inset-4 rounded-full border-4 border-transparent border-b-teal-500 animate-spin"
-          style={{ animationDuration: "2s" }}
-        ></div>
-        <div
-          className="absolute inset-6 rounded-full border-4 border-transparent border-l-orange-500 animate-spin animate-reverse"
-          style={{ animationDuration: "2.5s" }}
-        ></div>
+        {/* Middle Ring */}
+        <div className="absolute inset-4 w-24 h-24 border-4 border-purple-200 rounded-full animate-spin-reverse">
+          <div className="absolute top-0 right-0 w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
+        </div>
 
-        {/* Center Pulse */}
-        <div className="absolute inset-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 animate-pulse"></div>
+        {/* Inner Ring */}
+        <div className="absolute inset-8 w-16 h-16 border-4 border-pink-200 rounded-full animate-spin">
+          <div className="absolute bottom-0 left-0 w-2 h-2 bg-pink-500 rounded-full animate-ping"></div>
+        </div>
+
+        {/* Center Core */}
+        <div className="absolute inset-12 w-8 h-8 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full animate-pulse shadow-lg">
+          <div className="absolute inset-1 bg-white rounded-full flex items-center justify-center">
+            <div className="w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-bounce"></div>
+          </div>
+        </div>
 
         {/* Floating Particles */}
-        <div
-          className="absolute -top-2 -left-2 w-3 h-3 bg-blue-400 rounded-full animate-bounce"
-          style={{ animationDelay: "0s" }}
-        ></div>
-        <div
-          className="absolute -top-2 -right-2 w-2 h-2 bg-purple-400 rounded-full animate-bounce"
-          style={{ animationDelay: "0.5s" }}
-        ></div>
-        <div
-          className="absolute -bottom-2 -left-2 w-2 h-2 bg-teal-400 rounded-full animate-bounce"
-          style={{ animationDelay: "1s" }}
-        ></div>
-        <div
-          className="absolute -bottom-2 -right-2 w-3 h-3 bg-orange-400 rounded-full animate-bounce"
-          style={{ animationDelay: "1.5s" }}
-        ></div>
+        <div className="absolute -inset-8">
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 bg-blue-400 rounded-full animate-float opacity-60"
+              style={{
+                left: `${20 + ((i * 45) % 360)}%`,
+                top: `${30 + ((i * 60) % 360)}%`,
+                animationDelay: `${i * 0.5}s`,
+                animationDuration: `${3 + (i % 3)}s`,
+              }}
+            />
+          ))}
+        </div>
 
         {/* Orbiting Elements */}
-        <div className="absolute inset-0 animate-spin" style={{ animationDuration: "3s" }}>
-          <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+        <div className="absolute inset-0 animate-spin-slow">
+          <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-gradient-to-r from-green-400 to-blue-500 rounded-full shadow-lg animate-bounce"></div>
         </div>
-        <div className="absolute inset-0 animate-spin animate-reverse" style={{ animationDuration: "4s" }}>
-          <div className="absolute top-1/2 -right-1 transform -translate-y-1/2 w-2 h-2 bg-gradient-to-r from-purple-500 to-teal-500 rounded-full"></div>
+        <div className="absolute inset-0 animate-spin-reverse">
+          <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full shadow-lg animate-pulse"></div>
         </div>
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full max-w-md mb-6">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium text-gray-700">Analyzing Website</span>
-          <span className="text-sm font-medium text-primary">{Math.round(progress)}%</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+      <div className="w-80 max-w-full">
+        <div className="bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
           <div
-            className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-teal-500 rounded-full transition-all duration-300 ease-out relative"
+            className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full transition-all duration-500 ease-out relative overflow-hidden"
             style={{ width: `${progress}%` }}
           >
-            <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+            <div className="absolute inset-0 bg-white opacity-30 animate-pulse"></div>
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white to-transparent opacity-50 animate-shimmer"></div>
           </div>
+        </div>
+        <div className="flex justify-between text-sm text-gray-600 mt-2">
+          <span>Analyzing...</span>
+          <span>{Math.round(progress)}%</span>
         </div>
       </div>
 
       {/* Status Text */}
-      <div className="text-center">
-        <h3 className="text-xl font-semibold text-gray-800 mb-2">WSfynder Analysis in Progress</h3>
-        <p className="text-lg text-primary font-medium mb-1 animate-pulse">{steps[currentStep]}</p>
-        <p className="text-sm text-gray-500">Performing comprehensive website analysis with AI-powered insights</p>
+      <div className="text-center space-y-4">
+        <div className="flex items-center justify-center space-x-3">
+          <span className="text-4xl animate-bounce" style={{ animationDelay: "0.1s" }}>
+            {steps[currentStep].emoji}
+          </span>
+          <h3 className="text-xl font-semibold text-gray-800 animate-fade-in">Analyzing Website</h3>
+        </div>
+
+        <p className="text-gray-600 animate-fade-in max-w-md">{steps[currentStep].text}</p>
+
+        <div className="flex justify-center space-x-2 mt-4">
+          {steps.map((_, index) => (
+            <div
+              key={index}
+              className={cn(
+                "w-2 h-2 rounded-full transition-all duration-300",
+                index === currentStep ? "bg-blue-500 scale-125" : index < currentStep ? "bg-green-500" : "bg-gray-300",
+              )}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* Floating Icons */}
+      {/* Floating Emojis */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 text-blue-400 animate-float" style={{ animationDelay: "0s" }}>
-          🔍
-        </div>
-        <div className="absolute top-1/3 right-1/4 text-purple-400 animate-float" style={{ animationDelay: "1s" }}>
-          ⚡
-        </div>
-        <div className="absolute bottom-1/3 left-1/3 text-teal-400 animate-float" style={{ animationDelay: "2s" }}>
-          🛡️
-        </div>
-        <div className="absolute bottom-1/4 right-1/3 text-orange-400 animate-float" style={{ animationDelay: "3s" }}>
-          🌱
-        </div>
+        {["🚀", "⚡", "🔍", "📊", "🎯", "✨"].map((emoji, i) => (
+          <div
+            key={i}
+            className="absolute text-2xl animate-float opacity-20"
+            style={{
+              left: `${10 + i * 15}%`,
+              top: `${20 + i * 10}%`,
+              animationDelay: `${i * 1.5}s`,
+              animationDuration: `${4 + (i % 2)}s`,
+            }}
+          >
+            {emoji}
+          </div>
+        ))}
       </div>
-
-      <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; }
-          50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
-        }
-        .animate-float {
-          animation: float 4s ease-in-out infinite;
-        }
-        .animate-reverse {
-          animation-direction: reverse;
-        }
-      `}</style>
     </div>
   )
 }

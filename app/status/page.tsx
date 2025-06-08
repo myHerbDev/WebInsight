@@ -38,7 +38,7 @@ const servicesStatus = [
   {
     name: "Public Website & Docs",
     status: "operational",
-    description: "WScrapierr.com and documentation site.",
+    description: "WSfynder.com and documentation site.",
     lastIncident: null,
   },
 ]
@@ -101,7 +101,7 @@ export default function StatusPage() {
           </span>
         </h1>
         <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          Current operational status of WScrapierr services. We believe in transparency.
+          Current operational status of WSfynder services. We believe in transparency.
         </p>
       </header>
 

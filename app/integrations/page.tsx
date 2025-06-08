@@ -15,8 +15,8 @@ const integrationCategories = [
     name: "Analytics & SEO Tools",
     icon: BarChart,
     integrations: [
-      { name: "Google Analytics", description: "Correlate WScrapierr insights with your site traffic data." },
-      { name: "Semrush (Planned)", description: "Combine keyword research with WScrapierr's content analysis." },
+      { name: "Google Analytics", description: "Correlate WSfynder insights with your site traffic data." },
+      { name: "Semrush (Planned)", description: "Combine keyword research with WSfynder's content analysis." },
       { name: "Ahrefs (Planned)", description: "Enhance backlink and competitor analysis." },
     ],
   },
@@ -33,10 +33,10 @@ const integrationCategories = [
     name: "Developer Tools",
     icon: Settings,
     integrations: [
-      { name: "Zapier", description: "Connect WScrapierr to thousands of other apps with custom workflows." },
+      { name: "Zapier", description: "Connect WSfynder to thousands of other apps with custom workflows." },
       {
         name: "Make (Integromat)",
-        description: "Automate tasks and data transfer between WScrapierr and other services.",
+        description: "Automate tasks and data transfer between WSfynder and other services.",
       },
       { name: "WScrapierr API", description: "Build custom solutions and integrate our data into your applications." },
     ],
@@ -49,11 +49,11 @@ export default function IntegrationsPage() {
       <header className="text-center mb-12 md:mb-16">
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
           <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
-            WScrapierr Integrations
+            WSfynder Integrations
           </span>
         </h1>
         <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          Connect WScrapierr with your favorite tools and platforms to streamline your workflow and enhance your
+          Connect WSfynder with your favorite tools and platforms to streamline your workflow and enhance your
           productivity.
         </p>
       </header>
@@ -88,7 +88,7 @@ export default function IntegrationsPage() {
       <section className="mt-16 md:mt-24 text-center">
         <h2 className="text-3xl font-semibold mb-4">Don't See Your Tool?</h2>
         <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-          We're always expanding our list of integrations. Let us know what tools you'd love to see WScrapierr connect
+          We're always expanding our list of integrations. Let us know what tools you'd love to see WSfynder connect
           with!
         </p>
         {/* <Button asChild>
