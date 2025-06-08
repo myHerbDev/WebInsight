@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ['@neondatabase/serverless'],
+  reactStrictMode: true,
+  swcMinify: true,
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -8,6 +9,7 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    domains: ['placeholder.com', 'via.placeholder.com', 'example.com'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -16,32 +18,22 @@ const nextConfig = {
     ],
     unoptimized: true,
   },
+  serverExternalPackages: [
+    '@neondatabase/serverless',
+    'pg',
+  ],
   webpack: (config, { isServer }) => {
+    // Handle optional dependencies gracefully
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
       net: false,
       tls: false,
-      crypto: false,
-      stream: false,
-      url: false,
-      zlib: false,
-      http: false,
-      https: false,
-      assert: false,
-      os: false,
-      path: false,
+      dns: false,
+      child_process: false,
+      aws4: false,
     };
-
-    // Handle AI SDK modules
-    if (!isServer) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        'ai': false,
-        '@ai-sdk/groq': false,
-      };
-    }
-
+    
     return config;
   },
 };
