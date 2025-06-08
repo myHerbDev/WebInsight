@@ -258,6 +258,14 @@ export function AiContentStudio({ analysisId, tone: defaultTone, onSignUpClick }
     const modifier = toneModifiers[tone as keyof typeof toneModifiers] || toneModifiers.professional
     const framework = intentionFrameworks[intention as keyof typeof intentionFrameworks] || intentionFrameworks.inform
 
+    // Generate lessons learned text based on intention
+    let lessonsText = "Strategic website optimization requires comprehensive analytical foundations."
+    if (intention === "entertain") {
+      lessonsText = "Plot twist: Every website has hidden superpowers waiting to be unleashed!"
+    } else if (intention === "analyze") {
+      lessonsText = "Critical analysis reveals the importance of systematic optimization approaches."
+    }
+
     const contentTemplates = {
       research_report: `# Comprehensive Website Analysis Report
 
@@ -358,17 +366,16 @@ ${modifier.conclusion}
 ---
 *Powered by WScrapierr Analytics*`,
 
-      case_study:
-        `# Case Study: ${intention === "promote" ? "Digital Transformation Success" : intention === "analyze" ? "Comprehensive Website Analysis" : "Strategic Website Optimization"}
+      case_study: `# Case Study: ${intention === "promote" ? "Digital Transformation Success" : intention === "analyze" ? "Comprehensive Website Analysis" : "Strategic Website Optimization"}
 
 ## ${tone === "academic" ? "Research Objective" : tone === "casual" ? "The Challenge" : "Executive Overview"}
 
 This case study examines ${framework.focus} through detailed website analysis, demonstrating ${intention === "persuade" ? "the transformative power of strategic optimization" : intention === "inform" ? "comprehensive analytical methodologies" : "practical implementation strategies"}.
 
 ## Background & Context
-${tone === "professional" ? "The subject website represents a typical digital presence requiring strategic enhancement." : tone === "casual" ? "We looked at a website that had some room for improvement – and boy, did we find opportunities!" : tone === "academic" ? "The research subject demonstrates characteristics common to contemporary web properties requiring optimization."}
+${tone === "professional" ? "The subject website represents a typical digital presence requiring strategic enhancement." : tone === "casual" ? "We looked at a website that had some room for improvement – and boy, did we find opportunities!" : tone === "academic" ? "The research subject demonstrates characteristics common to contemporary web properties requiring optimization." : ""}
 
-## Methodology\
+## Methodology
 Our analysis employed ${framework.structure} to ensure ${tone === "technical" ? "precise measurement and evaluation" : tone === "creative" ? "innovative assessment techniques" : "comprehensive examination"}.
 
 ### Data Collection
@@ -391,10 +398,10 @@ ${intention === "promote" ? "These findings represent substantial business value
 ${framework.focus === "learning objectives" ? "Step-by-step implementation ensures systematic improvement" : framework.focus === "marketing message" ? "Immediate action on these insights delivers competitive advantage" : "Strategic implementation maximizes optimization impact"}.
 
 ## Results & Impact
-${tone === "casual" ? "The potential improvements are honestly pretty amazing!" : tone === "professional" ? "Analysis indicates significant optimization potential across multiple dimensions." : tone === "academic" ? "Quantitative projections suggest substantial performance improvements."}
+${tone === "casual" ? "The potential improvements are honestly pretty amazing!" : tone === "professional" ? "Analysis indicates significant optimization potential across multiple dimensions." : tone === "academic" ? "Quantitative projections suggest substantial performance improvements." : ""}
 
 ## Lessons Learned
-${intention === "entertain" ? \"Plot twist: Every website has hidden superpowers waiting to be unleashed!\" : intention === "analyze" ? \"Critical analysis reveals the importance of systematic optimization approaches." : "Strategic website optimization requires comprehensive analytical foundations."}
+${lessonsText}
 
 ## Conclusion
 ${modifier.conclusion}
