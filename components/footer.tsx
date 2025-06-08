@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Logo } from "@/components/logo"
-import { Github, Twitter, Linkedin } from "lucide-react"
+import { Github, Twitter, Linkedin, Rss, MessageSquare } from "lucide-react" // Added Rss, MessageSquare
 
 export function Footer() {
   const footerSections = [
@@ -11,6 +11,7 @@ export function Footer() {
         { label: "Pricing", href: "/pricing" },
         { label: "Integrations", href: "/integrations" },
         { label: "API Status", href: "/status" },
+        { label: "Content Studio", href: "/content-studio" }, // Added
       ],
     },
     {
@@ -18,24 +19,25 @@ export function Footer() {
       links: [
         { label: "About Us", href: "/about" },
         { label: "Careers", href: "/careers" },
-        { label: "Blog", href: "/blog" }, // Existing
-        { label: "Contact", href: "/contact" },
+        { label: "Blog", href: "/blog" },
+        { label: "Contact Us", href: "/contact" },
       ],
     },
     {
       title: "Resources",
       links: [
-        { label: "Documentation", href: "/docs" }, // Existing
-        { label: "Support Center", href: "/support" }, // Existing
+        { label: "Documentation", href: "/docs" },
+        { label: "Support Center", href: "/support" },
         { label: "Community Forum", href: "/community" },
         { label: "Tutorials", href: "/tutorials" },
+        { label: "Hosting Reviews", href: "/hosting" }, // Added
       ],
     },
     {
       title: "Legal",
       links: [
-        { label: "Privacy Policy", href: "/privacy" }, // Existing
-        { label: "Terms of Service", href: "/terms" }, // Existing
+        { label: "Privacy Policy", href: "/privacy" },
+        { label: "Terms of Service", href: "/terms" },
         { label: "Cookie Policy", href: "/cookies" },
         { label: "Acceptable Use", href: "/acceptable-use" },
       ],
@@ -43,13 +45,15 @@ export function Footer() {
   ]
 
   const socialLinks = [
-    { label: "GitHub", href: "https://github.com/your-repo", icon: Github }, // Replace with actual link
-    { label: "Twitter", href: "https://twitter.com/your-handle", icon: Twitter }, // Replace
-    { label: "LinkedIn", href: "https://linkedin.com/company/your-company", icon: Linkedin }, // Replace
+    { label: "GitHub", href: "https://github.com/myHerbDev/wscrapierr", icon: Github }, // Example actual link
+    { label: "Twitter", href: "https://twitter.com/wscrapierr", icon: Twitter }, // Example actual link
+    { label: "LinkedIn", href: "https://linkedin.com/company/wscrapierr", icon: Linkedin }, // Example actual link
+    { label: "Blog RSS", href: "/blog/rss.xml", icon: Rss }, // Example
+    { label: "Community", href: "/community", icon: MessageSquare }, // Example
   ]
 
   return (
-    <footer className="border-t bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70 relative z-10">
+    <footer className="border-t bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/70 relative z-10 mt-auto">
       <div className="container mx-auto px-6 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 mb-8">
           <div className="col-span-2 lg:col-span-2">
@@ -86,8 +90,8 @@ export function Footer() {
               <Link
                 key={social.label}
                 href={social.href}
-                target="_blank"
-                rel="noopener noreferrer"
+                target={social.href.startsWith("http") ? "_blank" : "_self"}
+                rel={social.href.startsWith("http") ? "noopener noreferrer" : ""}
                 className="text-muted-foreground hover:text-primary transition-colors"
                 aria-label={social.label}
               >

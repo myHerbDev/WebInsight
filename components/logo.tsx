@@ -1,7 +1,6 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-
 import Link from "next/link"
 import { Sparkles } from "lucide-react"
 import { motion } from "framer-motion"
@@ -9,7 +8,7 @@ import { motion } from "framer-motion"
 interface LogoProps {
   size?: "sm" | "md" | "lg" | "xl"
   className?: string
-  showText?: boolean // Added to control text visibility explicitly
+  showText?: boolean
 }
 
 export function Logo({ size = "md", className = "", showText = true }: LogoProps) {
@@ -33,7 +32,7 @@ export function Logo({ size = "md", className = "", showText = true }: LogoProps
         <div className="absolute inset-0.5 bg-background rounded-[5px] flex items-center justify-center">
           <Sparkles
             size={currentSize.icon}
-            className="text-transparent bg-clip-text bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 group-hover:animate-pulse"
+            className="text-primary group-hover:opacity-75 transition-opacity" // Changed to primary color
           />
         </div>
         <motion.div
