@@ -80,19 +80,33 @@ export default function Home() {
     setActiveTab("analyze")
 
     try {
-      // Validate URL format first
+      // Enhanced URL validation
+      let normalizedUrl = ""
       try {
-        new URL(url.startsWith("http") ? url : `https://${url}`)
-      } catch (e) {
+        normalizedUrl = url.trim()
+        if (!normalizedUrl) {
+          throw new Error("URL cannot be empty")
+        }
+
+        if (!normalizedUrl.startsWith("http://") && !normalizedUrl.startsWith("https://")) {
+          normalizedUrl = "https://" + normalizedUrl
+        }
+
+        // Validate URL format
+        const urlObj = new URL(normalizedUrl)
+        if (!urlObj.hostname || urlObj.hostname.length < 3) {
+          throw new Error("Invalid hostname")
+        }
+      } catch (urlError: any) {
         setErrorType("url")
         throw new Error(`Invalid URL format: ${url}. Please enter a valid website address.`)
       }
 
-      console.log("Starting website analysis for:", url)
+      console.log("Starting website analysis for:", normalizedUrl)
 
-      // Prepare request data
+      // Enhanced request preparation
       const requestData = {
-        url,
+        url: normalizedUrl,
         includeAdvancedMetrics: true,
         analyzeSEO: true,
         checkAccessibility: true,
@@ -105,37 +119,56 @@ export default function Home() {
         checkSocialMedia: true,
       }
 
+      // Validate request data
+      if (!requestData.url) {
+        throw new Error("Request data validation failed")
+      }
+
       console.log("Sending analysis request...")
 
+      // Enhanced fetch with comprehensive error handling
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+      const timeoutId = setTimeout(() => {
+        console.log("Request timeout triggered")
+        controller.abort()
+      }, 30000)
 
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
-        signal: controller.signal,
-      })
+      let response: Response
+      try {
+        response = await fetch("/api/analyze", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestData),
+          signal: controller.signal,
+        })
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId)
+        if (fetchError.name === "AbortError") {
+          setErrorType("timeout")
+          throw new Error("Request timeout - analysis took too long")
+        }
+        throw new Error(`Network error: ${fetchError.message}`)
+      }
 
       clearTimeout(timeoutId)
-      console.log("Response status:", response.status)
+      console.log("Response received with status:", response.status)
 
-      // Handle non-OK responses
+      // Enhanced response handling
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`
 
         try {
           const responseText = await response.text()
-          console.log("Error response text:", responseText.substring(0, 500))
+          console.log("Error response text length:", responseText?.length || 0)
 
           if (responseText && responseText.trim()) {
             try {
               const errorData = JSON.parse(responseText)
-              errorMessage = errorData.error || errorMessage
+              errorMessage = errorData.error || errorData.message || errorMessage
             } catch (parseError) {
-              // If JSON parsing fails, use the raw text
+              console.warn("Could not parse error response as JSON")
               errorMessage = responseText.substring(0, 200)
             }
           }
@@ -148,11 +181,11 @@ export default function Home() {
         throw new Error(errorMessage)
       }
 
-      // Parse successful response
+      // Enhanced response parsing
       let data
       try {
         const responseText = await response.text()
-        console.log("Success response length:", responseText.length)
+        console.log("Success response length:", responseText?.length || 0)
 
         if (!responseText || !responseText.trim()) {
           throw new Error("Empty response from server")
@@ -167,17 +200,17 @@ export default function Home() {
         data = JSON.parse(responseText)
         console.log("Successfully parsed response data")
 
-        // Validate required fields
+        // Enhanced data validation
         if (!data || typeof data !== "object") {
           throw new Error("Invalid data format received from server")
         }
 
-        // Ensure required fields exist with safe defaults
+        // Ensure all required fields with comprehensive defaults
         data = {
           _id: data._id || "unknown",
-          url: data.url || url,
+          url: data.url || normalizedUrl,
           title: data.title || "Website Analysis",
-          summary: data.summary || "Analysis completed",
+          summary: data.summary || "Analysis completed successfully",
           keyPoints: Array.isArray(data.keyPoints) ? data.keyPoints : [],
           keywords: Array.isArray(data.keywords) ? data.keywords : [],
           sustainability: data.sustainability || {
@@ -187,7 +220,7 @@ export default function Home() {
             duplicateContent: 0,
             improvements: [],
           },
-          subdomains: data.subdomains || [],
+          subdomains: Array.isArray(data.subdomains) ? data.subdomains : [],
           contentStats: data.contentStats || {},
           rawData: data.rawData || {},
           // Backward compatibility
@@ -203,8 +236,13 @@ export default function Home() {
           ip_address: data.ip_address || "Unknown",
         }
       } catch (parseError: any) {
-        console.error("Response parsing error:", parseError)
+        console.error("Response parsing error:", parseError.message)
         throw new Error(`Failed to parse server response: ${parseError.message}`)
+      }
+
+      // Final validation before setting state
+      if (!data._id || !data.url) {
+        throw new Error("Response missing required fields")
       }
 
       setWebsiteData(data)
