@@ -7,49 +7,31 @@ import { randomBytes } from "crypto"
 
 export async function POST(request: Request) {
   try {
-    // Enhanced request body parsing with comprehensive safety
+    // Safe request body parsing
     let requestBody
     try {
       const bodyText = await request.text()
-      console.log("Raw request body length:", bodyText?.length || 0)
+      console.log("Raw request body:", bodyText.substring(0, 200))
 
       if (!bodyText || !bodyText.trim()) {
         console.error("Empty request body received")
         return NextResponse.json({ error: "Request body is required" }, { status: 400 })
       }
 
-      // Validate JSON structure before parsing
-      const trimmed = bodyText.trim()
-      if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) {
+      // Validate JSON before parsing
+      if (!bodyText.trim().startsWith("{") || !bodyText.trim().endsWith("}")) {
         console.error("Invalid JSON format in request body")
         return NextResponse.json({ error: "Invalid JSON format" }, { status: 400 })
       }
 
-      try {
-        requestBody = JSON.parse(trimmed)
-        console.log("Successfully parsed request body")
-      } catch (parseError: any) {
-        console.error("JSON parsing failed:", parseError.message)
-        return NextResponse.json(
-          {
-            error: "Invalid JSON in request body",
-            details: parseError.message,
-          },
-          { status: 400 },
-        )
-      }
-
-      // Validate parsed object
-      if (!requestBody || typeof requestBody !== "object") {
-        console.error("Parsed body is not a valid object")
-        return NextResponse.json({ error: "Invalid request body format" }, { status: 400 })
-      }
-    } catch (textError: any) {
-      console.error("Failed to read request body:", textError.message)
+      requestBody = JSON.parse(bodyText)
+      console.log("Parsed request body successfully")
+    } catch (parseError: any) {
+      console.error("JSON parsing error:", parseError.message)
       return NextResponse.json(
         {
-          error: "Failed to read request body",
-          details: textError.message,
+          error: "Invalid JSON in request body",
+          details: parseError.message,
         },
         { status: 400 },
       )
@@ -296,53 +278,39 @@ export async function POST(request: Request) {
       rawData: savedAnalysis.raw_data,
     }
 
-    // Enhanced response validation and safety
-    try {
-      // Ensure all required fields are present with safe defaults
-      const safeResponse = {
-        _id: responseData?._id || "unknown",
-        url: responseData?.url || normalizedUrl,
-        title: responseData?.title || "Website Analysis",
-        summary: responseData?.summary || "Analysis completed successfully",
-        keyPoints: Array.isArray(responseData?.keyPoints) ? responseData.keyPoints : [],
-        keywords: Array.isArray(responseData?.keywords) ? responseData.keywords : [],
-        sustainability: responseData?.sustainability || {
-          score: 0,
-          performance: 0,
-          scriptOptimization: 0,
-          duplicateContent: 0,
-          improvements: [],
-        },
-        subdomains: Array.isArray(responseData?.subdomains) ? responseData.subdomains : [],
-        contentStats: responseData?.contentStats || {},
-        rawData: responseData?.rawData || {},
-      }
-
-      // Validate response structure
-      if (!safeResponse._id || !safeResponse.url) {
-        throw new Error("Invalid response structure")
-      }
-
-      console.log("Sending validated response with ID:", safeResponse._id)
-
-      // Create response with proper headers
-      return new NextResponse(JSON.stringify(safeResponse), {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-cache",
-        },
-      })
-    } catch (responseError: any) {
-      console.error("Response validation error:", responseError.message)
+    // Validate response data before sending
+    if (!responseData || typeof responseData !== "object") {
+      console.error("Invalid response data generated")
       return NextResponse.json(
         {
-          error: "Failed to generate valid response",
-          message: responseError.message,
+          error: "Failed to generate valid response data",
         },
         { status: 500 },
       )
     }
+
+    // Ensure all required fields are present
+    const validatedResponse = {
+      _id: responseData._id || "unknown",
+      url: responseData.url || normalizedUrl,
+      title: responseData.title || "Website Analysis",
+      summary: responseData.summary || "Analysis completed",
+      keyPoints: Array.isArray(responseData.keyPoints) ? responseData.keyPoints : [],
+      keywords: Array.isArray(responseData.keywords) ? responseData.keywords : [],
+      sustainability: responseData.sustainability || {
+        score: 0,
+        performance: 0,
+        scriptOptimization: 0,
+        duplicateContent: 0,
+        improvements: [],
+      },
+      subdomains: responseData.subdomains || [],
+      contentStats: responseData.contentStats || {},
+      rawData: responseData.rawData || {},
+    }
+
+    console.log("Sending validated response")
+    return NextResponse.json(validatedResponse)
   } catch (error: any) {
     console.error("Analysis error:", error)
     return NextResponse.json(
