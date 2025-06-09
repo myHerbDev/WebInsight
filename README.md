@@ -4,6 +4,13 @@
 [![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/gaTwn19OSeK)
 
 **Analyze any website's performance, sustainability, security, and generate AI-powered content**
+# Support Us on GitHub Sponsors
+
+If you enjoy our project and want to support us, please consider becoming a sponsor!
+
+<a href="https://github.com/sponsors/myHerbDev" target="_blank">
+  <img src="https://img.shields.io/badge/Sponsor%20Us-❤️-brightgreen" alt="Sponsor Us" />
+</a>
 
 ---
 
