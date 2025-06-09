@@ -1,4 +1,5 @@
-# Modern data analysis tool
+# WSfynder
+### Analyze any website's performance, sustainability, security, and generate AI-powered content
 
 *Automatically synced with your [v0.dev](https://v0.dev) deployments*
 
