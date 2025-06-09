@@ -7,12 +7,12 @@ import { Header } from "@/components/header"
 import { ResultsSection } from "@/components/results-section"
 import { SignUpModal } from "@/components/sign-up-modal"
 import { toast } from "@/components/ui/use-toast"
-import type { WebsiteData, AnalysisOptions } from "@/types/website-data" // Ensure AnalysisOptions is imported
+import type { WebsiteData, AnalysisOptions } from "@/types/website-data"
 import { AlertCircle, Search, Globe, Zap, Shield } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { Logo } from "@/components/logo"
-import { safeFetch } from "@/lib/safe-fetch" // Ensure safeFetch is imported
+import { safeFetch } from "@/lib/safe-fetch"
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
@@ -42,7 +42,6 @@ export default function Home() {
 
     try {
       const analysisOptions: AnalysisOptions = {
-        // Define analysis options
         includeAdvancedMetrics: true,
         analyzeSEO: true,
         checkAccessibility: true,
@@ -62,7 +61,7 @@ export default function Home() {
       } = await safeFetch<WebsiteData>("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: formattedUrl, ...analysisOptions }), // Pass options
+        body: JSON.stringify({ url: formattedUrl, ...analysisOptions }),
         timeout: 45000,
       })
 
@@ -99,52 +98,37 @@ export default function Home() {
 
   if (!isClient) {
     return (
-      <div className="min-h-screen flex flex-col futuristic-bg">
-        <div className="grid-pattern"></div>
-        <div className="orb orb-1"></div>
-        <div className="orb orb-2"></div>
-        <div className="orb orb-3"></div>
+      <>
+        {/* Minimal structure for SSR/pre-hydration to avoid theme errors */}
         <Header />
-        <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 sm:py-20 relative z-10">
+        <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 sm:py-20">
           <div className="text-center">
             <LoadingAnimation />
             <p className="text-xl mt-4">Initializing WebInSight...</p>
           </div>
         </main>
         <Footer />
-      </div>
+      </>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col futuristic-bg">
-      {/* Background elements */}
-      <div className="grid-pattern"></div>
-      <div className="orb orb-1"></div>
-      <div className="orb orb-2"></div>
-      <div className="orb orb-3"></div>
-
+    <>
       <Header />
-
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 sm:py-20 relative z-10">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 sm:py-20">
         <div className="w-full max-w-3xl text-center mb-12">
-          {/* Futuristic logo */}
           <div className="flex justify-center mb-8">
             <Logo size="lg" />
           </div>
-
           <h1 className="text-5xl sm:text-6xl font-bold mb-6">
             Discover Your Website's
             <span className="gradient-text block mt-2" data-text="Full Potential">
               Full Potential
             </span>
           </h1>
-
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto">
             AI-powered analysis for performance, SEO, and sustainability optimization
           </p>
-
-          {/* Futuristic search form */}
           <form onSubmit={handleAnalyzeWebsite} className="relative mb-12 max-w-2xl mx-auto">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-600/20 rounded-full blur-xl -z-10"></div>
             <input
@@ -168,8 +152,6 @@ export default function Home() {
               )}
             </button>
           </form>
-
-          {/* Feature cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             {[
               {
@@ -208,8 +190,6 @@ export default function Home() {
             ))}
           </div>
         </div>
-
-        {/* Analysis Results Section */}
         <div className="w-full max-w-4xl">
           {isLoading && !websiteData && <LoadingAnimation />}
           {error && !isLoading && (
@@ -232,9 +212,7 @@ export default function Home() {
           )}
         </div>
       </main>
-
       <Footer />
-
       {showSignUpModal && (
         <SignUpModal
           onClose={() => setShowSignUpModal(false)}
@@ -246,6 +224,6 @@ export default function Home() {
           }}
         />
       )}
-    </div>
+    </>
   )
 }
