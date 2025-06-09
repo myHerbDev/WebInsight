@@ -1,5 +1,127 @@
-import { Leaf } from "lucide-react" // Using Leaf as a placeholder logo icon
+"use client"
 
-export function Logo({ className }: { className?: string }) {
-  return <Leaf className={`text-green-600 dark:text-green-500 ${className}`} />
+import { cn } from "@/lib/utils"
+import { Brain } from "lucide-react"
+import { useEffect, useRef } from "react"
+
+interface LogoProps {
+  size?: "sm" | "md" | "lg"
+  showText?: boolean
+  className?: string
+  iconOnly?: boolean
+}
+
+export function Logo({ size = "md", showText = true, className = "", iconOnly = false }: LogoProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  const iconContainerSizeClasses = {
+    sm: "w-10 h-10",
+    md: "w-12 h-12",
+    lg: "w-16 h-16",
+  }
+
+  const iconSizeClasses = {
+    sm: "w-5 h-5",
+    md: "w-6 h-6",
+    lg: "w-8 h-8",
+  }
+
+  const textSizeClasses = {
+    sm: "text-xl",
+    md: "text-2xl",
+    lg: "text-3xl",
+  }
+
+  // Animated logo background
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+
+    const resizeCanvas = () => {
+      const { width, height } = canvas.getBoundingClientRect()
+      canvas.width = width * window.devicePixelRatio
+      canvas.height = height * window.devicePixelRatio
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
+    }
+
+    resizeCanvas()
+    window.addEventListener("resize", resizeCanvas)
+
+    // Particles
+    const particles: { x: number; y: number; size: number; speedX: number; speedY: number; hue: number }[] = []
+    const particleCount = 20
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2 + 0.5,
+        speedX: (Math.random() - 0.5) * 0.5,
+        speedY: (Math.random() - 0.5) * 0.5,
+        hue: Math.random() * 60 + 220, // Blue to purple range
+      })
+    }
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      // Draw particles
+      particles.forEach((particle) => {
+        ctx.fillStyle = `hsla(${particle.hue}, 100%, 70%, 0.8)`
+        ctx.beginPath()
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
+        ctx.fill()
+
+        // Update position
+        particle.x += particle.speedX
+        particle.y += particle.speedY
+
+        // Bounce off edges
+        if (particle.x < 0 || particle.x > canvas.width) particle.speedX *= -1
+        if (particle.y < 0 || particle.y > canvas.height) particle.speedY *= -1
+      })
+
+      requestAnimationFrame(animate)
+    }
+
+    animate()
+
+    return () => {
+      window.removeEventListener("resize", resizeCanvas)
+    }
+  }, [])
+
+  return (
+    <div className={cn("flex items-center", className)}>
+      <div className={cn(iconContainerSizeClasses[size], "rounded-2xl relative overflow-hidden shadow-lg")}>
+        {/* Animated background */}
+        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/80 to-purple-600/80 rounded-2xl"></div>
+
+        {/* Icon */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Brain className={cn(iconSizeClasses[size], "text-white drop-shadow-md relative z-10")} />
+        </div>
+
+        {/* Glow effect */}
+        <div className="absolute -inset-1 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl opacity-30 blur-xl"></div>
+      </div>
+
+      {!iconOnly && showText && (
+        <div className="ml-3">
+          <h1 className={cn(textSizeClasses[size], "font-bold tracking-tight")}>
+            <span className="text-gray-800 dark:text-white">Web</span>
+            <span className="gradient-text" data-text="InSight">
+              InSight
+            </span>
+          </h1>
+        </div>
+      )}
+    </div>
+  )
 }
