@@ -1,27 +1,62 @@
-import Link from "next/link"
-import { Search, Zap } from "lucide-react"
+"use client"
 
-export function Logo() {
+import { Globe, Zap, Shield } from "lucide-react"
+
+interface LogoProps {
+  size?: "sm" | "md" | "lg"
+  showText?: boolean
+  className?: string
+}
+
+export function Logo({ size = "md", showText = true, className = "" }: LogoProps) {
+  const sizeClasses = {
+    sm: "w-6 h-6",
+    md: "w-8 h-8",
+    lg: "w-12 h-12",
+  }
+
+  const textSizeClasses = {
+    sm: "text-lg",
+    md: "text-xl",
+    lg: "text-3xl",
+  }
+
   return (
-    <Link
-      href="/"
-      className="flex items-center space-x-3 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg p-1"
-      aria-label="WSfynder - Go to homepage"
-    >
+    <div className={`flex items-center space-x-2 ${className}`}>
       <div className="relative">
-        <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-green-600 rounded-xl flex items-center justify-center shadow-md">
-          <Search className="h-5 w-5 text-white" aria-hidden="true" />
+        {/* Main globe icon with gradient background */}
+        <div
+          className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-blue-500 via-purple-600 to-teal-500 p-1.5 shadow-lg`}
+        >
+          <Globe className="w-full h-full text-white" />
         </div>
-        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center">
-          <Zap className="h-2.5 w-2.5 text-white" aria-hidden="true" />
+
+        {/* Insight indicators */}
+        <div className="absolute -top-1 -right-1">
+          <div className="w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-sm">
+            <Zap className="w-1.5 h-1.5 text-white" />
+          </div>
+        </div>
+
+        <div className="absolute -bottom-1 -left-1">
+          <div className="w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-sm">
+            <Shield className="w-1.5 h-1.5 text-white" />
+          </div>
         </div>
       </div>
-      <div className="flex flex-col">
-        <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-green-600 bg-clip-text text-transparent">
-          WSfynder
-        </span>
-        <span className="text-xs text-muted-foreground leading-none">Website Intelligence</span>
-      </div>
-    </Link>
+
+      {showText && (
+        <div className="flex flex-col">
+          <h1
+            className={`${textSizeClasses[size]} font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent leading-tight`}
+          >
+            WebInsight
+          </h1>
+          {size !== "sm" && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 -mt-1">Analyze • Optimize • Sustain</p>
+          )}
+        </div>
+      )}
+    </div>
   )
 }

@@ -1,199 +1,300 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { BarChart3, Lightbulb, FileText } from "lucide-react"
-import { AiContentStudio } from "@/components/ai-content-studio"
+import { Analytics } from "@/components/analytics"
 import { SustainabilityChart } from "@/components/sustainability-chart"
+import { SocialShare } from "@/components/social-share"
+import { ContentExport } from "@/components/content-export"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { motion } from "framer-motion"
+import { BarChart3, TrendingUp, Download, Heart, Bookmark, Globe, Shield, Zap, Users, AlertCircle } from "lucide-react"
 import type { WebsiteData } from "@/types/website-data"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 
 interface ResultsSectionProps {
-  data: WebsiteData | null | undefined
-  isLoading: boolean
-  isError: boolean
+  data: WebsiteData
+  onSignUpClick: (userId: string) => void
+  onSave: () => void
+  onFavorite: () => void
+  userId: string | null
 }
 
-export function ResultsSection({ data, isLoading, isError }: ResultsSectionProps) {
-  const searchParams = useSearchParams()
-  const [selectedTone, setSelectedTone] = useState(searchParams.get("tone") || "professional")
+export function ResultsSection({ data, onSignUpClick, onSave, onFavorite, userId }: ResultsSectionProps) {
+  const [isClient, setIsClient] = useState(false)
+  const [activeTab, setActiveTab] = useState("overview")
 
   useEffect(() => {
-    const tone = searchParams.get("tone")
-    if (tone) {
-      setSelectedTone(tone)
-    }
-  }, [searchParams])
+    setIsClient(true)
+  }, [])
 
-  if (isLoading) {
-    return (
-      <section className="container grid items-center justify-center gap-6 pt-20 pb-10">
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-6 w-[200px]" />
-          <Skeleton className="h-4 w-[350px]" />
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                <Skeleton className="h-4 w-[150px]" />
-              </CardTitle>
-              <CardDescription>
-                <Skeleton className="h-4 w-[200px]" />
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-4 w-[100%]" />
-              <Skeleton className="h-4 w-[75%]" />
-              <Skeleton className="h-4 w-[50%]" />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                <Skeleton className="h-4 w-[150px]" />
-              </CardTitle>
-              <CardDescription>
-                <Skeleton className="h-4 w-[200px]" />
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-4 w-[100%]" />
-              <Skeleton className="h-4 w-[75%]" />
-              <Skeleton className="h-4 w-[50%]" />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                <Skeleton className="h-4 w-[150px]" />
-              </CardTitle>
-              <CardDescription>
-                <Skeleton className="h-4 w-[200px]" />
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-4 w-[100%]" />
-              <Skeleton className="h-4 w-[75%]" />
-              <Skeleton className="h-4 w-[50%]" />
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-    )
-  }
-
-  if (isError) {
-    return (
-      <section className="container grid items-center justify-center gap-6 pt-20 pb-10">
-        <div className="flex flex-col gap-2">
-          <h2 className="scroll-m-20 pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0">Oops!</h2>
-          <p className="text-muted-foreground">Something went wrong. Please try again.</p>
-        </div>
-      </section>
-    )
-  }
-
-  // If no data is available, show a message
+  // Safe data validation
   if (!data) {
     return (
-      <section className="container grid items-center justify-center gap-6 pt-20 pb-10">
-        <div className="flex flex-col gap-2">
-          <h2 className="scroll-m-20 pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0">
-            No Results Yet
-          </h2>
-          <p className="text-muted-foreground">Enter a website URL above to analyze it.</p>
-        </div>
-      </section>
+      <Card className="w-full">
+        <CardContent className="flex items-center justify-center py-8">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">No analysis data available</p>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
-  // Ensure metrics exist with fallbacks
-  const metrics = data.metrics || {
-    carbonFootprint: 0,
-    pageWeight: 0,
+  // Ensure data has required structure
+  const safeData: WebsiteData = {
+    _id: data._id || "unknown",
+    url: data.url || "",
+    title: data.title || "Website Analysis",
+    summary: data.summary || "Analysis completed",
+    keyPoints: Array.isArray(data.keyPoints) ? data.keyPoints : [],
+    keywords: Array.isArray(data.keywords) ? data.keywords : [],
+    sustainability: data.sustainability || {
+      score: 0,
+      performance: 0,
+      scriptOptimization: 0,
+      duplicateContent: 0,
+      improvements: [],
+    },
+    subdomains: Array.isArray(data.subdomains) ? data.subdomains : [],
+    contentStats: data.contentStats || {},
+    rawData: data.rawData || {},
+    // Backward compatibility
+    sustainability_score: data.sustainability_score || data.sustainability?.score || 0,
+    performance_score: data.performance_score || data.sustainability?.performance || 0,
+    script_optimization_score: data.script_optimization_score || data.sustainability?.scriptOptimization || 0,
+    content_quality_score: data.content_quality_score || 0,
+    security_score: data.security_score || 0,
+    improvements: data.improvements || data.sustainability?.improvements || [],
+    hosting_provider_name: data.hosting_provider_name || "Unknown",
+    ssl_certificate: data.ssl_certificate || false,
+    server_location: data.server_location || "Unknown",
+    ip_address: data.ip_address || "Unknown",
+  }
+
+  const getOverallScore = () => {
+    const scores = [
+      safeData.sustainability_score || 0,
+      safeData.performance_score || 0,
+      safeData.security_score || 0,
+      safeData.content_quality_score || 0,
+    ].filter((score) => typeof score === "number" && !isNaN(score))
+
+    if (scores.length === 0) return 0
+    return Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length)
+  }
+
+  const overallScore = getOverallScore()
+
+  const getScoreColor = (score: number) => {
+    if (typeof score !== "number" || isNaN(score)) return "text-gray-500"
+    if (score >= 80) return "text-green-600"
+    if (score >= 60) return "text-yellow-600"
+    return "text-red-600"
+  }
+
+  const getScoreBadge = (score: number) => {
+    if (typeof score !== "number" || isNaN(score)) return "Unknown"
+    if (score >= 80) return "Excellent"
+    if (score >= 60) return "Good"
+    return "Needs Improvement"
+  }
+
+  // Don't render until client-side to avoid hydration issues
+  if (!isClient) {
+    return (
+      <div className="w-full space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-2/3 mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <section className="container grid items-center justify-center gap-6 pt-20 pb-10">
-      <div className="flex justify-between w-full flex-col md:flex-row gap-4">
-        <div className="flex flex-col gap-2">
-          <h2 className="scroll-m-20 pb-2 text-3xl font-semibold tracking-tight transition-colors first:mt-0">
-            Here are your results
-          </h2>
-          <p className="text-muted-foreground">Here&apos;s what we found after analyzing {data.url}.</p>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="w-full space-y-6"
+    >
+      {/* Header Section */}
+      <div className="text-center space-y-4">
+        <div className="flex items-center justify-center space-x-4">
+          <div className={`text-6xl font-bold ${getScoreColor(overallScore)}`}>{overallScore}%</div>
+          <div className="text-left">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{safeData.title}</h2>
+            <Badge
+              variant="outline"
+              className={`mt-1 ${
+                overallScore >= 80
+                  ? "border-green-200 text-green-700 bg-green-50"
+                  : overallScore >= 60
+                    ? "border-yellow-200 text-yellow-700 bg-yellow-50"
+                    : "border-red-200 text-red-700 bg-red-50"
+              }`}
+            >
+              {getScoreBadge(overallScore)}
+            </Badge>
+          </div>
         </div>
-        <Select onValueChange={setSelectedTone} defaultValue={selectedTone}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select tone" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="professional">Professional</SelectItem>
-            <SelectItem value="friendly">Friendly</SelectItem>
-            <SelectItem value="humorous">Humorous</SelectItem>
-            <SelectItem value="persuasive">Persuasive</SelectItem>
-          </SelectContent>
-        </Select>
+
+        <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">{safeData.summary}</p>
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap justify-center gap-3">
+          <Button onClick={onSave} variant="outline" size="sm">
+            <Bookmark className="mr-2 h-4 w-4" />
+            Save Analysis
+          </Button>
+          <Button onClick={onFavorite} variant="outline" size="sm">
+            <Heart className="mr-2 h-4 w-4" />
+            Add to Favorites
+          </Button>
+          <SocialShare data={safeData} />
+        </div>
       </div>
 
-      <Tabs defaultValue="sustainability" className="w-full">
-        <TabsList>
-          <TabsTrigger value="sustainability">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Sustainability
+      {/* Key Points */}
+      {safeData.keyPoints && safeData.keyPoints.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <TrendingUp className="h-5 w-5 text-blue-500" />
+              <span>Key Findings</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {safeData.keyPoints.map((point, index) => (
+                <motion.li
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex items-start space-x-2"
+                >
+                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+                  <span className="text-gray-700 dark:text-gray-300">{point}</span>
+                </motion.li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Main Content Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview" className="flex items-center space-x-2">
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="insights">
-            <Lightbulb className="mr-2 h-4 w-4" />
-            Insights
+          <TabsTrigger value="analytics" className="flex items-center space-x-2">
+            <TrendingUp className="h-4 w-4" />
+            <span className="hidden sm:inline">Analytics</span>
           </TabsTrigger>
-          <TabsTrigger value="content-generation">
-            <FileText className="mr-2 h-4 w-4" />
-            Content Generation
+          <TabsTrigger value="sustainability" className="flex items-center space-x-2">
+            <Globe className="h-4 w-4" />
+            <span className="hidden sm:inline">Sustainability</span>
+          </TabsTrigger>
+          <TabsTrigger value="export" className="flex items-center space-x-2">
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Export</span>
           </TabsTrigger>
         </TabsList>
-        <div className="pt-4">
-          <TabsContent value="sustainability" className="space-y-4">
-            <SustainabilityChart data={data} />
-          </TabsContent>
 
-          <TabsContent value="insights">
+        <TabsContent value="overview" className="space-y-6">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-4 text-center">
+                <Globe className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                <div className={`text-2xl font-bold ${getScoreColor(safeData.sustainability_score || 0)}`}>
+                  {typeof safeData.sustainability_score === "number" && !isNaN(safeData.sustainability_score)
+                    ? `${safeData.sustainability_score}%`
+                    : "N/A"}
+                </div>
+                <div className="text-sm text-gray-500">Sustainability</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4 text-center">
+                <Zap className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+                <div className={`text-2xl font-bold ${getScoreColor(safeData.performance_score || 0)}`}>
+                  {typeof safeData.performance_score === "number" && !isNaN(safeData.performance_score)
+                    ? `${safeData.performance_score}%`
+                    : "N/A"}
+                </div>
+                <div className="text-sm text-gray-500">Performance</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4 text-center">
+                <Shield className="h-8 w-8 text-purple-500 mx-auto mb-2" />
+                <div className={`text-2xl font-bold ${getScoreColor(safeData.security_score || 0)}`}>
+                  {typeof safeData.security_score === "number" && !isNaN(safeData.security_score)
+                    ? `${safeData.security_score}%`
+                    : "N/A"}
+                </div>
+                <div className="text-sm text-gray-500">Security</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4 text-center">
+                <Users className="h-8 w-8 text-orange-500 mx-auto mb-2" />
+                <div className={`text-2xl font-bold ${getScoreColor(safeData.content_quality_score || 0)}`}>
+                  {typeof safeData.content_quality_score === "number" && !isNaN(safeData.content_quality_score)
+                    ? `${safeData.content_quality_score}%`
+                    : "N/A"}
+                </div>
+                <div className="text-sm text-gray-500">Content</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Keywords */}
+          {safeData.keywords && safeData.keywords.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Key Metrics</CardTitle>
-                <CardDescription>Important metrics for your website.</CardDescription>
+                <CardTitle>Keywords</CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <p className="text-sm font-medium leading-none">Carbon Footprint</p>
-                  <p className="text-5xl font-bold">{metrics.carbonFootprint.toFixed(2)}g</p>
-                  <p className="text-sm text-muted-foreground">Estimated carbon footprint of your website.</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium leading-none">Page Size</p>
-                  <p className="text-5xl font-bold">{metrics.pageWeight.toFixed(2)}MB</p>
-                  <p className="text-sm text-muted-foreground">Total size of all resources on your website.</p>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {safeData.keywords.slice(0, 20).map((keyword, index) => (
+                    <Badge key={index} variant="secondary">
+                      {keyword}
+                    </Badge>
+                  ))}
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          )}
+        </TabsContent>
 
-          <TabsContent value="content-generation">
-            <AiContentStudio
-              analysisId={data._id || ""}
-              websiteUrl={data.url || ""}
-              websiteTitle={data.title || ""}
-              tone={selectedTone}
-              onSignUpClick={() => {
-                // Handle sign up click
-                window.open("/signup", "_blank")
-              }}
-            />
-          </TabsContent>
-        </div>
+        <TabsContent value="analytics">
+          <Analytics data={safeData} />
+        </TabsContent>
+
+        <TabsContent value="sustainability">
+          <SustainabilityChart data={safeData} />
+        </TabsContent>
+
+        <TabsContent value="export">
+          <ContentExport data={safeData} onSignUpClick={onSignUpClick} />
+        </TabsContent>
       </Tabs>
-    </section>
+    </motion.div>
   )
 }

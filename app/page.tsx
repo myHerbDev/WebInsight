@@ -1,371 +1,602 @@
-import { Suspense } from "react"
-import { WebsiteForm } from "@/components/website-form"
+"use client"
+
+import { useState, useEffect } from "react"
+import { Footer } from "@/components/footer"
+import { Header } from "@/components/header"
+import { LoadingAnimation } from "@/components/loading-animation"
+import { ResultsSection } from "@/components/results-section"
+import { SignUpModal } from "@/components/sign-up-modal"
+import { MagicalWebsiteInput } from "@/components/magical-website-input"
+import { EnhancedErrorMessage } from "@/components/enhanced-error-message"
+import { EnhancedAIGenerator } from "@/components/enhanced-ai-generator"
+import { GoogleStyleCard } from "@/components/google-style-card"
+import { toast } from "@/components/ui/use-toast"
+import type { WebsiteData } from "@/types/website-data"
+import { motion, AnimatePresence } from "framer-motion"
+import { Sparkles, TrendingUp, Shield, Leaf, Globe, Users, ArrowUp, Brain } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import Link from "next/link"
-import { Search, BarChart3, Shield, Zap, Globe, Brain, ArrowRight, CheckCircle, Star, Clock } from "lucide-react"
-import type { Metadata } from "next"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-export const metadata: Metadata = {
-  title: "WSfynder - Intelligent Website Analysis & AI Content Platform",
-  description:
-    "Analyze any website with WSfynder's AI-powered platform. Get comprehensive insights on performance, SEO, security, sustainability, and generate professional content instantly.",
-  openGraph: {
-    title: "WSfynder - Intelligent Website Analysis & AI Content Platform",
-    description:
-      "Analyze any website with AI-powered insights. Performance, SEO, security analysis plus content generation.",
-    type: "website",
-    url: "https://wsfynder.com",
-  },
-  alternates: {
-    canonical: "https://wsfynder.com",
-  },
-}
+export default function Home() {
+  const [isLoading, setIsLoading] = useState(false)
+  const [websiteData, setWebsiteData] = useState<WebsiteData | null>(null)
+  const [showSignUpModal, setShowSignUpModal] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [errorType, setErrorType] = useState<"url" | "access" | "timeout" | "server" | "unknown">("unknown")
+  const [lastAnalyzedUrl, setLastAnalyzedUrl] = useState<string>("")
+  const [showScrollToTop, setShowScrollToTop] = useState(false)
+  const [activeTab, setActiveTab] = useState("analyze")
+  const [isClient, setIsClient] = useState(false)
 
-const features = [
-  {
-    icon: Search,
-    title: "Intelligent Analysis",
-    description: "Deep website analysis with AI-powered insights and comprehensive data extraction in seconds.",
-    benefits: ["50+ data points", "Real-time analysis", "Detailed reports"],
-  },
-  {
-    icon: BarChart3,
-    title: "Performance Metrics",
-    description: "Detailed performance analysis including speed, SEO, security, and accessibility scores.",
-    benefits: ["Core Web Vitals", "Loading speed", "Optimization tips"],
-  },
-  {
-    icon: Shield,
-    title: "Security Assessment",
-    description: "Comprehensive security evaluation and vulnerability detection for enhanced protection.",
-    benefits: ["SSL analysis", "Header security", "Threat detection"],
-  },
-  {
-    icon: Brain,
-    title: "AI Content Generation",
-    description: "Generate professional content based on website analysis with advanced AI technology.",
-    benefits: ["Multiple formats", "SEO optimized", "Custom prompts"],
-  },
-  {
-    icon: Globe,
-    title: "Hosting Intelligence",
-    description: "Detailed hosting provider analysis and infrastructure insights for optimization.",
-    benefits: ["Provider detection", "Server location", "Performance impact"],
-  },
-  {
-    icon: Zap,
-    title: "Real-time Results",
-    description: "Instant analysis results with detailed reports and actionable recommendations.",
-    benefits: ["< 30 seconds", "Exportable data", "Shareable reports"],
-  },
-]
+  // Client-side hydration
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
-const benefits = [
-  "Comprehensive website analysis in seconds",
-  "AI-powered content generation",
-  "Security and performance insights",
-  "Hosting provider intelligence",
-  "SEO optimization recommendations",
-  "Export and share analysis results",
-]
+  // Enhanced scroll detection
+  useEffect(() => {
+    if (!isClient) return
 
-const testimonials = [
-  {
-    quote: "WSfynder has revolutionized how we analyze competitor websites. The AI insights are incredibly valuable.",
-    author: "Sarah Chen",
-    role: "Digital Marketing Manager",
-    rating: 5,
-  },
-  {
-    quote: "The performance analysis helped us identify critical issues that improved our page speed by 40%.",
-    author: "Mike Rodriguez",
-    role: "Web Developer",
-    rating: 5,
-  },
-  {
-    quote: "Best website analysis tool I've used. The content generation feature is a game-changer.",
-    author: "Emma Thompson",
-    role: "SEO Specialist",
-    rating: 5,
-  },
-]
+    const handleScroll = () => {
+      setShowScrollToTop(window.scrollY > 300)
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [isClient])
 
-const stats = [
-  { value: "50K+", label: "Websites Analyzed", icon: Globe },
-  { value: "100+", label: "Data Points", icon: BarChart3 },
-  { value: "99.9%", label: "Uptime", icon: Clock },
-  { value: "4.9/5", label: "User Rating", icon: Star },
-]
+  const determineErrorType = (
+    error: Error | string,
+    statusCode?: number,
+  ): "url" | "access" | "timeout" | "server" | "unknown" => {
+    const errorMessage = typeof error === "string" ? error : error.message || ""
 
-export default function HomePage() {
-  return (
-    <div className="flex flex-col min-h-screen">
-      {/* Structured Data for SEO */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            name: "WSfynder",
-            description: "Intelligent website analysis and AI content generation platform",
-            url: "https://wsfynder.com",
-            applicationCategory: "WebApplication",
-            operatingSystem: "Web Browser",
-            offers: {
-              "@type": "Offer",
-              price: "0",
-              priceCurrency: "USD",
-            },
-            aggregateRating: {
-              "@type": "AggregateRating",
-              ratingValue: "4.9",
-              ratingCount: "1247",
-            },
-          }),
-        }}
-      />
+    if (errorMessage.includes("Invalid URL") || errorMessage.includes("URL format")) {
+      return "url"
+    }
 
-      {/* Hero Section */}
-      <section className="relative py-20 lg:py-32 overflow-hidden" aria-labelledby="hero-heading">
-        <div className="container relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <Badge variant="secondary" className="mb-6" role="img" aria-label="New feature">
-              🚀 Intelligent Website Discovery
-            </Badge>
+    if (errorMessage.includes("access denied") || errorMessage.includes("403") || statusCode === 403) {
+      return "access"
+    }
 
-            <h1 id="hero-heading" className="text-4xl lg:text-6xl font-bold tracking-tight mb-6">
-              Analyze, Understand, and
-              <span className="text-primary bg-gradient-to-r from-purple-600 to-green-600 bg-clip-text text-transparent">
-                {" "}
-                Optimize
-              </span>
-            </h1>
+    if (errorMessage.includes("timeout") || errorMessage.includes("timed out") || statusCode === 408) {
+      return "timeout"
+    }
 
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              WSfynder provides comprehensive website analysis, performance insights, and AI-powered content generation
-              to help you understand and optimize any website on the internet.
-            </p>
+    if (errorMessage.includes("server error") || statusCode === 500) {
+      return "server"
+    }
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Button
-                size="lg"
-                asChild
-                className="bg-gradient-to-r from-purple-600 to-green-600 hover:from-purple-700 hover:to-green-700"
-              >
-                <Link href="#analyze" aria-describedby="cta-description">
-                  Start Free Analysis <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild>
-                <Link href="/features">Learn More</Link>
-              </Button>
-            </div>
-            <p id="cta-description" className="sr-only">
-              Start analyzing websites for free with comprehensive insights
-            </p>
+    return "unknown"
+  }
 
-            {/* Stats Grid */}
-            <div
-              className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center"
-              role="region"
-              aria-label="Platform statistics"
-            >
-              {stats.map((stat, index) => (
-                <div key={index} className="flex flex-col items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <stat.icon className="h-5 w-5 text-primary" aria-hidden="true" />
-                    <div className="text-2xl font-bold text-primary">{stat.value}</div>
-                  </div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
-                </div>
+  const handleAnalyzeWebsite = async (url: string) => {
+    if (!isClient) return
+
+    setIsLoading(true)
+    setWebsiteData(null)
+    setError(null)
+    setLastAnalyzedUrl(url)
+    setActiveTab("analyze")
+
+    try {
+      // Validate URL format first
+      try {
+        new URL(url.startsWith("http") ? url : `https://${url}`)
+      } catch (e) {
+        setErrorType("url")
+        throw new Error(`Invalid URL format: ${url}. Please enter a valid website address.`)
+      }
+
+      console.log("Starting website analysis for:", url)
+
+      // Prepare request data
+      const requestData = {
+        url,
+        includeAdvancedMetrics: true,
+        analyzeSEO: true,
+        checkAccessibility: true,
+        analyzePerformance: true,
+        checkSecurity: true,
+        analyzeSustainability: true,
+        includeContentAnalysis: true,
+        checkMobileOptimization: true,
+        analyzeLoadingSpeed: true,
+        checkSocialMedia: true,
+      }
+
+      console.log("Sending analysis request...")
+
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
+        signal: controller.signal,
+      })
+
+      clearTimeout(timeoutId)
+      console.log("Response status:", response.status)
+
+      // Handle non-OK responses
+      if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+
+        try {
+          const responseText = await response.text()
+          console.log("Error response text:", responseText.substring(0, 500))
+
+          if (responseText && responseText.trim()) {
+            try {
+              const errorData = JSON.parse(responseText)
+              errorMessage = errorData.error || errorMessage
+            } catch (parseError) {
+              // If JSON parsing fails, use the raw text
+              errorMessage = responseText.substring(0, 200)
+            }
+          }
+        } catch (textError) {
+          console.error("Failed to read error response:", textError)
+        }
+
+        const errorType = determineErrorType(errorMessage, response.status)
+        setErrorType(errorType)
+        throw new Error(errorMessage)
+      }
+
+      // Parse successful response
+      let data
+      try {
+        const responseText = await response.text()
+        console.log("Success response length:", responseText.length)
+
+        if (!responseText || !responseText.trim()) {
+          throw new Error("Empty response from server")
+        }
+
+        // Validate JSON structure
+        const trimmed = responseText.trim()
+        if (!trimmed.startsWith("{")) {
+          throw new Error("Invalid response format from server")
+        }
+
+        data = JSON.parse(responseText)
+        console.log("Successfully parsed response data")
+
+        // Validate required fields
+        if (!data || typeof data !== "object") {
+          throw new Error("Invalid data format received from server")
+        }
+
+        // Ensure required fields exist with safe defaults
+        data = {
+          _id: data._id || "unknown",
+          url: data.url || url,
+          title: data.title || "Website Analysis",
+          summary: data.summary || "Analysis completed",
+          keyPoints: Array.isArray(data.keyPoints) ? data.keyPoints : [],
+          keywords: Array.isArray(data.keywords) ? data.keywords : [],
+          sustainability: data.sustainability || {
+            score: 0,
+            performance: 0,
+            scriptOptimization: 0,
+            duplicateContent: 0,
+            improvements: [],
+          },
+          subdomains: data.subdomains || [],
+          contentStats: data.contentStats || {},
+          rawData: data.rawData || {},
+          // Backward compatibility
+          sustainability_score: data.sustainability_score || data.sustainability?.score || 0,
+          performance_score: data.performance_score || data.sustainability?.performance || 0,
+          script_optimization_score: data.script_optimization_score || data.sustainability?.scriptOptimization || 0,
+          content_quality_score: data.content_quality_score || 0,
+          security_score: data.security_score || 0,
+          improvements: data.improvements || data.sustainability?.improvements || [],
+          hosting_provider_name: data.hosting_provider_name || "Unknown",
+          ssl_certificate: data.ssl_certificate || false,
+          server_location: data.server_location || "Unknown",
+          ip_address: data.ip_address || "Unknown",
+        }
+      } catch (parseError: any) {
+        console.error("Response parsing error:", parseError)
+        throw new Error(`Failed to parse server response: ${parseError.message}`)
+      }
+
+      setWebsiteData(data)
+      setShowScrollToTop(true)
+
+      // Auto-switch to results tab
+      setTimeout(() => setActiveTab("results"), 500)
+
+      console.log("Analysis completed successfully")
+    } catch (error: any) {
+      console.error("Error analyzing website:", error)
+
+      if (error.name === "AbortError") {
+        setError("Request timeout - analysis took too long")
+        setErrorType("timeout")
+      } else {
+        if (errorType === "unknown") {
+          setErrorType(determineErrorType(error))
+        }
+
+        const errorMessage = error.message || "Failed to analyze the website. Please try again."
+        setError(errorMessage)
+      }
+
+      toast({
+        title: "Analysis Failed",
+        description: error.message || "Failed to analyze the website. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSaveAnalysis = async (type: "save" | "favorite") => {
+    if (!websiteData || !isClient) return
+
+    try {
+      const response = await fetch("/api/user/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          analysisId: websiteData._id,
+          type: type === "favorite" ? "favorite" : "save",
+        }),
+      })
+
+      let data
+      try {
+        const responseText = await response.text()
+        if (responseText.trim()) {
+          data = JSON.parse(responseText)
+        } else {
+          throw new Error("Empty response from server")
+        }
+      } catch (e) {
+        throw new Error(`Failed to ${type} analysis: Invalid response format`)
+      }
+
+      if (!response.ok) {
+        throw new Error(data.error || `Failed to ${type} analysis`)
+      }
+
+      if (data.userId && !userId) {
+        setUserId(data.userId)
+      }
+
+      toast({
+        title: "Success",
+        description: data.message || `${type === "favorite" ? "Added to favorites" : "Analysis saved"}`,
+      })
+    } catch (error: any) {
+      console.error(`Error ${type}ing analysis:`, error)
+      toast({
+        title: "Error",
+        description: `Failed to ${type} the analysis. Please try again.`,
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleSignUp = (tempUserId: string) => {
+    setUserId(tempUserId || userId)
+    setShowSignUpModal(true)
+  }
+
+  const handleRetryAnalysis = () => {
+    if (lastAnalyzedUrl) {
+      handleAnalyzeWebsite(lastAnalyzedUrl)
+    }
+  }
+
+  const handleResetAnalysis = () => {
+    setError(null)
+    setWebsiteData(null)
+    setLastAnalyzedUrl("")
+    setShowScrollToTop(false)
+    setActiveTab("analyze")
+  }
+
+  const scrollToTop = () => {
+    if (isClient) {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+  }
+
+  // Don't render until client-side to avoid hydration issues
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-8">
+            <div className="h-96 bg-gray-200 rounded-3xl"></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-48 bg-gray-200 rounded-xl"></div>
               ))}
             </div>
           </div>
-        </div>
-      </section>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
-      {/* Analysis Form Section */}
-      <section id="analyze" className="py-20 bg-muted/50" aria-labelledby="analyze-heading">
-        <div className="container">
-          <div className="max-w-2xl mx-auto text-center mb-12">
-            <h2 id="analyze-heading" className="text-3xl font-bold mb-4">
-              Analyze Any Website Instantly
-            </h2>
-            <p className="text-muted-foreground">
-              Enter a website URL to get comprehensive analysis including performance, security, SEO, hosting
-              information, and sustainability metrics.
-            </p>
-          </div>
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+      {/* Google-style floating elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {Array.from({ length: 20 }).map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full opacity-20"
+            initial={{
+              x: Math.random() * window.innerWidth,
+              y: Math.random() * window.innerHeight,
+            }}
+            animate={{
+              y: [null, -50],
+              opacity: [0.2, 0.5, 0.2],
+              scale: [1, 1.5, 1],
+            }}
+            transition={{
+              duration: Math.random() * 4 + 3,
+              repeat: Number.POSITIVE_INFINITY,
+              delay: Math.random() * 2,
+            }}
+          />
+        ))}
+      </div>
 
-          <div className="max-w-4xl mx-auto">
-            <Suspense
-              fallback={
-                <div className="flex justify-center" role="status" aria-label="Loading website analysis form">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                </div>
-              }
-            >
-              <WebsiteForm />
-            </Suspense>
-          </div>
-        </div>
-      </section>
+      <Header />
 
-      {/* Features Section */}
-      <section className="py-20" aria-labelledby="features-heading">
-        <div className="container">
-          <div className="max-w-2xl mx-auto text-center mb-16">
-            <h2 id="features-heading" className="text-3xl font-bold mb-4">
-              Powerful Features for Website Intelligence
-            </h2>
-            <p className="text-muted-foreground">
-              Everything you need to understand, analyze, and optimize websites with professional-grade accuracy and
-              AI-powered insights.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="border-0 shadow-sm hover:shadow-lg transition-all duration-300 group">
-                <CardHeader>
-                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-green-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <feature.icon className="h-6 w-6 text-white" aria-hidden="true" />
-                  </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base mb-4">{feature.description}</CardDescription>
-                  <ul className="space-y-2">
-                    {feature.benefits.map((benefit, benefitIndex) => (
-                      <li key={benefitIndex} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" aria-hidden="true" />
-                        <span>{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="py-20 bg-muted/50" aria-labelledby="testimonials-heading">
-        <div className="container">
-          <div className="max-w-2xl mx-auto text-center mb-16">
-            <h2 id="testimonials-heading" className="text-3xl font-bold mb-4">
-              Trusted by Professionals
-            </h2>
-            <p className="text-muted-foreground">
-              See what our users say about WSfynder's powerful analysis capabilities
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-0 shadow-sm">
-                <CardContent className="pt-6">
-                  <div className="flex mb-4" role="img" aria-label={`${testimonial.rating} star rating`}>
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" aria-hidden="true" />
-                    ))}
-                  </div>
-                  <blockquote className="text-muted-foreground mb-4 italic">"{testimonial.quote}"</blockquote>
-                  <div>
-                    <div className="font-semibold">{testimonial.author}</div>
-                    <div className="text-sm text-muted-foreground">{testimonial.role}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits Section */}
-      <section className="py-20" aria-labelledby="benefits-heading">
-        <div className="container">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 id="benefits-heading" className="text-3xl font-bold mb-6">
-                Why Choose WSfynder?
-              </h2>
-              <p className="text-muted-foreground mb-8">
-                WSfynder combines advanced website analysis with AI-powered content generation to provide comprehensive
-                insights that help you make informed decisions about any website.
-              </p>
-
-              <ul className="space-y-4" role="list">
-                {benefits.map((benefit, index) => (
-                  <li key={index} className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" aria-hidden="true" />
-                    <span>{benefit}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-8">
-                <Button
-                  asChild
-                  className="bg-gradient-to-r from-purple-600 to-green-600 hover:from-purple-700 hover:to-green-700"
-                >
-                  <Link href="/features">
-                    Explore All Features <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-                  </Link>
-                </Button>
+      <main className="relative z-10">
+        {/* Main Content Container */}
+        <div className="container mx-auto px-4 py-8 max-w-7xl">
+          {/* Core App Tabs */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <div className="flex justify-center mb-8">
+                <TabsList className="grid grid-cols-3 w-full max-w-md bg-white shadow-lg border border-gray-200 rounded-full p-1">
+                  <TabsTrigger
+                    value="analyze"
+                    className="rounded-full data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all duration-300"
+                  >
+                    <Globe className="w-4 h-4 mr-2" />
+                    Analyze
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="results"
+                    className="rounded-full data-[state=active]:bg-green-500 data-[state=active]:text-white transition-all duration-300"
+                    disabled={!websiteData && !error}
+                  >
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    Results
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="ai-content"
+                    className="rounded-full data-[state=active]:bg-purple-500 data-[state=active]:text-white transition-all duration-300"
+                  >
+                    <Brain className="w-4 h-4 mr-2" />
+                    AI Content
+                  </TabsTrigger>
+                </TabsList>
               </div>
-            </div>
 
-            <div className="relative">
-              <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl p-8">
-                <div className="w-full h-full bg-background rounded-xl shadow-lg p-6 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Brain className="h-8 w-8 text-white" aria-hidden="true" />
+              {/* Analyze Tab */}
+              <TabsContent value="analyze" className="space-y-8">
+                <GoogleStyleCard className="p-0 overflow-hidden">
+                  <MagicalWebsiteInput onAnalyze={handleAnalyzeWebsite} isLoading={isLoading} />
+                </GoogleStyleCard>
+
+                {/* Loading Animation */}
+                <AnimatePresence>
+                  {isLoading && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      <GoogleStyleCard>
+                        <LoadingAnimation />
+                      </GoogleStyleCard>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Enhanced Error State */}
+                <AnimatePresence>
+                  {error && !isLoading && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                    >
+                      <GoogleStyleCard>
+                        <EnhancedErrorMessage
+                          error={error}
+                          errorType={errorType}
+                          onRetry={handleRetryAnalysis}
+                          onReset={handleResetAnalysis}
+                        />
+                      </GoogleStyleCard>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Features Section */}
+                {!isLoading && !error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                  >
+                    {[
+                      {
+                        icon: TrendingUp,
+                        title: "Performance Analysis",
+                        description: "Deep dive into loading speeds, Core Web Vitals, and optimization opportunities",
+                        color: "from-green-500 to-emerald-500",
+                      },
+                      {
+                        icon: Shield,
+                        title: "Security Assessment",
+                        description:
+                          "Comprehensive security analysis including SSL, headers, and vulnerability detection",
+                        color: "from-blue-500 to-cyan-500",
+                      },
+                      {
+                        icon: Leaf,
+                        title: "Sustainability Metrics",
+                        description: "Environmental impact analysis and carbon footprint optimization suggestions",
+                        color: "from-emerald-500 to-teal-500",
+                      },
+                      {
+                        icon: Brain,
+                        title: "AI Content Generation",
+                        description: "Generate blog posts, social media content, and marketing copy from your analysis",
+                        color: "from-purple-500 to-pink-500",
+                      },
+                      {
+                        icon: Globe,
+                        title: "SEO & Accessibility",
+                        description: "Complete SEO audit and accessibility compliance checking",
+                        color: "from-orange-500 to-red-500",
+                      },
+                      {
+                        icon: Users,
+                        title: "Mobile & Social",
+                        description: "Mobile optimization analysis and social media integration assessment",
+                        color: "from-indigo-500 to-purple-500",
+                      },
+                    ].map((feature, index) => (
+                      <motion.div
+                        key={feature.title}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 * index }}
+                        whileHover={{ y: -5 }}
+                      >
+                        <GoogleStyleCard className="h-full hover:shadow-xl transition-all duration-300">
+                          <div
+                            className={`w-12 h-12 rounded-xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-4`}
+                          >
+                            <feature.icon className="w-6 h-6 text-white" />
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                          <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
+                        </GoogleStyleCard>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </TabsContent>
+
+              {/* Results Tab */}
+              <TabsContent value="results" className="space-y-8">
+                <AnimatePresence>
+                  {websiteData && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                    >
+                      <GoogleStyleCard>
+                        <div className="text-center mb-6">
+                          <h2 className="text-2xl font-bold text-gray-900 mb-2">Analysis Complete</h2>
+                          <p className="text-gray-600">
+                            Comprehensive analysis results for{" "}
+                            <span className="font-semibold text-blue-600">{websiteData.url}</span>
+                          </p>
+                        </div>
+
+                        <ResultsSection
+                          data={websiteData}
+                          onSignUpClick={handleSignUp}
+                          onSave={() => handleSaveAnalysis("save")}
+                          onFavorite={() => handleSaveAnalysis("favorite")}
+                          userId={userId}
+                        />
+
+                        <div className="text-center mt-8">
+                          <Button
+                            onClick={() => setActiveTab("ai-content")}
+                            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                          >
+                            <Brain className="mr-2 h-5 w-5" />
+                            Generate AI Content
+                          </Button>
+                        </div>
+                      </GoogleStyleCard>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </TabsContent>
+
+              {/* AI Content Tab */}
+              <TabsContent value="ai-content" className="space-y-8">
+                <GoogleStyleCard>
+                  <div className="text-center mb-6">
+                    <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-100 to-pink-100 border border-purple-200 mb-4">
+                      <Brain className="w-5 h-5 text-purple-600" />
+                      <span className="text-sm font-medium text-purple-700">AI-Powered Content Generation</span>
+                      <Sparkles className="w-5 h-5 text-pink-600" />
                     </div>
-                    <h3 className="font-semibold mb-2">AI-Powered Analysis</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Advanced algorithms provide deep insights and actionable recommendations
+                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Create Amazing Content</h2>
+                    <p className="text-gray-600 max-w-2xl mx-auto">
+                      Transform your website analysis into engaging content for blogs, social media, marketing
+                      campaigns, and more.
                     </p>
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* CTA Section */}
-      <section className="py-20" aria-labelledby="cta-heading">
-        <div className="container">
-          <div className="max-w-2xl mx-auto text-center">
-            <h2 id="cta-heading" className="text-3xl font-bold mb-4">
-              Ready to Discover Website Intelligence?
-            </h2>
-            <p className="text-muted-foreground mb-8">
-              Join thousands of users who trust WSfynder for comprehensive website analysis and AI-powered content
-              generation.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                asChild
-                className="bg-gradient-to-r from-purple-600 to-green-600 hover:from-purple-700 hover:to-green-700"
-              >
-                <Link href="#analyze">Start Free Analysis</Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild>
-                <Link href="/content-studio">Try Content Studio</Link>
-              </Button>
-            </div>
-          </div>
+                  <EnhancedAIGenerator websiteData={websiteData} onSignUpClick={() => handleSignUp("")} />
+                </GoogleStyleCard>
+              </TabsContent>
+            </Tabs>
+          </motion.div>
         </div>
-      </section>
+      </main>
+
+      {/* Scroll to Top Button */}
+      <AnimatePresence>
+        {showScrollToTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0 }}
+            onClick={scrollToTop}
+            className="fixed bottom-8 right-8 z-50 bg-white text-gray-700 p-3 rounded-full shadow-lg hover:shadow-xl border border-gray-200 transition-all duration-300 hover:scale-110"
+          >
+            <ArrowUp className="h-5 w-5" />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      <Footer />
+
+      {showSignUpModal && (
+        <SignUpModal
+          onClose={() => setShowSignUpModal(false)}
+          tempUserId={userId}
+          onSignUpSuccess={(newUserId) => {
+            setUserId(newUserId)
+            setShowSignUpModal(false)
+            toast({
+              title: "Success",
+              description: "Account created successfully!",
+            })
+          }}
+        />
+      )}
     </div>
   )
 }

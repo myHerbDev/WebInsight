@@ -1,82 +1,94 @@
 import { NextResponse } from "next/server"
-import clientPromise from "@/lib/mongodb"
+import { sql, safeDbOperation, isNeonAvailable } from "@/lib/neon-db"
+import { getSession } from "@/lib/auth"
+import { randomBytes } from "crypto"
 
 export async function POST(request: Request) {
   try {
-    const { userId, analysisId, type } = await request.json()
+    let requestBody
+    try {
+      const bodyText = await request.text()
+      if (!bodyText.trim()) {
+        return NextResponse.json({ error: "Empty request body" }, { status: 400 })
+      }
+      requestBody = JSON.parse(bodyText)
+    } catch (error) {
+      return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 })
+    }
+
+    const { userId, analysisId, type } = requestBody
 
     if (!analysisId || !type) {
       return NextResponse.json({ error: "Analysis ID and type are required" }, { status: 400 })
     }
 
-    // For preview mode or when MongoDB is not available, use mock data
-    if (!process.env.MONGODB_URI) {
-      const mockUserId = userId || "temp-user-123"
+    // Get user from session if no userId provided
+    let userIdToUse = userId
+    if (!userIdToUse) {
+      const sessionId = request.headers.get("cookie")?.split("session=")[1]?.split(";")[0]
+      if (sessionId) {
+        const session = await getSession(sessionId)
+        if (session) {
+          userIdToUse = session.userId
+        }
+      }
+    }
+
+    // If still no user, create a temporary user ID
+    if (!userIdToUse) {
+      userIdToUse = "temp-user-" + randomBytes(8).toString("hex")
+    }
+
+    if (!isNeonAvailable()) {
       return NextResponse.json({
         success: true,
         message: type === "favorite" ? "Added to favorites" : "Analysis saved",
-        userId: mockUserId,
+        userId: userIdToUse,
       })
     }
 
-    // Real implementation with MongoDB
-    try {
-      const client = await clientPromise
-      const db = client.db("website-analyzer")
+    // Determine the table based on type
+    const tableName = type === "favorite" ? "favorites" : "saved_analyses"
 
-      // If no userId, create a temporary user
-      let userIdToUse = userId
+    const result = await safeDbOperation(
+      async () => {
+        // Check if already exists
+        const existing = await sql`
+          SELECT id FROM ${sql(tableName)} 
+          WHERE user_id = ${userIdToUse} AND analysis_id = ${analysisId}
+        `
 
-      if (!userIdToUse) {
-        const tempUser = await db.collection("users").insertOne({
-          email: null,
-          isTemporary: true,
-          createdAt: new Date(),
-        })
-        userIdToUse = tempUser.insertedId.toString()
-      }
+        if (existing.length > 0) {
+          return {
+            success: true,
+            message: "Already saved",
+            userId: userIdToUse,
+          }
+        }
 
-      // Save the analysis based on type (save or favorite)
-      const collection = type === "favorite" ? "favorites" : "saved-analyses"
+        // Save new entry
+        const entryId = randomBytes(16).toString("hex")
+        await sql`
+          INSERT INTO ${sql(tableName)} (id, user_id, analysis_id, created_at)
+          VALUES (${entryId}, ${userIdToUse}, ${analysisId}, NOW())
+        `
 
-      // Check if already exists - use string comparison instead of ObjectId
-      const existing = await db.collection(collection).findOne({
-        userId: userIdToUse,
-        analysisId: analysisId,
-      })
-
-      if (existing) {
-        // If already exists, return success
-        return NextResponse.json({
+        return {
           success: true,
-          message: "Already saved",
+          message: type === "favorite" ? "Added to favorites" : "Analysis saved",
           userId: userIdToUse,
-        })
-      }
-
-      // Save new entry
-      await db.collection(collection).insertOne({
-        userId: userIdToUse,
-        analysisId: analysisId,
-        createdAt: new Date(),
-      })
-
-      return NextResponse.json({
-        success: true,
-        message: type === "favorite" ? "Added to favorites" : "Analysis saved",
-        userId: userIdToUse,
-      })
-    } catch (dbError) {
-      console.error("Database error:", dbError)
-      // Fall back to mock data if database operations fail
-      const mockUserId = userId || "temp-user-123"
-      return NextResponse.json({
+        }
+      },
+      {
         success: true,
         message: type === "favorite" ? "Added to favorites (fallback)" : "Analysis saved (fallback)",
-        userId: mockUserId,
-      })
-    }
-  } catch (error) {
+        userId: userIdToUse,
+      },
+      "Error saving analysis",
+    )
+
+    return NextResponse.json(result)
+  } catch (error: any) {
     console.error("Error saving analysis:", error)
     return NextResponse.json({ error: "Failed to save analysis" }, { status: 500 })
   }

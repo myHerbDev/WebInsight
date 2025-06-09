@@ -1,134 +1,153 @@
-import Link from "next/link"
+import { Github, Heart, Globe, Shield, Zap } from "lucide-react"
 import { Logo } from "@/components/logo"
-import { ExternalLink, Heart, Github, Twitter, Linkedin } from "lucide-react"
-
-const footerLinks = {
-  product: [
-    { name: "Features", href: "/features" },
-    { name: "Content Studio", href: "/content-studio" },
-    { name: "Hosting Analysis", href: "/hosting" },
-    { name: "Pricing", href: "/pricing" },
-  ],
-  company: [
-    { name: "About", href: "/about" },
-    { name: "Careers", href: "/careers" },
-    { name: "Contact", href: "/contact" },
-    { name: "Status", href: "/status" },
-  ],
-  resources: [
-    { name: "Community", href: "/community" },
-    { name: "Tutorials", href: "/tutorials" },
-    { name: "API Documentation", href: "/docs" },
-    { name: "Integrations", href: "/integrations" },
-  ],
-  legal: [
-    { name: "Privacy Policy", href: "/privacy" },
-    { name: "Terms of Service", href: "/terms" },
-    { name: "Cookie Policy", href: "/cookies" },
-    { name: "Acceptable Use", href: "/acceptable-use" },
-  ],
-}
-
-const socialLinks = [
-  { name: "GitHub", href: "https://github.com/wsfynder", icon: Github },
-  { name: "Twitter", href: "https://twitter.com/wsfynder", icon: Twitter },
-  { name: "LinkedIn", href: "https://linkedin.com/company/wsfynder", icon: Linkedin },
-]
+import Link from "next/link"
 
 export function Footer() {
   return (
-    <footer className="border-t bg-background" role="contentinfo">
-      <div className="container py-12">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-          <div className="md:col-span-1">
-            <Logo />
-            <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
-              Intelligent website discovery and analysis platform powered by advanced AI technology. Analyze
-              performance, SEO, security, and generate content instantly.
+    <footer className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 border-t border-gray-200 dark:border-gray-700">
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Brand Section */}
+          <div className="col-span-1 md:col-span-2">
+            <Logo size="lg" showText={true} className="mb-4" />
+            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md">
+              Comprehensive website analysis platform that evaluates performance, sustainability, security, and hosting
+              quality. Get actionable insights to optimize your web presence and reduce environmental impact.
             </p>
 
-            {/* Social Links */}
-            <div className="mt-6 flex space-x-4">
-              {socialLinks.map((social) => (
-                <Link
-                  key={social.name}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm p-1"
-                  aria-label={`Follow WSfynder on ${social.name}`}
-                >
-                  <social.icon className="h-5 w-5" aria-hidden="true" />
-                </Link>
-              ))}
-            </div>
-
-            {/* Sponsor Button */}
-            <div className="mt-4">
-              <iframe
-                src="https://github.com/sponsors/myHerbDev/button"
-                title="Sponsor myHerbDev"
-                height="32"
-                width="114"
-                style={{ border: 0, borderRadius: "6px" }}
-                className="rounded-md"
-              />
-            </div>
-          </div>
-
-          {Object.entries(footerLinks).map(([category, links]) => (
-            <div key={category}>
-              <h3 className="font-semibold text-sm mb-4 capitalize">{category}</h3>
-              <ul className="space-y-2" role="list">
-                {links.map((link) => (
-                  <li key={link.name}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
-                    >
-                      {link.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-8 pt-8 border-t">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
-              <p className="text-sm text-muted-foreground">
-                © {new Date().getFullYear()} WSfynder. All rights reserved.
-              </p>
-              <div className="flex items-center space-x-1 text-sm text-muted-foreground">
-                <span>Made by</span>
-                <Link
-                  href="https://www.myherb.co.il"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-primary hover:underline inline-flex items-center space-x-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
-                >
-                  <span>myHerb</span>
-                  <ExternalLink className="h-3 w-3" aria-hidden="true" />
-                </Link>
-                <span>(DevSphere project)</span>
+            {/* Key Features */}
+            <div className="flex flex-wrap gap-4 mb-6">
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <Globe className="h-4 w-4 mr-2 text-blue-500" />
+                Website Analysis
+              </div>
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <Zap className="h-4 w-4 mr-2 text-yellow-500" />
+                Performance Optimization
+              </div>
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <Shield className="h-4 w-4 mr-2 text-green-500" />
+                Security Assessment
               </div>
             </div>
 
+            {/* Creator Attribution */}
             <div className="flex items-center space-x-4">
-              <Link
-                href="https://github.com/sponsors/myHerbDev"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center space-x-1 text-sm text-muted-foreground hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
-              >
-                <Heart className="h-4 w-4" aria-hidden="true" />
-                <span>Sponsor</span>
-                <ExternalLink className="h-3 w-3" aria-hidden="true" />
-              </Link>
-              <p className="text-sm text-muted-foreground">Built with ❤️ for intelligent website discovery</p>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <span className="font-medium">Created by </span>
+                <Link
+                  href="https://myherb.co.il"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium"
+                >
+                  myHerb
+                </Link>
+                <span className="mx-2">•</span>
+                <Link
+                  href="https://github.com/sponsors/myHerbDev"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+                >
+                  <Heart className="h-3 w-3 mr-1" />
+                  DevSphere Project
+                </Link>
+              </div>
             </div>
+          </div>
+
+          {/* Features Column */}
+          <div>
+            <h4 className="font-semibold mb-4 text-gray-900 dark:text-gray-100">Features</h4>
+            <ul className="space-y-2 text-gray-600 dark:text-gray-400">
+              <li>
+                <Link href="/" className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                  Website Analysis
+                </Link>
+              </li>
+              <li>
+                <Link href="/compare" className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                  Site Comparison
+                </Link>
+              </li>
+              <li>
+                <Link href="/hosting" className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                  Hosting Providers
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/recommendations"
+                  className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                >
+                  Sustainability Tips
+                </Link>
+              </li>
+              <li>Performance Metrics</li>
+              <li>Security Assessment</li>
+              <li>PDF Export</li>
+            </ul>
+          </div>
+
+          {/* Resources Column */}
+          <div>
+            <h4 className="font-semibold mb-4 text-gray-900 dark:text-gray-100">Resources</h4>
+            <ul className="space-y-2 text-gray-600 dark:text-gray-400">
+              <li>
+                <Link href="/docs" className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                  Documentation
+                </Link>
+              </li>
+              <li>
+                <Link href="/api" className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                  API Reference
+                </Link>
+              </li>
+              <li>
+                <Link href="/blog" className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                  Blog
+                </Link>
+              </li>
+              <li>
+                <Link href="/support" className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                  Support
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                  Terms of Service
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="border-t border-gray-200 dark:border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+          <div className="text-gray-600 dark:text-gray-400 text-sm mb-4 md:mb-0">
+            <p>
+              © 2024 WebInsight. All rights reserved.
+              <span className="mx-2">•</span>
+              <span className="font-medium">Created by myHerb (DevSphere Project)</span>
+            </p>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <Link
+              href="https://github.com/myHerbDev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors"
+            >
+              <Github className="h-5 w-5" />
+            </Link>
+            <span className="text-sm text-gray-500 dark:text-gray-500">Powered by Groq AI • Vercel • Neon</span>
           </div>
         </div>
       </div>
