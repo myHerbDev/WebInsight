@@ -1,551 +1,487 @@
 "use client"
 
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { useState, useEffect, useMemo } from "react"
-import { PlusCircle, XCircle, Star, Leaf, Shield, Globe, Zap, BarChart3, TrendingUp, Award } from "lucide-react"
+import {
+  X,
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Download,
+  Sparkles,
+  Zap,
+  Shield,
+  Globe,
+  Star,
+  Award,
+  Plus,
+} from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
-import { LoadingAnimation } from "@/components/loading-animation"
-import { useSearchParams } from "next/navigation"
-import Link from "next/link"
+import { Logo } from "@/components/logo"
 
-interface HostingProvider {
-  id: number
-  name: string
-  website: string
+interface ComparisonData {
+  id: string
+  title: string
+  url: string
   sustainability_score: number
-  renewable_energy_percentage: number
-  carbon_neutral: boolean
-  green_certifications: string[]
-  data_center_locations: string[]
-  pricing_tier: string
-  performance_rating: number
-  security_features: string[]
-  uptime_guarantee: number
-  support_quality: number
+  performance_score: number
+  security_score: number
+  content_quality_score: number
+  hosting_provider_name: string
+  ssl_certificate: boolean
+  created_at: string
 }
 
 export default function ComparePage() {
-  const searchParams = useSearchParams()
-  const [selectedProviders, setSelectedProviders] = useState<HostingProvider[]>([])
-  const [allProviders, setAllProviders] = useState<HostingProvider[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [showProviderSelector, setShowProviderSelector] = useState(false)
+  const [websites, setWebsites] = useState<ComparisonData[]>([])
+  const [newUrl, setNewUrl] = useState("")
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [comparisonName, setComparisonName] = useState("")
 
-  useEffect(() => {
-    fetchProviders()
-  }, [])
-
-  useEffect(() => {
-    // Check if providers are passed via URL params
-    const providersParam = searchParams.get("providers")
-    if (providersParam && allProviders.length > 0) {
-      const providerIds = providersParam.split(",").map((id) => Number.parseInt(id))
-      const preselectedProviders = allProviders.filter((p) => providerIds.includes(p.id))
-      setSelectedProviders(preselectedProviders)
-    }
-  }, [searchParams, allProviders])
-
-  const fetchProviders = async () => {
-    setLoading(true)
+  const analyzeWebsite = async (url: string) => {
+    setIsAnalyzing(true)
     try {
-      const response = await fetch("/api/hosting-providers")
-      if (response.ok) {
-        const data = await response.json()
-        setAllProviders(data)
-      } else {
-        throw new Error("Failed to fetch providers")
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      })
+
+      if (!response.ok) throw new Error("Analysis failed")
+
+      const data = await response.json()
+
+      const comparisonData: ComparisonData = {
+        id: data._id,
+        title: data.title,
+        url: data.url,
+        sustainability_score: data.sustainability_score || 0,
+        performance_score: data.performance_score || 0,
+        security_score: data.security_score || 0,
+        content_quality_score: data.content_quality_score || 0,
+        hosting_provider_name: data.hosting_provider_name || "Unknown",
+        ssl_certificate: data.ssl_certificate || false,
+        created_at: new Date().toISOString(),
       }
-    } catch (error) {
-      console.error("Error fetching providers:", error)
+
+      setWebsites((prev) => [...prev, comparisonData])
+      setNewUrl("")
+
       toast({
-        title: "Error",
-        description: "Failed to load hosting providers",
+        title: "✨ Analysis Complete",
+        description: `${data.title} has been added to comparison`,
+      })
+    } catch (error) {
+      toast({
+        title: "Analysis Failed",
+        description: "Failed to analyze website. Please try again.",
         variant: "destructive",
       })
     } finally {
-      setLoading(false)
+      setIsAnalyzing(false)
     }
   }
 
-  const filteredProviders = useMemo(() => {
-    return allProviders.filter(
-      (provider) =>
-        provider.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !selectedProviders.some((selected) => selected.id === provider.id),
-    )
-  }, [allProviders, searchTerm, selectedProviders])
+  const removeWebsite = (id: string) => {
+    setWebsites((prev) => prev.filter((w) => w.id !== id))
+  }
 
-  const addProvider = (provider: HostingProvider) => {
-    if (selectedProviders.length < 5) {
-      setSelectedProviders([...selectedProviders, provider])
-      setSearchTerm("")
-      if (selectedProviders.length >= 4) {
-        setShowProviderSelector(false)
-      }
-    } else {
+  const getAverageScores = () => {
+    if (websites.length === 0) return { sustainability: 0, performance: 0, security: 0, content: 0 }
+
+    return {
+      sustainability: Math.round(websites.reduce((sum, w) => sum + w.sustainability_score, 0) / websites.length),
+      performance: Math.round(websites.reduce((sum, w) => sum + w.performance_score, 0) / websites.length),
+      security: Math.round(websites.reduce((sum, w) => sum + w.security_score, 0) / websites.length),
+      content: Math.round(websites.reduce((sum, w) => sum + w.content_quality_score, 0) / websites.length),
+    }
+  }
+
+  const getBestPerformer = (metric: keyof ComparisonData) => {
+    if (websites.length === 0) return null
+    return websites.reduce((best, current) => ((current[metric] as number) > (best[metric] as number) ? current : best))
+  }
+
+  const getScoreComparison = (score: number, average: number) => {
+    const diff = score - average
+    if (Math.abs(diff) < 5) return { icon: Minus, color: "text-gray-500", text: "Average" }
+    if (diff > 0) return { icon: TrendingUp, color: "text-emerald-500", text: `+${diff}` }
+    return { icon: TrendingDown, color: "text-red-500", text: `${diff}` }
+  }
+
+  const getScoreGradient = (score: number) => {
+    if (score >= 90) return "from-emerald-500 to-green-500"
+    if (score >= 80) return "from-green-500 to-lime-500"
+    if (score >= 70) return "from-yellow-500 to-orange-500"
+    if (score >= 60) return "from-orange-500 to-red-500"
+    return "from-red-500 to-pink-500"
+  }
+
+  const saveComparison = async () => {
+    if (websites.length < 2) {
       toast({
-        title: "Limit Reached",
-        description: "You can compare up to 5 providers at once",
+        title: "Insufficient Data",
+        description: "Add at least 2 websites to save comparison",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const response = await fetch("/api/comparisons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: comparisonName || `Comparison ${new Date().toLocaleDateString()}`,
+          analysis_ids: websites.map((w) => w.id),
+          comparison_data: {
+            websites,
+            averages: getAverageScores(),
+            created_at: new Date().toISOString(),
+          },
+        }),
+      })
+
+      if (response.ok) {
+        toast({
+          title: "✨ Comparison Saved",
+          description: "Your comparison has been saved successfully",
+        })
+      }
+    } catch (error) {
+      toast({
+        title: "Save Failed",
+        description: "Failed to save comparison",
         variant: "destructive",
       })
     }
   }
 
-  const removeProvider = (providerId: number) => {
-    setSelectedProviders(selectedProviders.filter((p) => p.id !== providerId))
-  }
-
-  const getTierColor = (tier: string) => {
-    switch (tier?.toLowerCase()) {
-      case "budget":
-        return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300"
-      case "mid-range":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-      case "premium":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-      case "enterprise":
-        return "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300"
-      default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-700/30 dark:text-gray-300"
-    }
-  }
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600 dark:text-green-400"
-    if (score >= 60) return "text-yellow-600 dark:text-yellow-400"
-    return "text-red-600 dark:text-red-400"
-  }
-
-  const renderStars = (rating: number) => {
-    const stars = Math.round(rating / 20)
-    return (
-      <div className="flex items-center">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`h-4 w-4 ${i < stars ? "text-yellow-400 fill-current" : "text-gray-300 dark:text-gray-600"}`}
-          />
-        ))}
-      </div>
-    )
-  }
-
-  const ComparisonChart = ({ providers }: { providers: HostingProvider[] }) => {
-    const metrics = [
-      { key: "sustainability_score", label: "Sustainability", color: "bg-green-500" },
-      { key: "performance_rating", label: "Performance", color: "bg-blue-500" },
-      { key: "renewable_energy_percentage", label: "Renewable Energy", color: "bg-emerald-500" },
-      { key: "support_quality", label: "Support Quality", color: "bg-purple-500" },
+  const exportComparison = () => {
+    const csvContent = [
+      ["Website", "URL", "Sustainability", "Performance", "Security", "Content Quality", "Hosting Provider", "SSL"],
+      ...websites.map((w) => [
+        w.title,
+        w.url,
+        w.sustainability_score,
+        w.performance_score,
+        w.security_score,
+        w.content_quality_score,
+        w.hosting_provider_name,
+        w.ssl_certificate ? "Yes" : "No",
+      ]),
     ]
+      .map((row) => row.join(","))
+      .join("\n")
 
-    return (
-      <Card className="mb-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <BarChart3 className="h-5 w-5 mr-2" />
-            Performance Comparison Chart
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {metrics.map((metric) => (
-              <div key={metric.key}>
-                <h4 className="font-medium text-sm text-slate-600 dark:text-slate-400 mb-3">{metric.label}</h4>
-                <div className="space-y-2">
-                  {providers.map((provider) => {
-                    const value = provider[metric.key as keyof HostingProvider] as number
-                    return (
-                      <div key={provider.id} className="flex items-center">
-                        <div className="w-24 text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
-                          {provider.name}
-                        </div>
-                        <div className="flex-1 mx-3">
-                          <Progress value={value} className="h-3" indicatorClassName={metric.color} />
-                        </div>
-                        <div className="w-12 text-sm font-bold text-right">{value}%</div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    )
+    const blob = new Blob([csvContent], { type: "text/csv" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `website-comparison-${new Date().toISOString().split("T")[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
-  if (loading) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-1">
-          <LoadingAnimation />
-        </main>
-        <Footer />
-        <Toaster />
-      </div>
-    )
-  }
+  const averages = getAverageScores()
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl sm:text-5xl font-bold bg-primary-gradient bg-clip-text text-transparent mb-4">
-              Compare Hosting Providers
-            </h1>
-            <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto text-lg">
-              Select up to 5 hosting providers to compare their features, performance, and sustainability metrics side
-              by side.
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-teal-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <div className="container mx-auto px-4 py-8">
+        {/* Magical Header */}
+        <div className="text-center mb-12">
+          <div className="flex justify-center mb-6">
+            <Logo size="lg" showText={true} />
           </div>
+          <div className="relative">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-teal-600 bg-clip-text text-transparent mb-4">
+              Website Comparison Tool
+            </h1>
+            <div className="absolute -top-2 -right-8">
+              <Sparkles className="h-8 w-8 text-purple-500 animate-pulse" />
+            </div>
+          </div>
+          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
+            Compare multiple websites side-by-side with magical insights. Discover performance differences, security
+            gaps, and sustainability opportunities with our intelligent analysis.
+          </p>
+        </div>
 
-          {/* Provider Selection */}
-          <Card className="mb-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle>Selected Providers ({selectedProviders.length}/5)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-3 mb-4">
-                {selectedProviders.map((provider) => (
-                  <Badge
-                    key={provider.id}
-                    variant="outline"
-                    className="px-3 py-2 text-sm bg-primary-gradient-start/10 border-primary-gradient-start/30"
-                  >
-                    {provider.name}
-                    <button
-                      onClick={() => removeProvider(provider.id)}
-                      className="ml-2 hover:text-red-500"
-                      aria-label={`Remove ${provider.name}`}
-                    >
-                      <XCircle className="h-4 w-4" />
-                    </button>
-                  </Badge>
-                ))}
+        {/* Magical Add Website Form */}
+        <Card className="mb-8 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-0 shadow-xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-2xl">
+              <div className="p-2 bg-gradient-to-r from-purple-500 to-teal-500 rounded-lg">
+                <Plus className="h-5 w-5 text-white" />
               </div>
+              Add Website to Comparison
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4">
+              <Input
+                placeholder="Enter website URL (e.g., example.com)"
+                value={newUrl}
+                onChange={(e) => setNewUrl(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && newUrl && analyzeWebsite(newUrl)}
+                className="flex-1 border-purple-200 focus:border-purple-500 text-lg py-6"
+              />
+              <Button
+                onClick={() => newUrl && analyzeWebsite(newUrl)}
+                disabled={isAnalyzing || !newUrl}
+                className="bg-gradient-to-r from-purple-600 to-teal-600 hover:from-purple-700 hover:to-teal-700 text-white px-8 py-6 text-lg shadow-lg"
+              >
+                {isAnalyzing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-5 w-5 mr-2" />
+                    Add Website
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-              {selectedProviders.length < 5 && (
-                <div className="space-y-3">
-                  <Button
-                    onClick={() => setShowProviderSelector(!showProviderSelector)}
-                    variant="outline"
-                    className="border-primary-gradient-start/30 text-primary-gradient-start hover:bg-primary-gradient-start/10"
-                  >
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Add Provider to Compare
-                  </Button>
+        {/* Comparison Actions */}
+        {websites.length > 0 && (
+          <div className="flex gap-4 mb-8">
+            <Input
+              placeholder="Comparison name (optional)"
+              value={comparisonName}
+              onChange={(e) => setComparisonName(e.target.value)}
+              className="max-w-xs border-purple-200 focus:border-purple-500"
+            />
+            <Button onClick={saveComparison} variant="outline" className="border-purple-200 hover:bg-purple-50">
+              <Star className="h-4 w-4 mr-2" />
+              Save Comparison
+            </Button>
+            <Button onClick={exportComparison} variant="outline" className="border-purple-200 hover:bg-purple-50">
+              <Download className="h-4 w-4 mr-2" />
+              Export Data
+            </Button>
+          </div>
+        )}
 
-                  {showProviderSelector && (
-                    <div className="space-y-3">
-                      <Input
-                        placeholder="Search providers..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="max-w-md"
-                      />
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
-                        {filteredProviders.slice(0, 12).map((provider) => (
-                          <Button
-                            key={provider.id}
-                            variant="outline"
-                            onClick={() => addProvider(provider)}
-                            className="justify-start h-auto p-3 text-left"
-                          >
-                            <div>
-                              <div className="font-medium">{provider.name}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {provider.carbon_neutral && <Leaf className="inline h-3 w-3 mr-1" />}
-                                {provider.pricing_tier} • {provider.sustainability_score}% sustainable
-                              </div>
-                            </div>
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+        {websites.length === 0 ? (
+          <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-0 shadow-xl">
+            <CardContent className="text-center py-16">
+              <div className="relative mb-8">
+                <BarChart3 className="h-24 w-24 mx-auto text-purple-300 dark:text-purple-700" />
+                <div className="absolute -top-2 -right-2">
+                  <Sparkles className="h-8 w-8 text-teal-500 animate-bounce" />
                 </div>
-              )}
-
-              {selectedProviders.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <TrendingUp className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>Select hosting providers to start comparing</p>
-                  <p className="text-sm mt-1">
-                    <Link href="/hosting" className="text-primary-gradient-start hover:underline">
-                      Browse our hosting catalog
-                    </Link>
-                  </p>
-                </div>
-              )}
+              </div>
+              <h3 className="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-4">Ready to Compare Websites?</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-lg max-w-md mx-auto">
+                Add websites above to start comparing their performance, security, and sustainability metrics with
+                magical insights and beautiful visualizations.
+              </p>
             </CardContent>
           </Card>
+        ) : (
+          <>
+            {/* Magical Average Scores Overview */}
+            <Card className="mb-8 bg-gradient-to-r from-purple-600 via-blue-600 to-teal-600 border-0 shadow-2xl">
+              <CardHeader>
+                <CardTitle className="text-white text-2xl flex items-center gap-2">
+                  <Award className="h-6 w-6" />
+                  Average Performance Across {websites.length} Websites
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  {[
+                    { label: "Sustainability", value: averages.sustainability, icon: Globe, color: "text-emerald-300" },
+                    { label: "Performance", value: averages.performance, icon: Zap, color: "text-yellow-300" },
+                    { label: "Security", value: averages.security, icon: Shield, color: "text-blue-300" },
+                    { label: "Content", value: averages.content, icon: BarChart3, color: "text-purple-300" },
+                  ].map((metric, index) => (
+                    <div key={index} className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4">
+                      <metric.icon className={`h-8 w-8 mx-auto mb-2 ${metric.color}`} />
+                      <div className="text-3xl font-bold text-white mb-1">{metric.value}%</div>
+                      <div className="text-sm text-white/80">{metric.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-          {/* Comparison Results */}
-          {selectedProviders.length >= 2 && (
-            <>
-              <ComparisonChart providers={selectedProviders} />
+            {/* Enhanced Comparison Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {websites.map((website, index) => {
+                const sustainabilityComp = getScoreComparison(website.sustainability_score, averages.sustainability)
+                const performanceComp = getScoreComparison(website.performance_score, averages.performance)
+                const securityComp = getScoreComparison(website.security_score, averages.security)
+                const contentComp = getScoreComparison(website.content_quality_score, averages.content)
 
-              {/* Detailed Comparison Table */}
-              <Card className="mb-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm overflow-hidden">
-                <CardHeader>
-                  <CardTitle>Detailed Comparison</CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-48 sticky left-0 bg-white dark:bg-slate-900 z-10">Feature</TableHead>
-                          {selectedProviders.map((provider) => (
-                            <TableHead key={provider.id} className="text-center min-w-48">
-                              <div className="space-y-1">
-                                <div className="font-semibold">{provider.name}</div>
-                                <Badge className={getTierColor(provider.pricing_tier)}>{provider.pricing_tier}</Badge>
-                              </div>
-                            </TableHead>
-                          ))}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell className="font-medium sticky left-0 bg-white dark:bg-slate-900 z-10">
-                            <div className="flex items-center">
-                              <Leaf className="h-4 w-4 mr-2 text-green-500" />
-                              Sustainability Score
+                const isTopPerformer =
+                  website.sustainability_score >= 90 || website.performance_score >= 90 || website.security_score >= 90
+
+                return (
+                  <Card
+                    key={website.id}
+                    className="group relative bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-500"
+                  >
+                    {/* Top Performer Badge */}
+                    {isTopPerformer && (
+                      <div className="absolute -top-2 -right-2 z-10">
+                        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-2 rounded-full shadow-lg">
+                          <Star className="h-4 w-4" />
+                        </div>
+                      </div>
+                    )}
+
+                    <CardHeader className="relative overflow-hidden">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-purple-600 transition-colors">
+                            {website.title}
+                          </CardTitle>
+                          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{website.url}</p>
+                          <div className="flex items-center gap-2">
+                            <Badge className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white">
+                              {website.hosting_provider_name}
+                            </Badge>
+                            <Badge
+                              className={
+                                website.ssl_certificate
+                                  ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
+                                  : "bg-gradient-to-r from-red-500 to-pink-500 text-white"
+                              }
+                            >
+                              {website.ssl_certificate ? "🔒 SSL" : "❌ No SSL"}
+                            </Badge>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeWebsite(website.id)}
+                          className="hover:bg-red-100 dark:hover:bg-red-900"
+                        >
+                          <X className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="space-y-4">
+                      {/* Enhanced Score Displays */}
+                      {[
+                        {
+                          label: "Sustainability",
+                          score: website.sustainability_score,
+                          comparison: sustainabilityComp,
+                          icon: Globe,
+                        },
+                        {
+                          label: "Performance",
+                          score: website.performance_score,
+                          comparison: performanceComp,
+                          icon: Zap,
+                        },
+                        {
+                          label: "Security",
+                          score: website.security_score,
+                          comparison: securityComp,
+                          icon: Shield,
+                        },
+                        {
+                          label: "Content",
+                          score: website.content_quality_score,
+                          comparison: contentComp,
+                          icon: BarChart3,
+                        },
+                      ].map((metric, index) => (
+                        <div key={index} className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                              <metric.icon className="h-4 w-4 text-gray-500" />
+                              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                {metric.label}
+                              </span>
                             </div>
-                          </TableCell>
-                          {selectedProviders.map((provider) => (
-                            <TableCell key={provider.id} className="text-center">
-                              <div className={`font-bold text-lg ${getScoreColor(provider.sustainability_score)}`}>
-                                {provider.sustainability_score}%
-                              </div>
-                              <Progress
-                                value={provider.sustainability_score}
-                                className="h-2 mt-1"
-                                indicatorClassName={
-                                  provider.sustainability_score >= 80
-                                    ? "bg-green-500"
-                                    : provider.sustainability_score >= 60
-                                      ? "bg-yellow-500"
-                                      : "bg-red-500"
-                                }
-                              />
-                            </TableCell>
-                          ))}
-                        </TableRow>
-
-                        <TableRow>
-                          <TableCell className="font-medium sticky left-0 bg-white dark:bg-slate-900 z-10">
-                            <div className="flex items-center">
-                              <Zap className="h-4 w-4 mr-2 text-blue-500" />
-                              Performance Rating
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg font-bold text-gray-900 dark:text-white">{metric.score}%</span>
+                              <metric.comparison.icon className={`h-4 w-4 ${metric.comparison.color}`} />
                             </div>
-                          </TableCell>
-                          {selectedProviders.map((provider) => (
-                            <TableCell key={provider.id} className="text-center">
-                              <div className={`font-bold text-lg ${getScoreColor(provider.performance_rating)}`}>
-                                {provider.performance_rating}%
-                              </div>
-                              <Progress
-                                value={provider.performance_rating}
-                                className="h-2 mt-1"
-                                indicatorClassName="bg-blue-500"
-                              />
-                            </TableCell>
-                          ))}
-                        </TableRow>
+                          </div>
+                          <div className="relative">
+                            <Progress value={metric.score} className="h-2" />
+                            <div
+                              className={`absolute top-0 left-0 h-2 rounded-full bg-gradient-to-r ${getScoreGradient(metric.score)} transition-all duration-700`}
+                              style={{ width: `${metric.score}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )
+              })}
+            </div>
 
-                        <TableRow>
-                          <TableCell className="font-medium sticky left-0 bg-white dark:bg-slate-900 z-10">
-                            <div className="flex items-center">
-                              <Award className="h-4 w-4 mr-2 text-green-500" />
-                              Renewable Energy
-                            </div>
-                          </TableCell>
-                          {selectedProviders.map((provider) => (
-                            <TableCell key={provider.id} className="text-center">
-                              <div className="font-bold text-lg text-green-600 dark:text-green-400">
-                                {provider.renewable_energy_percentage}%
-                              </div>
-                              <Progress
-                                value={provider.renewable_energy_percentage}
-                                className="h-2 mt-1"
-                                indicatorClassName="bg-green-500"
-                              />
-                            </TableCell>
-                          ))}
-                        </TableRow>
-
-                        <TableRow>
-                          <TableCell className="font-medium sticky left-0 bg-white dark:bg-slate-900 z-10">
-                            <div className="flex items-center">
-                              <Leaf className="h-4 w-4 mr-2 text-green-500" />
-                              Carbon Neutral
-                            </div>
-                          </TableCell>
-                          {selectedProviders.map((provider) => (
-                            <TableCell key={provider.id} className="text-center">
-                              {provider.carbon_neutral ? (
-                                <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                                  ✓ Yes
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-muted-foreground">
-                                  ✗ No
-                                </Badge>
-                              )}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-
-                        <TableRow>
-                          <TableCell className="font-medium sticky left-0 bg-white dark:bg-slate-900 z-10">
-                            <div className="flex items-center">
-                              <Star className="h-4 w-4 mr-2 text-yellow-500" />
-                              Support Quality
-                            </div>
-                          </TableCell>
-                          {selectedProviders.map((provider) => (
-                            <TableCell key={provider.id} className="text-center">
-                              <div className="flex flex-col items-center">
-                                {renderStars(provider.support_quality)}
-                                <span className="text-sm text-muted-foreground mt-1">{provider.support_quality}%</span>
-                              </div>
-                            </TableCell>
-                          ))}
-                        </TableRow>
-
-                        <TableRow>
-                          <TableCell className="font-medium sticky left-0 bg-white dark:bg-slate-900 z-10">
-                            <div className="flex items-center">
-                              <Zap className="h-4 w-4 mr-2 text-yellow-500" />
-                              Uptime Guarantee
-                            </div>
-                          </TableCell>
-                          {selectedProviders.map((provider) => (
-                            <TableCell key={provider.id} className="text-center">
-                              <div className="font-bold text-lg">{provider.uptime_guarantee}%</div>
-                            </TableCell>
-                          ))}
-                        </TableRow>
-
-                        <TableRow>
-                          <TableCell className="font-medium sticky left-0 bg-white dark:bg-slate-900 z-10">
-                            <div className="flex items-center">
-                              <Shield className="h-4 w-4 mr-2 text-blue-500" />
-                              Security Features
-                            </div>
-                          </TableCell>
-                          {selectedProviders.map((provider) => (
-                            <TableCell key={provider.id} className="text-center">
-                              <div className="space-y-1">
-                                {provider.security_features.slice(0, 3).map((feature, index) => (
-                                  <Badge key={index} variant="outline" className="text-xs block">
-                                    {feature}
-                                  </Badge>
-                                ))}
-                                {provider.security_features.length > 3 && (
-                                  <div className="text-xs text-muted-foreground">
-                                    +{provider.security_features.length - 3} more
-                                  </div>
-                                )}
-                              </div>
-                            </TableCell>
-                          ))}
-                        </TableRow>
-
-                        <TableRow>
-                          <TableCell className="font-medium sticky left-0 bg-white dark:bg-slate-900 z-10">
-                            <div className="flex items-center">
-                              <Globe className="h-4 w-4 mr-2 text-sky-500" />
-                              Data Centers
-                            </div>
-                          </TableCell>
-                          {selectedProviders.map((provider) => (
-                            <TableCell key={provider.id} className="text-center">
-                              <div className="space-y-1">
-                                {provider.data_center_locations.slice(0, 3).map((location, index) => (
-                                  <Badge key={index} variant="outline" className="text-xs block">
-                                    {location}
-                                  </Badge>
-                                ))}
-                                {provider.data_center_locations.length > 3 && (
-                                  <div className="text-xs text-muted-foreground">
-                                    +{provider.data_center_locations.length - 3} more
-                                  </div>
-                                )}
-                              </div>
-                            </TableCell>
-                          ))}
-                        </TableRow>
-
-                        <TableRow>
-                          <TableCell className="font-medium sticky left-0 bg-white dark:bg-slate-900 z-10">
-                            <div className="flex items-center">
-                              <Award className="h-4 w-4 mr-2 text-purple-500" />
-                              Green Certifications
-                            </div>
-                          </TableCell>
-                          {selectedProviders.map((provider) => (
-                            <TableCell key={provider.id} className="text-center">
-                              {provider.green_certifications.length > 0 ? (
-                                <div className="space-y-1">
-                                  {provider.green_certifications.slice(0, 2).map((cert, index) => (
-                                    <Badge
-                                      key={index}
-                                      variant="outline"
-                                      className="text-xs block bg-green-50 dark:bg-green-900/20"
-                                    >
-                                      {cert}
-                                    </Badge>
-                                  ))}
-                                  {provider.green_certifications.length > 2 && (
-                                    <div className="text-xs text-muted-foreground">
-                                      +{provider.green_certifications.length - 2} more
-                                    </div>
-                                  )}
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground text-sm">None</span>
-                              )}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      </TableBody>
-                    </Table>
+            {/* Magical Insights Panel */}
+            <Card className="mt-8 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 border-0 shadow-2xl">
+              <CardHeader>
+                <CardTitle className="text-white text-2xl flex items-center gap-2">
+                  <Sparkles className="h-6 w-6" />
+                  Magical Insights & Recommendations
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6">
+                    <h4 className="font-semibold mb-4 text-white text-lg flex items-center gap-2">
+                      <Award className="h-5 w-5" />🏆 Best Performers
+                    </h4>
+                    <ul className="space-y-2 text-white/90">
+                      <li className="flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-emerald-300" />
+                        Sustainability:{" "}
+                        <span className="font-bold">{getBestPerformer("sustainability_score")?.title}</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-yellow-300" />
+                        Performance: <span className="font-bold">{getBestPerformer("performance_score")?.title}</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-blue-300" />
+                        Security: <span className="font-bold">{getBestPerformer("security_score")?.title}</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <BarChart3 className="h-4 w-4 text-purple-300" />
+                        Content: <span className="font-bold">{getBestPerformer("content_quality_score")?.title}</span>
+                      </li>
+                    </ul>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3 justify-center">
-                {selectedProviders.map((provider) => (
-                  <Button key={provider.id} asChild className="bg-primary-gradient hover:opacity-90 text-white">
-                    <a href={provider.website} target="_blank" rel="noopener noreferrer">
-                      Visit {provider.name}
-                    </a>
-                  </Button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </main>
-      <Footer />
-      <Toaster />
+                  <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6">
+                    <h4 className="font-semibold mb-4 text-white text-lg flex items-center gap-2">
+                      <Sparkles className="h-5 w-5" />✨ Smart Recommendations
+                    </h4>
+                    <ul className="space-y-2 text-white/90 text-sm">
+                      <li>• Focus on improving lowest-scoring metrics across all sites</li>
+                      <li>• Consider migrating to top-performing hosting providers</li>
+                      <li>• Implement security best practices from leading sites</li>
+                      <li>• Optimize performance using insights from best performers</li>
+                      <li>• Enhance sustainability with green hosting solutions</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
     </div>
   )
 }

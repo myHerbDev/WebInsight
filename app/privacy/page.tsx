@@ -1,242 +1,554 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Shield, Eye, Lock, Users, Globe, Clock, Mail, Info, CheckCircle } from "lucide-react"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Shield, Eye, Lock, Database, Mail, Calendar } from "lucide-react"
 
-export default function PrivacyPage() {
-  const lastUpdated = "December 2024"
-
+export default function PrivacyPolicyPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+
+      <main className="flex-1">
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          {/* Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl sm:text-5xl font-bold bg-primary-gradient bg-clip-text text-transparent mb-4">
+            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
               Privacy Policy
             </h1>
-            <p className="text-slate-600 dark:text-slate-400 flex items-center justify-center">
-              <Calendar className="h-4 w-4 mr-2" />
-              Last updated: {lastUpdated}
+            <p className="text-lg text-gray-600 dark:text-gray-400 mb-4">
+              How we collect, use, and protect your information
             </p>
+            <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
+              <div className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                <span>Last updated: January 15, 2024</span>
+              </div>
+              <Badge variant="outline">GDPR Compliant</Badge>
+              <Badge variant="outline">CCPA Compliant</Badge>
+            </div>
           </div>
 
-          <Card className="mb-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/60">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Shield className="h-5 w-5 mr-3 text-primary-gradient-start" />
-                Our Commitment to Privacy
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="prose prose-slate dark:prose-invert max-w-none">
-              <p>
-                At WebInSight, we take your privacy seriously. This Privacy Policy explains how we collect, use,
-                disclose, and safeguard your information when you use our website analysis service.
-              </p>
-            </CardContent>
-          </Card>
+          {/* Quick Summary */}
+          <Alert className="mb-8">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Quick Summary:</strong> We collect minimal data necessary to provide our website analysis service.
+              We don't sell your data, use it for advertising, or share it with third parties except as described below.
+              You have full control over your data and can delete it at any time.
+            </AlertDescription>
+          </Alert>
 
-          <Card className="mb-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/60">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Database className="h-5 w-5 mr-3 text-primary-gradient-start" />
-                Information We Collect
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Website URLs</h3>
-                <p className="text-slate-600 dark:text-slate-400">
-                  We collect the URLs you submit for analysis to provide our website evaluation services.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Analysis Data</h3>
-                <p className="text-slate-600 dark:text-slate-400">
-                  We temporarily store website content and metadata during the analysis process to generate
-                  comprehensive reports.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Usage Information</h3>
-                <p className="text-slate-600 dark:text-slate-400">
-                  We collect information about how you interact with our service, including pages visited and features
-                  used.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">
-                  Account Information (Optional)
-                </h3>
-                <p className="text-slate-600 dark:text-slate-400">
-                  If you create an account, we collect your email address and any profile information you provide.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="space-y-8">
+            {/* Information We Collect */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Eye className="h-5 w-5 text-blue-500" />
+                  Information We Collect
+                </CardTitle>
+                <CardDescription>Types of data we collect and how we collect it</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <h3 className="font-semibold mb-3">Information You Provide Directly</h3>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                      <div>
+                        <strong>Account Information:</strong> Email address, name, and password when you create an
+                        account
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                      <div>
+                        <strong>Website URLs:</strong> URLs of websites you submit for analysis
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                      <div>
+                        <strong>Support Communications:</strong> Messages you send through our support channels
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                      <div>
+                        <strong>Preferences:</strong> Settings and preferences you configure in your account
+                      </div>
+                    </li>
+                  </ul>
+                </div>
 
-          <Card className="mb-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/60">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Eye className="h-5 w-5 mr-3 text-primary-gradient-start" />
-                How We Use Your Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ul className="space-y-3 text-slate-600 dark:text-slate-400">
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-primary-gradient-start rounded-full mt-2 mr-3 shrink-0"></span>
-                  To provide website analysis and generate comprehensive reports
-                </li>
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-primary-gradient-start rounded-full mt-2 mr-3 shrink-0"></span>
-                  To improve our AI algorithms and analysis accuracy
-                </li>
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-primary-gradient-start rounded-full mt-2 mr-3 shrink-0"></span>
-                  To communicate with you about our services (if you've provided contact information)
-                </li>
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-primary-gradient-start rounded-full mt-2 mr-3 shrink-0"></span>
-                  To maintain and improve our service performance
-                </li>
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-primary-gradient-start rounded-full mt-2 mr-3 shrink-0"></span>
-                  To comply with legal obligations and protect our rights
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+                <div>
+                  <h3 className="font-semibold mb-3">Information We Collect Automatically</h3>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                      <div>
+                        <strong>Usage Data:</strong> How you interact with our service, features used, and time spent
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                      <div>
+                        <strong>Technical Data:</strong> IP address, browser type, device information, and operating
+                        system
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                      <div>
+                        <strong>Performance Data:</strong> Error logs and performance metrics to improve our service
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                      <div>
+                        <strong>Cookies:</strong> Essential cookies for functionality and optional analytics cookies
+                      </div>
+                    </li>
+                  </ul>
+                </div>
 
-          <Card className="mb-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/60">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Lock className="h-5 w-5 mr-3 text-primary-gradient-start" />
-                Data Security & Retention
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Security Measures</h3>
-                <p className="text-slate-600 dark:text-slate-400">
-                  We implement industry-standard security measures to protect your data, including encryption in transit
-                  and at rest, secure servers, and regular security audits.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Data Retention</h3>
-                <p className="text-slate-600 dark:text-slate-400">
-                  Website analysis data is typically retained for 30 days to allow you to access your reports. Account
-                  information is retained until you request deletion.
-                </p>
-              </div>
-              <div>
-                <h3 className="font-semibold text-slate-800 dark:text-slate-200 mb-2">Data Deletion</h3>
-                <p className="text-slate-600 dark:text-slate-400">
-                  You can request deletion of your data at any time by contacting us. We will process deletion requests
-                  within 30 days.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+                <div>
+                  <h3 className="font-semibold mb-3">Website Analysis Data</h3>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                      <div>
+                        <strong>Public Website Content:</strong> Publicly accessible content from websites you analyze
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                      <div>
+                        <strong>Analysis Results:</strong> Performance metrics, security scores, and sustainability data
+                      </div>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                      <div>
+                        <strong>Generated Content:</strong> AI-generated content based on analysis results
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card className="mb-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/60">
-            <CardHeader>
-              <CardTitle>Third-Party Services</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-slate-600 dark:text-slate-400">
-                We use the following third-party services to provide our functionality:
-              </p>
-              <ul className="space-y-2 text-slate-600 dark:text-slate-400">
-                <li>
-                  <strong>Groq AI:</strong> For AI-powered analysis and content generation
-                </li>
-                <li>
-                  <strong>Vercel:</strong> For hosting and deployment
-                </li>
-                <li>
-                  <strong>Neon:</strong> For database services
-                </li>
-              </ul>
-              <p className="text-slate-600 dark:text-slate-400">
-                These services have their own privacy policies, and we encourage you to review them.
-              </p>
-            </CardContent>
-          </Card>
+            {/* How We Use Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-purple-500" />
+                  How We Use Your Information
+                </CardTitle>
+                <CardDescription>The purposes for which we process your data</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold mb-3">Service Provision</h3>
+                    <ul className="space-y-1 text-sm">
+                      <li>• Perform website analysis</li>
+                      <li>• Generate reports and insights</li>
+                      <li>• Provide AI content generation</li>
+                      <li>• Save and organize your analyses</li>
+                      <li>• Enable comparison features</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-3">Account Management</h3>
+                    <ul className="space-y-1 text-sm">
+                      <li>• Create and maintain your account</li>
+                      <li>• Authenticate your identity</li>
+                      <li>• Process subscription payments</li>
+                      <li>• Send important account notifications</li>
+                      <li>• Provide customer support</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-3">Service Improvement</h3>
+                    <ul className="space-y-1 text-sm">
+                      <li>• Analyze usage patterns</li>
+                      <li>• Fix bugs and technical issues</li>
+                      <li>• Develop new features</li>
+                      <li>• Improve analysis accuracy</li>
+                      <li>• Optimize performance</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-3">Communication</h3>
+                    <ul className="space-y-1 text-sm">
+                      <li>• Send service updates</li>
+                      <li>• Respond to support requests</li>
+                      <li>• Share product announcements</li>
+                      <li>• Send optional newsletters</li>
+                      <li>• Notify about security issues</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card className="mb-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/60">
-            <CardHeader>
-              <CardTitle>Your Rights</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-slate-600 dark:text-slate-400">
-                Depending on your location, you may have the following rights regarding your personal data:
-              </p>
-              <ul className="space-y-3 text-slate-600 dark:text-slate-400">
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-primary-gradient-start rounded-full mt-2 mr-3 shrink-0"></span>
-                  Right to access your personal data
-                </li>
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-primary-gradient-start rounded-full mt-2 mr-3 shrink-0"></span>
-                  Right to correct inaccurate data
-                </li>
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-primary-gradient-start rounded-full mt-2 mr-3 shrink-0"></span>
-                  Right to delete your data
-                </li>
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-primary-gradient-start rounded-full mt-2 mr-3 shrink-0"></span>
-                  Right to data portability
-                </li>
-                <li className="flex items-start">
-                  <span className="w-2 h-2 bg-primary-gradient-start rounded-full mt-2 mr-3 shrink-0"></span>
-                  Right to object to processing
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+            {/* Data Sharing */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-teal-500" />
+                  How We Share Information
+                </CardTitle>
+                <CardDescription>When and with whom we share your data</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Alert>
+                  <Shield className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>We do not sell your personal data.</strong> We only share information in the limited
+                    circumstances described below.
+                  </AlertDescription>
+                </Alert>
 
-          <Card className="mb-8 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/60">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Mail className="h-5 w-5 mr-3 text-primary-gradient-start" />
-                Contact Us
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-600 dark:text-slate-400 mb-4">
-                If you have any questions about this Privacy Policy or our data practices, please contact us:
-              </p>
-              <div className="space-y-2 text-slate-600 dark:text-slate-400">
-                <p>
-                  <strong>Email:</strong> privacy@myherb.co.il
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Service Providers</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      We work with trusted third-party service providers who help us operate our service:
+                    </p>
+                    <ul className="space-y-1 text-sm">
+                      <li>
+                        • <strong>Hosting Services:</strong> Vercel (website hosting) and Neon (database hosting)
+                      </li>
+                      <li>
+                        • <strong>AI Services:</strong> Groq (AI content generation)
+                      </li>
+                      <li>
+                        • <strong>Analytics:</strong> Privacy-focused analytics to understand usage patterns
+                      </li>
+                      <li>
+                        • <strong>Payment Processing:</strong> Stripe for subscription billing (if applicable)
+                      </li>
+                      <li>
+                        • <strong>Email Services:</strong> For transactional emails and support communications
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Legal Requirements</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      We may disclose information if required by law, court order, or government request, or to protect
+                      our rights, property, or safety.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Business Transfers</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      In the event of a merger, acquisition, or sale of assets, your information may be transferred as
+                      part of that transaction.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Aggregated Data</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      We may share aggregated, anonymized data that cannot identify you for research, industry reports,
+                      or service improvement.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Data Security */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Lock className="h-5 w-5 text-green-500" />
+                  Data Security
+                </CardTitle>
+                <CardDescription>How we protect your information</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  We implement industry-standard security measures to protect your data:
                 </p>
-                <p>
-                  <strong>Website:</strong>{" "}
-                  <a href="https://myherb.co.il" className="text-primary-gradient-start hover:underline">
-                    myherb.co.il
-                  </a>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
 
-          <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/60">
-            <CardHeader>
-              <CardTitle>Changes to This Policy</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-slate-600 dark:text-slate-400">
-                We may update this Privacy Policy from time to time. We will notify you of any changes by posting the
-                new Privacy Policy on this page and updating the "Last updated" date. We encourage you to review this
-                Privacy Policy periodically for any changes.
-              </p>
-            </CardContent>
-          </Card>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold mb-3">Technical Safeguards</h3>
+                    <ul className="space-y-1 text-sm">
+                      <li>• SSL/TLS encryption for data in transit</li>
+                      <li>• Encryption at rest for sensitive data</li>
+                      <li>• Secure database configurations</li>
+                      <li>• Regular security updates and patches</li>
+                      <li>• Access controls and authentication</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-3">Operational Safeguards</h3>
+                    <ul className="space-y-1 text-sm">
+                      <li>• Limited access on a need-to-know basis</li>
+                      <li>• Regular security training for staff</li>
+                      <li>• Incident response procedures</li>
+                      <li>• Regular security audits</li>
+                      <li>• Secure development practices</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <Alert>
+                  <Info className="h-4 w-4" />
+                  <AlertDescription>
+                    While we implement strong security measures, no system is 100% secure. We encourage you to use
+                    strong passwords and keep your account information confidential.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+
+            {/* Your Rights */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-orange-500" />
+                  Your Rights and Choices
+                </CardTitle>
+                <CardDescription>How you can control your personal information</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold mb-3">Access and Control</h3>
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <div>
+                          <strong>Access:</strong> Request a copy of your personal data
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <div>
+                          <strong>Correction:</strong> Update or correct inaccurate information
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <div>
+                          <strong>Deletion:</strong> Request deletion of your account and data
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <div>
+                          <strong>Portability:</strong> Export your data in a machine-readable format
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-3">Communication Preferences</h3>
+                    <ul className="space-y-2 text-sm">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <div>
+                          <strong>Email Preferences:</strong> Opt out of marketing emails
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <div>
+                          <strong>Notifications:</strong> Control account and service notifications
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <div>
+                          <strong>Cookies:</strong> Manage cookie preferences in your browser
+                        </div>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
+                        <div>
+                          <strong>Analytics:</strong> Opt out of analytics tracking
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-2">How to Exercise Your Rights</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    To exercise any of these rights, please contact us at:
+                  </p>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="h-4 w-4 text-purple-600" />
+                    <a href="mailto:privacy@webinsight.com" className="text-purple-600 hover:underline">
+                      privacy@webinsight.com
+                    </a>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">
+                    We will respond to your request within 30 days as required by applicable law.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Data Retention */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-indigo-500" />
+                  Data Retention
+                </CardTitle>
+                <CardDescription>How long we keep your information</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Account Data</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      We retain your account information and analysis data for as long as your account is active. When
+                      you delete your account, we will delete your personal data within 30 days, except where we need to
+                      retain it for legal compliance.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Analysis Data</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Website analysis results are retained to provide historical data and improve our service. You can
+                      delete individual analyses at any time from your account dashboard.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Technical Data</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Log files and technical data are typically retained for 90 days for security and performance
+                      monitoring purposes.
+                    </p>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Legal Requirements</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Some data may be retained longer if required by law, for legal proceedings, or to protect our
+                      rights and interests.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* International Transfers */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-blue-500" />
+                  International Data Transfers
+                </CardTitle>
+                <CardDescription>How we handle data across borders</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Our service is hosted primarily in the United States. If you are located outside the US, your
+                  information may be transferred to and processed in the US or other countries where our service
+                  providers operate.
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  We ensure that any international transfers comply with applicable data protection laws and implement
+                  appropriate safeguards, such as standard contractual clauses or adequacy decisions.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Children's Privacy */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-pink-500" />
+                  Children's Privacy
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Our service is not intended for children under 13 years of age. We do not knowingly collect personal
+                  information from children under 13. If you are a parent or guardian and believe your child has
+                  provided us with personal information, please contact us immediately.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Changes to Policy */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-gray-500" />
+                  Changes to This Policy
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  We may update this Privacy Policy from time to time to reflect changes in our practices or applicable
+                  law. We will notify you of any material changes by:
+                </p>
+                <ul className="space-y-1 text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  <li>• Posting the updated policy on our website</li>
+                  <li>• Sending an email notification to registered users</li>
+                  <li>• Displaying a prominent notice on our service</li>
+                </ul>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Your continued use of our service after the effective date of the updated policy constitutes
+                  acceptance of the changes.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Contact Information */}
+            <Card className="bg-gradient-to-br from-purple-50 to-teal-50 dark:from-purple-900/20 dark:to-teal-900/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-purple-600" />
+                  Contact Us
+                </CardTitle>
+                <CardDescription>Questions about this Privacy Policy</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  If you have any questions about this Privacy Policy or our data practices, please contact us:
+                </p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-purple-600" />
+                    <span>Email: </span>
+                    <a href="mailto:privacy@webinsight.com" className="text-purple-600 hover:underline">
+                      privacy@webinsight.com
+                    </a>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-purple-600" />
+                    <span>Website: </span>
+                    <a href="/support" className="text-purple-600 hover:underline">
+                      webinsight.com/support
+                    </a>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-4">
+                  We will respond to privacy-related inquiries within 30 days.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </main>
+
       <Footer />
     </div>
   )

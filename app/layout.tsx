@@ -1,52 +1,39 @@
 import type React from "react"
 import type { Metadata } from "next"
 import "./globals.css"
-import { Inter } from "next/font/google"
-import { ThemeProvider } from "@/components/theme-provider" // Assuming you have this for shadcn/ui
+import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
-import { ParticleBackground } from "@/components/particle-background"
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-})
+// Removed AuthProvider for now to ensure stability, can be re-added carefully later
 
 export const metadata: Metadata = {
-  title: "WebInSight: AI-Powered Website Analysis & Optimization",
+  title: "WebInSight - Advanced Website Analytics & AI Content Generation",
   description:
-    "Elevate your website with WebInSight. AI-driven analysis for peak performance, SEO, content strategy, and sustainability. Actionable insights for developers & marketers.",
-  generator: "v0.dev",
-  keywords: [
-    "AI Website Analyzer",
-    "SEO Audit Tool",
-    "Website Performance",
-    "Content Optimization",
-    "Sustainability Score",
-    "WebInSight",
-    "Gradient Design",
-    "Modern Web App",
-  ],
+    "Analyze your website for sustainability, performance, and security. Generate AI-powered content based on insights.",
+  keywords:
+    "website analysis, sustainability, carbon footprint, web performance, SEO, AI content generation, green hosting",
+  authors: [{ name: "WebInSight Team" }],
+  creator: "WebInSight",
+  publisher: "WebInSight",
+  robots: "index, follow",
   openGraph: {
-    title: "WebInSight: AI-Powered Website Analysis & Optimization",
-    description:
-      "Elevate your website with WebInSight. AI-driven analysis for peak performance, SEO, content strategy, and sustainability.",
+    title: "WebInSight - Advanced Website Analytics",
+    description: "Analyze your website and generate AI-powered content.",
     type: "website",
-    // url: 'https://yourdomain.com', // Replace with your actual domain
-    // images: [{ url: 'https://yourdomain.com/og-image.png' }], // Replace with your OG image
+    locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "WebInSight: AI-Powered Website Analysis & Optimization",
-    description:
-      "Elevate your website with WebInSight. AI-driven analysis for peak performance, SEO, content strategy, and sustainability.",
-    // site: '@yourtwitterhandle', // Replace with your Twitter handle
-    // images: ['https://yourdomain.com/twitter-image.png'], // Replace with your Twitter image
+    title: "WebInSight - Advanced Website Analytics",
+    description: "Analyze your website and generate AI-powered content.",
   },
-  themeColor: [
-    // For PWA and browser theming
-    { media: "(prefers-color-scheme: light)", color: "hsl(220 20% 97%)" },
-    { media: "(prefers-color-scheme: dark)", color: "hsl(220 25% 8%)" },
-  ],
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any", type: "image/x-icon" },
+      { url: "/favicon.png", type: "image/png", sizes: "32x32" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -55,14 +42,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
-      <body className="min-h-screen bg-background font-sans antialiased">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <div className="relative flex min-h-screen flex-col">
-            {/* Particle background effect */}
-            <ParticleBackground />
-            {children}
-          </div>
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
           <Toaster />
         </ThemeProvider>
       </body>
