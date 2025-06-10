@@ -16,7 +16,7 @@
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-dialog": "latest",
     "@radix-ui/react-dropdown-menu": "latest",
-    "@radix-ui/react-label": "^2.0.2",
+    "@radix-ui/react-label": "latest",
     "@radix-ui/react-progress": "latest",
     "@radix-ui/react-scroll-area": "latest",
     "@radix-ui/react-select": "latest",

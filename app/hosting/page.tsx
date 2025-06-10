@@ -49,8 +49,18 @@ export default function HostingProvidersPage() {
     try {
       const response = await fetch("/api/hosting-providers")
       if (response.ok) {
-        const data = await response.json()
-        setProviders(data)
+        const responseBody = await response.json()
+        if (responseBody && responseBody.data && Array.isArray(responseBody.data)) {
+          setProviders(responseBody.data)
+        } else {
+          console.error("Unexpected API response structure:", responseBody)
+          setProviders([]) // Default to an empty array to prevent .filter error
+          toast({
+            title: "Data Error",
+            description: "Received invalid data format for hosting providers.",
+            variant: "destructive",
+          })
+        }
       } else {
         throw new Error("Failed to fetch providers")
       }
