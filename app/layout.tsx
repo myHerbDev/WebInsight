@@ -8,9 +8,9 @@ import { Toaster } from "@/components/ui/toaster" // Import Toaster
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "WebInSight - AI-Powered Website Analysis",
+  title: "WSfynder - AI-Powered Website Analysis",
   description: "AI-powered analysis for performance, SEO, and sustainability optimization.",
-    generator: 'v0.dev'
+  generator: "v0.dev",
 }
 
 export default function RootLayout({

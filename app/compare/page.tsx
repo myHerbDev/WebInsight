@@ -200,15 +200,15 @@ export default function ComparePage() {
           </div>
           <div className="relative">
             <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-teal-600 bg-clip-text text-transparent mb-4">
-              Website Comparison Tool
+              WSfynder Comparison Engine
             </h1>
             <div className="absolute -top-2 -right-8">
               <Sparkles className="h-8 w-8 text-purple-500 animate-pulse" />
             </div>
           </div>
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            Compare multiple websites side-by-side with magical insights. Discover performance differences, security
-            gaps, and sustainability opportunities with our intelligent analysis.
+            Compare multiple websites side-by-side with WSfynder's magical insights. Discover performance differences,
+            security gaps, and sustainability opportunities with our intelligent analysis.
           </p>
         </div>
 

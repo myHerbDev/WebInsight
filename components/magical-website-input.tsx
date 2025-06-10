@@ -15,48 +15,44 @@ export function MagicalWebsiteInput({ onAnalyze, isLoading }: MagicalWebsiteInpu
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (url.trim()) {
+    if (url.trim() && !isLoading) {
       onAnalyze(url.trim())
     }
   }
 
   return (
-    <div className="bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-700 dark:to-purple-800 p-8 md:p-12 rounded-b-xl">
-      <div className="text-center mb-8">
-        <Sparkles className="h-12 w-12 text-yellow-300 mx-auto mb-4 animate-pulse-slow" />
-        <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">Unlock Your Website's Potential</h2>
-        <p className="text-purple-200 max-w-xl mx-auto">
-          Enter any website URL to get instant AI-powered analysis on sustainability, performance, security, and more.
-        </p>
-      </div>
-      <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
-        <div className="flex flex-col sm:flex-row items-center gap-3 bg-white/20 dark:bg-black/20 p-2 rounded-full shadow-xl backdrop-blur-sm">
-          <div className="relative flex-grow w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-purple-300" />
-            <Input
-              type="url"
-              placeholder="e.g., https://example.com"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="w-full h-14 pl-12 pr-4 rounded-full text-lg bg-transparent text-white placeholder-purple-300 border-none focus:ring-0 focus:outline-none"
-              required
-            />
-          </div>
-          <Button
-            type="submit"
-            disabled={isLoading || !url.trim()}
-            className="w-full sm:w-auto h-14 px-8 py-2 text-lg font-semibold bg-yellow-400 hover:bg-yellow-500 text-purple-800 rounded-full shadow-md transition-transform duration-150 ease-in-out hover:scale-105 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:ring-opacity-50 flex items-center justify-center"
-          >
-            {isLoading ? (
-              <Loader2 className="h-6 w-6 animate-spin" />
-            ) : (
-              <>
-                <Sparkles className="h-5 w-5 mr-2" />
-                Analyze Now
-              </>
-            )}
-          </Button>
+    <div className="relative p-1 rounded-full bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 shadow-2xl hover:shadow-purple-500/50 transition-shadow duration-300">
+      <form
+        onSubmit={handleSubmit}
+        className="flex items-center gap-2 bg-background dark:bg-gray-900/80 backdrop-blur-md p-2 rounded-full"
+      >
+        <div className="relative flex-grow">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+            type="url"
+            placeholder="Enter website URL (e.g., https://example.com)"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className="w-full h-12 pl-12 pr-4 rounded-full text-base bg-transparent text-foreground placeholder-muted-foreground border-none focus:ring-0 focus:outline-none"
+            required
+            aria-label="Website URL to analyze"
+          />
         </div>
+        <Button
+          type="submit"
+          disabled={isLoading || !url.trim()}
+          className="h-12 px-6 text-base font-semibold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full shadow-lg transition-all duration-300 ease-in-out hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75 flex items-center justify-center"
+          aria-label="Analyze Website"
+        >
+          {isLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <>
+              <Sparkles className="h-5 w-5 mr-2 opacity-80" />
+              Analyze
+            </>
+          )}
+        </Button>
       </form>
     </div>
   )

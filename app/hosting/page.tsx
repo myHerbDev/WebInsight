@@ -5,14 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Search, Leaf, Shield, Zap, Globe, ExternalLink, SortAsc, SortDesc, Award, Star } from "lucide-react"
+import { Search, Leaf, Zap, ExternalLink, SortAsc, SortDesc, Award, Star, CheckCircle } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "@/components/ui/use-toast"
 import { Logo } from "@/components/logo"
+import Link from "next/link"
 
 interface HostingProvider {
-  id: number
+  id: string // Changed to string to match API potential from DB
   name: string
   website: string
   sustainability_score: number
@@ -25,6 +25,9 @@ interface HostingProvider {
   security_features: string[]
   uptime_guarantee: number
   support_quality: number
+  average_rating?: number // Optional, as not all entries might have it
+  review_count?: number // Optional
+  features?: string[] // Optional
 }
 
 export default function HostingProvidersPage() {
@@ -42,10 +45,14 @@ export default function HostingProvidersPage() {
   }, [])
 
   useEffect(() => {
-    filterAndSortProviders()
+    if (providers.length > 0) {
+      // Only filter if providers is not empty
+      filterAndSortProviders()
+    }
   }, [providers, searchTerm, sortBy, sortOrder, filterTier, filterGreen])
 
   const fetchProviders = async () => {
+    setLoading(true)
     try {
       const response = await fetch("/api/hosting-providers")
       if (response.ok) {
@@ -54,7 +61,7 @@ export default function HostingProvidersPage() {
           setProviders(responseBody.data)
         } else {
           console.error("Unexpected API response structure:", responseBody)
-          setProviders([]) // Default to an empty array to prevent .filter error
+          setProviders([])
           toast({
             title: "Data Error",
             description: "Received invalid data format for hosting providers.",
@@ -62,13 +69,14 @@ export default function HostingProvidersPage() {
           })
         }
       } else {
-        throw new Error("Failed to fetch providers")
+        throw new Error(`Failed to fetch providers: ${response.statusText}`)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching providers:", error)
+      setProviders([]) // Set to empty array on error
       toast({
         title: "Error",
-        description: "Failed to load hosting providers",
+        description: error.message || "Failed to load hosting providers",
         variant: "destructive",
       })
     } finally {
@@ -77,12 +85,17 @@ export default function HostingProvidersPage() {
   }
 
   const filterAndSortProviders = () => {
-    const filtered = providers.filter((provider) => {
+    if (!Array.isArray(providers)) {
+      // Guard against providers not being an array
+      setFilteredProviders([])
+      return
+    }
+    const tempFiltered = [...providers].filter((provider) => {
       const matchesSearch =
         provider.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         provider.website.toLowerCase().includes(searchTerm.toLowerCase())
 
-      const matchesTier = filterTier === "all" || provider.pricing_tier === filterTier
+      const matchesTier = filterTier === "all" || provider.pricing_tier.toLowerCase() === filterTier.toLowerCase()
 
       const matchesGreen =
         filterGreen === "all" ||
@@ -92,12 +105,18 @@ export default function HostingProvidersPage() {
       return matchesSearch && matchesTier && matchesGreen
     })
 
-    filtered.sort((a, b) => {
+    tempFiltered.sort((a, b) => {
       let aValue = a[sortBy as keyof HostingProvider]
       let bValue = b[sortBy as keyof HostingProvider]
 
-      if (typeof aValue === "string") aValue = aValue.toLowerCase()
-      if (typeof bValue === "string") bValue = bValue.toLowerCase()
+      // Handle cases where values might be undefined for sorting
+      if (aValue === undefined) aValue = sortOrder === "asc" ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY
+      if (bValue === undefined) bValue = sortOrder === "asc" ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY
+
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        aValue = aValue.toLowerCase()
+        bValue = bValue.toLowerCase()
+      }
 
       if (sortOrder === "asc") {
         return aValue < bValue ? -1 : aValue > bValue ? 1 : 0
@@ -105,12 +124,11 @@ export default function HostingProvidersPage() {
         return aValue > bValue ? -1 : aValue < bValue ? 1 : 0
       }
     })
-
-    setFilteredProviders(filtered)
+    setFilteredProviders(tempFiltered)
   }
 
   const getTierColor = (tier: string) => {
-    switch (tier) {
+    switch (tier?.toLowerCase()) {
       case "budget":
         return "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
       case "mid-range":
@@ -120,19 +138,21 @@ export default function HostingProvidersPage() {
       case "enterprise":
         return "bg-gradient-to-r from-orange-500 to-red-500 text-white"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+        return "bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
     }
   }
 
-  const getScoreColor = (score: number) => {
-    if (score >= 90) return "text-emerald-600"
-    if (score >= 80) return "text-green-600"
-    if (score >= 70) return "text-yellow-600"
-    if (score >= 60) return "text-orange-600"
-    return "text-red-600"
+  const getScoreColor = (score: number | undefined) => {
+    if (score === undefined) return "text-gray-500"
+    if (score >= 90) return "text-emerald-500 dark:text-emerald-400"
+    if (score >= 80) return "text-green-500 dark:text-green-400"
+    if (score >= 70) return "text-yellow-500 dark:text-yellow-400"
+    if (score >= 60) return "text-orange-500 dark:text-orange-400"
+    return "text-red-500 dark:text-red-400"
   }
 
-  const getScoreGradient = (score: number) => {
+  const getScoreGradient = (score: number | undefined) => {
+    if (score === undefined) return "from-gray-400 to-gray-500"
     if (score >= 90) return "from-emerald-500 to-green-500"
     if (score >= 80) return "from-green-500 to-lime-500"
     if (score >= 70) return "from-yellow-500 to-orange-500"
@@ -142,12 +162,14 @@ export default function HostingProvidersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-teal-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
+      <div className="min-h-screen futuristic-bg">
+        <div className="grid-pattern"></div> <div className="orb orb-1"></div> <div className="orb orb-2"></div>{" "}
+        <div className="orb orb-3"></div>
+        <div className="container mx-auto px-4 py-8 relative z-10">
+          <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-500 border-t-transparent mx-auto mb-6"></div>
-              <p className="text-lg text-gray-600 dark:text-gray-400">Loading hosting providers...</p>
+              <p className="text-lg text-gray-300">Loading Sustainable Hosts...</p>
             </div>
           </div>
         </div>
@@ -156,50 +178,47 @@ export default function HostingProvidersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-teal-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header with Logo */}
+    <div className="min-h-screen futuristic-bg">
+      <div className="grid-pattern"></div> <div className="orb orb-1"></div> <div className="orb orb-2"></div>{" "}
+      <div className="orb orb-3"></div>
+      <div className="container mx-auto px-4 py-8 relative z-10">
         <div className="text-center mb-12">
           <div className="flex justify-center mb-6">
             <Logo size="lg" showText={true} />
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-teal-600 bg-clip-text text-transparent mb-4">
-            Green Hosting Providers Catalog
+          <h1 className="text-4xl md:text-5xl font-bold gradient-text mb-4" data-text="Sustainable Hosting Catalog">
+            Sustainable Hosting Catalog
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-            Compare the world's leading hosting providers based on sustainability, performance, and security metrics.
-            Make informed decisions for environmentally responsible web hosting.
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+            Discover top hosting providers, rated for sustainability, performance, and user satisfaction. Make an
+            informed, eco-conscious choice.
           </p>
         </div>
 
-        {/* Enhanced Search and Filters */}
-        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl p-6 mb-8 shadow-lg">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-background/70 dark:bg-gray-900/70 backdrop-blur-md rounded-2xl p-6 mb-8 shadow-2xl border border-white/10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search providers..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-purple-200 focus:border-purple-500"
+                className="pl-10 futuristic-input--alt"
               />
             </div>
-
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="border-purple-200 focus:border-purple-500">
+              <SelectTrigger className="futuristic-input--alt">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="sustainability_score">Sustainability Score</SelectItem>
-                <SelectItem value="performance_rating">Performance Rating</SelectItem>
-                <SelectItem value="renewable_energy_percentage">Renewable Energy</SelectItem>
+                <SelectItem value="sustainability_score">Sustainability</SelectItem>
+                <SelectItem value="performance_rating">Performance</SelectItem>
+                <SelectItem value="average_rating">User Rating</SelectItem>
                 <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="pricing_tier">Pricing Tier</SelectItem>
               </SelectContent>
             </Select>
-
             <Select value={filterTier} onValueChange={setFilterTier}>
-              <SelectTrigger className="border-purple-200 focus:border-purple-500">
+              <SelectTrigger className="futuristic-input--alt">
                 <SelectValue placeholder="Filter by tier" />
               </SelectTrigger>
               <SelectContent>
@@ -207,209 +226,156 @@ export default function HostingProvidersPage() {
                 <SelectItem value="budget">Budget</SelectItem>
                 <SelectItem value="mid-range">Mid-range</SelectItem>
                 <SelectItem value="premium">Premium</SelectItem>
-                <SelectItem value="enterprise">Enterprise</SelectItem>
               </SelectContent>
             </Select>
-
             <Select value={filterGreen} onValueChange={setFilterGreen}>
-              <SelectTrigger className="border-purple-200 focus:border-purple-500">
+              <SelectTrigger className="futuristic-input--alt">
                 <SelectValue placeholder="Green hosting" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Providers</SelectItem>
-                <SelectItem value="green">Carbon Neutral Only</SelectItem>
+                <SelectItem value="green">Carbon Neutral</SelectItem>
                 <SelectItem value="not-green">Not Carbon Neutral</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
           <div className="flex items-center justify-between">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-              className="border-purple-200 hover:bg-purple-50"
+              className="futuristic-button--secondary"
             >
               {sortOrder === "asc" ? <SortAsc className="h-4 w-4 mr-2" /> : <SortDesc className="h-4 w-4 mr-2" />}
               {sortOrder === "asc" ? "Ascending" : "Descending"}
             </Button>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-muted-foreground">
               Showing {filteredProviders.length} of {providers.length} providers
             </span>
           </div>
         </div>
 
-        {/* Providers Grid with Enhanced Design */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredProviders.map((provider) => (
             <Card
               key={provider.id}
-              className="group hover:shadow-2xl hover:scale-105 transition-all duration-300 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-0 shadow-lg"
+              className="futuristic-card glassmorphism-effect group hover:border-purple-500/50 transition-all duration-300"
             >
-              <CardHeader className="relative overflow-hidden">
-                {/* Gradient overlay for top performers */}
-                {provider.sustainability_score >= 90 && (
-                  <div className="absolute top-0 right-0 bg-gradient-to-l from-green-500 to-emerald-500 text-white px-3 py-1 rounded-bl-lg">
-                    <div className="flex items-center gap-1">
-                      <Award className="h-3 w-3" />
-                      <span className="text-xs font-bold">TOP RATED</span>
-                    </div>
-                  </div>
+              <CardHeader className="relative overflow-hidden pb-4">
+                {provider.sustainability_score >= 95 && (
+                  <Badge className="absolute top-4 right-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-2 py-1 text-xs font-bold shadow-lg">
+                    <Award className="h-3 w-3 mr-1" /> TOP SUSTAINABLE
+                  </Badge>
                 )}
-
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-purple-600 transition-colors">
+                <div className="flex items-center space-x-3">
+                  {/* Placeholder for actual logo - could fetch from a URL if available */}
+                  <div
+                    className={`w-12 h-12 rounded-lg bg-gradient-to-br ${getScoreGradient(provider.sustainability_score)} flex items-center justify-center text-white text-xl font-bold`}
+                  >
+                    {provider.name.substring(0, 1)}
+                  </div>
+                  <div>
+                    <CardTitle
+                      className="text-xl font-bold text-foreground group-hover:gradient-text transition-colors"
+                      data-text={provider.name}
+                    >
                       {provider.name}
                     </CardTitle>
-                    <div className="flex items-center gap-2 mt-3">
-                      <Badge className={`${getTierColor(provider.pricing_tier)} shadow-lg`}>
-                        {provider.pricing_tier}
-                      </Badge>
-                      {provider.carbon_neutral && (
-                        <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg">
-                          <Leaf className="h-3 w-3 mr-1" />
-                          Carbon Neutral
-                        </Badge>
-                      )}
-                    </div>
+                    <Link
+                      href={provider.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-400 hover:text-blue-300 transition-colors flex items-center"
+                    >
+                      Visit Website <ExternalLink className="h-3 w-3 ml-1" />
+                    </Link>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => window.open(provider.website, "_blank")}
-                    className="hover:bg-purple-100 dark:hover:bg-purple-900"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </Button>
                 </div>
               </CardHeader>
-
-              <CardContent className="space-y-6">
-                {/* Score Displays with Enhanced Visuals */}
-                <div className="space-y-4">
-                  {/* Sustainability Score */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Sustainability</span>
-                      <div className="flex items-center gap-1">
-                        <span className={`text-lg font-bold ${getScoreColor(provider.sustainability_score)}`}>
-                          {provider.sustainability_score}
+              <CardContent className="space-y-5 pt-2">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                  {[
+                    { label: "Sustainability", value: provider.sustainability_score, icon: Leaf, unit: "%" },
+                    { label: "Performance", value: provider.performance_rating, icon: Zap, unit: "%" },
+                    {
+                      label: "User Rating",
+                      value: provider.average_rating,
+                      icon: Star,
+                      unit: `/5 (${provider.review_count || 0} reviews)`,
+                    },
+                    { label: "Uptime", value: provider.uptime_guarantee, icon: CheckCircle, unit: "%" },
+                  ].map((metric) => (
+                    <div key={metric.label}>
+                      <div className="flex items-center text-muted-foreground mb-1">
+                        <metric.icon className={`h-4 w-4 mr-2 ${getScoreColor(metric.value)}`} />
+                        <span>{metric.label}</span>
+                      </div>
+                      <div className="flex items-baseline">
+                        <span className={`text-lg font-bold ${getScoreColor(metric.value)}`}>
+                          {metric.value ?? "N/A"}
                         </span>
-                        <span className="text-xs text-gray-500">%</span>
-                        {provider.sustainability_score >= 85 && <Star className="h-4 w-4 text-yellow-500" />}
+                        <span className="text-xs text-muted-foreground ml-0.5">{metric.unit}</span>
+                      </div>
+                      <div className="relative h-2 bg-gray-700/50 rounded-full mt-1 overflow-hidden">
+                        <div
+                          className={`absolute top-0 left-0 h-full rounded-full bg-gradient-to-r ${getScoreGradient(metric.value)} transition-all duration-500`}
+                          style={{
+                            width: `${metric.value && metric.label !== "User Rating" ? metric.value : (metric.value || 0) * 20}%`,
+                          }}
+                        />
                       </div>
                     </div>
-                    <div className="relative">
-                      <Progress value={provider.sustainability_score} className="h-3" />
-                      <div
-                        className={`absolute top-0 left-0 h-3 rounded-full bg-gradient-to-r ${getScoreGradient(provider.sustainability_score)} transition-all duration-500`}
-                        style={{ width: `${provider.sustainability_score}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Renewable Energy */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Renewable Energy</span>
-                      <span className="text-lg font-bold text-green-600">{provider.renewable_energy_percentage}%</span>
-                    </div>
-                    <div className="relative">
-                      <Progress value={Math.min(provider.renewable_energy_percentage, 100)} className="h-3" />
-                      <div
-                        className="absolute top-0 left-0 h-3 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all duration-500"
-                        style={{ width: `${Math.min(provider.renewable_energy_percentage, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Performance Rating */}
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Performance</span>
-                      <span className={`text-lg font-bold ${getScoreColor(provider.performance_rating)}`}>
-                        {provider.performance_rating}%
-                      </span>
-                    </div>
-                    <div className="relative">
-                      <Progress value={provider.performance_rating} className="h-3" />
-                      <div
-                        className={`absolute top-0 left-0 h-3 rounded-full bg-gradient-to-r from-blue-400 to-cyan-500 transition-all duration-500`}
-                        style={{ width: `${provider.performance_rating}%` }}
-                      />
-                    </div>
-                  </div>
+                  ))}
                 </div>
 
-                {/* Key Features with Enhanced Icons */}
-                <div className="space-y-3">
-                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                    <Shield className="h-4 w-4 mr-3 text-blue-500" />
-                    <span className="font-medium">{provider.security_features.length} Security Features</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                    <Globe className="h-4 w-4 mr-3 text-green-500" />
-                    <span className="font-medium">{provider.data_center_locations.length} Global Locations</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                    <Zap className="h-4 w-4 mr-3 text-yellow-500" />
-                    <span className="font-medium">{provider.uptime_guarantee}% Uptime SLA</span>
-                  </div>
-                </div>
-
-                {/* Green Certifications */}
-                {provider.green_certifications.length > 0 && (
+                {provider.carbon_neutral && (
+                  <Badge className="bg-green-600/20 text-green-300 border-green-500/50 py-1 px-2">
+                    <Leaf className="h-3 w-3 mr-1" />
+                    Carbon Neutral
+                  </Badge>
+                )}
+                {provider.green_certifications && provider.green_certifications.length > 0 && (
                   <div>
-                    <p className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Green Certifications</p>
+                    <p className="text-xs font-semibold mb-1 text-muted-foreground">Certifications:</p>
                     <div className="flex flex-wrap gap-1">
-                      {provider.green_certifications.slice(0, 2).map((cert, index) => (
-                        <Badge key={index} variant="outline" className="text-xs border-green-300 text-green-700">
+                      {provider.green_certifications.slice(0, 3).map((cert, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs border-gray-600 text-gray-400">
                           {cert}
                         </Badge>
                       ))}
-                      {provider.green_certifications.length > 2 && (
-                        <Badge variant="outline" className="text-xs border-green-300 text-green-700">
-                          +{provider.green_certifications.length - 2} more
+                      {provider.green_certifications.length > 3 && (
+                        <Badge variant="outline" className="text-xs border-gray-600 text-gray-400">
+                          +{provider.green_certifications.length - 3} more
                         </Badge>
                       )}
                     </div>
                   </div>
                 )}
-
-                {/* Enhanced Action Buttons */}
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 border-purple-200 hover:bg-purple-50 hover:border-purple-500"
-                    onClick={() => window.open(provider.website, "_blank")}
-                  >
-                    Visit Website
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-teal-600 hover:from-purple-700 hover:to-teal-700 text-white shadow-lg"
-                    onClick={() => {
-                      window.location.href = `/hosting/${provider.id}`
-                    }}
-                  >
-                    View Details
-                  </Button>
-                </div>
+                <Button
+                  variant="ghost"
+                  className="w-full futuristic-button--secondary mt-4"
+                  onClick={() => {
+                    // This would navigate to a detailed page for the provider
+                    // For now, let's just toast
+                    toast({
+                      title: "Coming Soon!",
+                      description: `Detailed page for ${provider.name} is under construction.`,
+                    })
+                  }}
+                >
+                  More Details
+                </Button>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {filteredProviders.length === 0 && (
-          <div className="text-center py-16">
-            <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-2xl p-12 max-w-md mx-auto">
-              <Search className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">No Providers Found</h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                No hosting providers found matching your criteria. Try adjusting your filters.
-              </p>
+        {filteredProviders.length === 0 && !loading && (
+          <div className="text-center py-16 col-span-full">
+            <div className="futuristic-card glassmorphism-effect p-12 max-w-md mx-auto">
+              <Search className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-foreground mb-2">No Providers Found</h3>
+              <p className="text-muted-foreground">Try adjusting your search or filters.</p>
             </div>
           </div>
         )}
