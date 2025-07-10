@@ -7,16 +7,12 @@ import { Badge } from "@/components/ui/badge"
 import { MagicalWebsiteInput } from "@/components/magical-website-input"
 import { ResultsSection } from "@/components/results-section"
 import { SocialShare } from "@/components/social-share"
-import { LoginModal } from "@/components/login-modal"
-import { UserProfileButton } from "@/components/user-profile-button"
-import { Logo } from "@/components/logo"
 import { Zap, Leaf, Shield, Search, Eye, Brain, BarChart3, Globe, Sparkles, TrendingUp, Award } from "lucide-react"
 import type { WebsiteData } from "@/types/website-data"
 
 export default function HomePage() {
   const [analysisData, setAnalysisData] = useState<WebsiteData | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [showLoginModal, setShowLoginModal] = useState(false)
 
   const handleAnalysisComplete = (data: WebsiteData) => {
     setAnalysisData(data)
@@ -34,42 +30,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/30">
-      {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-purple-100/50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Logo />
-              <div className="hidden sm:block">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-green-600 bg-clip-text text-transparent">
-                  WebInSight
-                </h1>
-                <p className="text-sm text-gray-600">AI-Powered Website Analysis</p>
-              </div>
-            </div>
-
-            <nav className="hidden md:flex items-center space-x-6">
-              <a href="/hosting" className="text-gray-600 hover:text-purple-600 transition-colors">
-                Hosting
-              </a>
-              <a href="/recommendations" className="text-gray-600 hover:text-purple-600 transition-colors">
-                Recommendations
-              </a>
-              <a href="/docs" className="text-gray-600 hover:text-purple-600 transition-colors">
-                Docs
-              </a>
-              <a href="/blog" className="text-gray-600 hover:text-purple-600 transition-colors">
-                Blog
-              </a>
-            </nav>
-
-            <div className="flex items-center space-x-3">
-              <UserProfileButton onLoginClick={() => setShowLoginModal(true)} />
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Hero Section */}
       <section className="relative py-20 px-4 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 via-blue-600/5 to-green-600/5" />
@@ -146,7 +106,7 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* Why WSfynder Section */}
+      {/* Why WebInSight Section */}
       <section className="py-20 px-4 bg-gradient-to-br from-white via-purple-50/30 to-blue-50/30">
         <div className="container mx-auto">
           <div className="text-center mb-16">
@@ -304,15 +264,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Modals */}
-      <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onSwitchToSignUp={() => {
-          setShowLoginModal(false)
-        }}
-      />
     </div>
   )
 }

@@ -36,7 +36,7 @@ export function UserProfileButton() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm">
           <User className="h-4 w-4 mr-2" />
-          {user.name || user.email}
+          Account
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
