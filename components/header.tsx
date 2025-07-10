@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-export default function Header() {
+export function Header() {
   return (
     <header className="bg-background border-b">
       <div className="container flex items-center justify-between h-16">
@@ -22,3 +22,5 @@ export default function Header() {
     </header>
   )
 }
+
+export default Header
