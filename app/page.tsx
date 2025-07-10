@@ -1,230 +1,332 @@
 "use client"
-import { useState, useEffect } from "react"
-import { Footer } from "@/components/footer"
-import { Header } from "@/components/header"
-import { ResultsSection } from "@/components/results-section"
-import { SignUpModal } from "@/components/sign-up-modal"
-import { toast } from "@/components/ui/use-toast"
-import type { WebsiteData, AnalysisOptions } from "@/types/website-data"
-import { AlertCircle, Globe, Zap, Shield, Leaf, BarChart3, Brain } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { LoadingAnimation } from "@/components/loading-animation"
-import { Logo } from "@/components/logo"
-import { safeFetch } from "@/lib/safe-fetch"
+
+import { useState } from "react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { MagicalWebsiteInput } from "@/components/magical-website-input"
+import { ResultsSection } from "@/components/results-section"
+import { SocialShare } from "@/components/social-share"
+import { LoginModal } from "@/components/login-modal"
+import { SignUpModal } from "@/components/sign-up-modal"
+import { UserProfileButton } from "@/components/user-profile-button"
+import { Logo } from "@/components/logo"
+import { Zap, Leaf, Shield, Search, Eye, Brain, BarChart3, Globe, Sparkles, TrendingUp, Award } from "lucide-react"
+import type { WebsiteData } from "@/types/website-data"
 
-export default function Home() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [websiteData, setWebsiteData] = useState<WebsiteData | null>(null)
+export default function HomePage() {
+  const [analysisData, setAnalysisData] = useState<WebsiteData | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
   const [showSignUpModal, setShowSignUpModal] = useState(false)
-  const [userId, setUserId] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [isClient, setIsClient] = useState(false)
 
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
-
-  const handleAnalyzeWebsite = async (urlToAnalyze: string) => {
-    if (!isClient || !urlToAnalyze.trim()) return
-
-    let formattedUrl = urlToAnalyze.trim()
-    if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
-      formattedUrl = `https://${formattedUrl}`
-    }
-
-    setIsLoading(true)
-    setWebsiteData(null)
-    setError(null)
-
-    try {
-      const analysisOptions: AnalysisOptions = {
-        includeAdvancedMetrics: true,
-        analyzeSEO: true,
-        checkAccessibility: true,
-        analyzePerformance: true,
-        checkSecurity: true,
-        analyzeSustainability: true,
-        includeContentAnalysis: true,
-        checkMobileOptimization: true,
-        analyzeLoadingSpeed: true,
-        checkSocialMedia: true,
-      }
-
-      const {
-        success,
-        data,
-        error: fetchError,
-      } = await safeFetch<WebsiteData>("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: formattedUrl, ...analysisOptions }),
-        timeout: 45000,
-      })
-
-      if (!success || !data) {
-        throw new Error(fetchError || "Analysis failed due to an unknown error.")
-      }
-      if (!data._id || !data.url) {
-        throw new Error("Received incomplete analysis data from server.")
-      }
-
-      setWebsiteData(data)
-      toast({ title: "Analysis Complete!", description: `Successfully analyzed ${data.url}` })
-    } catch (err: any) {
-      const errorMessage = err.message || "An unexpected error occurred during analysis."
-      setError(errorMessage)
-      toast({ title: "Analysis Failed", description: errorMessage, variant: "destructive" })
-    } finally {
-      setIsLoading(false)
-    }
+  const handleAnalysisComplete = (data: WebsiteData) => {
+    setAnalysisData(data)
+    setIsAnalyzing(false)
   }
 
-  const handleSaveAnalysis = async (type: "save" | "favorite") => {
-    if (!websiteData) return
-    toast({
-      title: "Feature Coming Soon",
-      description: `${type === "favorite" ? "Favoriting" : "Saving"} analyses will be available with user accounts.`,
-    })
+  const handleAnalysisStart = () => {
+    setIsAnalyzing(true)
+    setAnalysisData(null)
   }
 
-  const handleSignUp = (tempUserId?: string) => {
-    if (tempUserId) setUserId(tempUserId)
-    setShowSignUpModal(true)
-  }
-
-  if (!isClient) {
-    return (
-      <>
-        <Header />
-        <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 sm:py-20">
-          <div className="text-center">
-            <LoadingAnimation />
-            <p className="text-xl mt-4">Initializing WSfynder...</p>
-          </div>
-        </main>
-        <Footer />
-      </>
-    )
+  const handleAnalysisError = () => {
+    setIsAnalyzing(false)
   }
 
   return (
-    <>
-      <Header />
-      <main className="flex-1 flex flex-col items-center px-4 pt-12 pb-20 sm:pt-20 sm:pb-28">
-        <div className="w-full max-w-3xl text-center mb-12">
-          <div className="flex justify-center mb-8">
-            <Logo size="lg" showText={true} />
-          </div>
-          <h1 className="text-5xl sm:text-6xl font-bold mb-6">
-            Discover Your Website's
-            <span className="gradient-text block mt-2" data-text="Full Potential">
-              Full Potential
-            </span>
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-10 max-w-2xl mx-auto">
-            WSfynder: AI-powered analysis for performance, SEO, and sustainability optimization.
-          </p>
-
-          <MagicalWebsiteInput onAnalyze={handleAnalyzeWebsite} isLoading={isLoading} />
-        </div>
-
-        {/* Feature cards with exact descriptions requested */}
-        {!isLoading && !websiteData && !error && (
-          <div className="w-full max-w-5xl mt-16 mb-12">
-            <h2 className="text-3xl font-bold text-center mb-10">Why WSfynder?</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {[
-                {
-                  icon: Zap,
-                  title: "Blazing Performance",
-                  description: "Uncover speed bottlenecks & optimize Core Web Vitals for a lightning-fast UX.",
-                  gradient: "from-blue-500 to-cyan-400",
-                },
-                {
-                  icon: Leaf,
-                  title: "Eco-Friendly Insights",
-                  description: "Analyze sustainability, reduce your carbon footprint, and find greener hosting.",
-                  gradient: "from-green-500 to-emerald-400",
-                },
-                {
-                  icon: Shield,
-                  title: "Robust Security",
-                  description: "Assess SSL, headers, and common vulnerabilities to fortify your site.",
-                  gradient: "from-purple-500 to-pink-500",
-                },
-                {
-                  icon: BarChart3,
-                  title: "SEO & Content Strategy",
-                  description: "Audit SEO best practices and generate AI-driven content ideas.",
-                  gradient: "from-orange-500 to-red-400",
-                },
-                {
-                  icon: Globe,
-                  title: "Accessibility Audits",
-                  description: "Ensure your website is inclusive and usable by everyone.",
-                  gradient: "from-teal-500 to-sky-400",
-                },
-                {
-                  icon: Brain,
-                  title: "AI-Powered Recommendations",
-                  description: "Get actionable, intelligent suggestions tailored to your website's needs.",
-                  gradient: "from-indigo-500 to-violet-400",
-                },
-              ].map((feature, i) => (
-                <div key={i} className="futuristic-card p-6 group glassmorphism-effect">
-                  <div className="mb-4 relative inline-block">
-                    <div
-                      className={`absolute -inset-2 rounded-full bg-gradient-to-br ${feature.gradient} opacity-30 blur-lg group-hover:opacity-50 transition-all duration-300 animate-pulse-slow`}
-                    ></div>
-                    <div
-                      className={`h-12 w-12 rounded-full bg-gradient-to-br ${feature.gradient} flex items-center justify-center shadow-lg relative z-10`}
-                    >
-                      <feature.icon className="h-6 w-6 text-white" />
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">{feature.title}</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{feature.description}</p>
-                </div>
-              ))}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-purple-50/30">
+      {/* Header */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-purple-100/50">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Logo />
+              <div className="hidden sm:block">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-green-600 bg-clip-text text-transparent">
+                  WebInSight
+                </h1>
+                <p className="text-sm text-gray-600">AI-Powered Website Analysis</p>
+              </div>
             </div>
-          </div>
-        )}
 
-        <div className="w-full max-w-4xl mt-8">
-          {isLoading && !websiteData && <LoadingAnimation />}
-          {error && !isLoading && (
-            <Alert variant="destructive" className="shadow-lg rounded-xl p-6 futuristic-card glassmorphism-effect">
-              <AlertCircle className="h-5 w-5" />
-              <AlertTitle className="font-semibold">Analysis Failed</AlertTitle>
-              <AlertDescription>{error} Please check the URL or try a different website.</AlertDescription>
-            </Alert>
-          )}
-          {websiteData && !isLoading && (
-            <div className="mt-0">
-              <ResultsSection
-                data={websiteData}
-                onSignUpClick={handleSignUp}
-                onSave={() => handleSaveAnalysis("save")}
-                onFavorite={() => handleSaveAnalysis("favorite")}
-                userId={userId}
+            <nav className="hidden md:flex items-center space-x-6">
+              <a href="/hosting" className="text-gray-600 hover:text-purple-600 transition-colors">
+                Hosting
+              </a>
+              <a href="/recommendations" className="text-gray-600 hover:text-purple-600 transition-colors">
+                Recommendations
+              </a>
+              <a href="/docs" className="text-gray-600 hover:text-purple-600 transition-colors">
+                Docs
+              </a>
+              <a href="/blog" className="text-gray-600 hover:text-purple-600 transition-colors">
+                Blog
+              </a>
+            </nav>
+
+            <div className="flex items-center space-x-3">
+              <UserProfileButton
+                onLoginClick={() => setShowLoginModal(true)}
+                onSignUpClick={() => setShowSignUpModal(true)}
               />
             </div>
-          )}
+          </div>
         </div>
-      </main>
-      <Footer />
-      {showSignUpModal && (
-        <SignUpModal
-          onClose={() => setShowSignUpModal(false)}
-          tempUserId={userId}
-          onSignUpSuccess={(newUserId) => {
-            setUserId(newUserId)
-            setShowSignUpModal(false)
-            toast({ title: "Account Created", description: "You've successfully signed up!" })
-          }}
-        />
+      </header>
+
+      {/* Hero Section */}
+      <section className="relative py-20 px-4 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 via-blue-600/5 to-green-600/5" />
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-purple-300/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-pulse delay-1000" />
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-300/20 rounded-full blur-3xl animate-pulse delay-2000" />
+        </div>
+
+        <div className="container mx-auto text-center relative z-10">
+          <div className="max-w-4xl mx-auto">
+            <Badge
+              variant="secondary"
+              className="mb-6 bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 border-purple-200"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              AI-Powered Website Analysis Platform
+            </Badge>
+
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-purple-600 via-blue-600 to-green-600 bg-clip-text text-transparent leading-tight">
+              Unlock Your Website's
+              <span className="block bg-gradient-to-r from-green-600 via-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Full Potential
+              </span>
+            </h1>
+
+            <p className="text-xl md:text-2xl text-gray-600 mb-8 leading-relaxed">
+              Get comprehensive insights into your website's performance, sustainability, security, and SEO with our
+              advanced AI-powered analysis platform.
+            </p>
+
+            <div className="flex flex-wrap justify-center gap-4 mb-12">
+              <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 border border-purple-100">
+                <BarChart3 className="w-5 h-5 text-purple-600" />
+                <span className="text-sm font-medium text-gray-700">Performance Analysis</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 border border-green-100">
+                <Leaf className="w-5 h-5 text-green-600" />
+                <span className="text-sm font-medium text-gray-700">Sustainability Insights</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 border border-blue-100">
+                <Brain className="w-5 h-5 text-blue-600" />
+                <span className="text-sm font-medium text-gray-700">AI Recommendations</span>
+              </div>
+            </div>
+
+            {/* Website Input */}
+            <div className="max-w-2xl mx-auto">
+              <MagicalWebsiteInput
+                onAnalysisComplete={handleAnalysisComplete}
+                onAnalysisStart={handleAnalysisStart}
+                onAnalysisError={handleAnalysisError}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Results Section */}
+      {(analysisData || isAnalyzing) && (
+        <section className="py-16 px-4">
+          <div className="container mx-auto">
+            <ResultsSection data={analysisData} isLoading={isAnalyzing} />
+            {analysisData && (
+              <div className="mt-8 flex justify-center">
+                <SocialShare
+                  url={typeof window !== "undefined" ? window.location.href : ""}
+                  title={`Check out the analysis of ${analysisData.title}`}
+                  description={analysisData.summary}
+                />
+              </div>
+            )}
+          </div>
+        </section>
       )}
-    </>
+
+      {/* Why WSfynder Section */}
+      <section className="py-20 px-4 bg-gradient-to-br from-white via-purple-50/30 to-blue-50/30">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
+            <Badge
+              variant="secondary"
+              className="mb-4 bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 border-purple-200"
+            >
+              <Award className="w-4 h-4 mr-2" />
+              Why Choose WebInSight?
+            </Badge>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              Comprehensive Website Analysis
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Our AI-powered platform provides deep insights across all aspects of your website, helping you optimize
+              for performance, sustainability, and user experience.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Blazing Performance */}
+            <Card className="group hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br from-orange-50 to-red-50 hover:from-orange-100 hover:to-red-100">
+              <CardContent className="p-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Zap className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-gray-800">Blazing Performance</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Uncover speed bottlenecks & optimize Core Web Vitals for a lightning-fast UX.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Eco-Friendly Insights */}
+            <Card className="group hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100">
+              <CardContent className="p-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Leaf className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-gray-800">Eco-Friendly Insights</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Analyze sustainability, reduce your carbon footprint, and find greener hosting.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Robust Security */}
+            <Card className="group hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100">
+              <CardContent className="p-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Shield className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-gray-800">Robust Security</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Assess SSL, headers, and common vulnerabilities to fortify your site.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* SEO & Content Strategy */}
+            <Card className="group hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100">
+              <CardContent className="p-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Search className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-gray-800">SEO & Content Strategy</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Audit SEO best practices and generate AI-driven content ideas.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Accessibility Audits */}
+            <Card className="group hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br from-teal-50 to-cyan-50 hover:from-teal-100 hover:to-cyan-100">
+              <CardContent className="p-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Eye className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-gray-800">Accessibility Audits</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Ensure your website is inclusive and usable by everyone.
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* AI-Powered Recommendations */}
+            <Card className="group hover:shadow-2xl transition-all duration-300 border-0 bg-gradient-to-br from-violet-50 to-purple-50 hover:from-violet-100 hover:to-purple-100">
+              <CardContent className="p-8">
+                <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                  <Brain className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold mb-4 text-gray-800">AI-Powered Recommendations</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Get actionable, intelligent suggestions tailored to your website's needs.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-20 px-4 bg-gradient-to-r from-purple-600 via-blue-600 to-green-600">
+        <div className="container mx-auto">
+          <div className="grid md:grid-cols-4 gap-8 text-center text-white">
+            <div className="space-y-2">
+              <div className="text-4xl md:text-5xl font-bold">10K+</div>
+              <div className="text-purple-100">Websites Analyzed</div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-4xl md:text-5xl font-bold">95%</div>
+              <div className="text-blue-100">Accuracy Rate</div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-4xl md:text-5xl font-bold">2.5M</div>
+              <div className="text-green-100">CO2 Saved (kg)</div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-4xl md:text-5xl font-bold">24/7</div>
+              <div className="text-purple-100">AI Monitoring</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-4 bg-gradient-to-br from-gray-50 to-white">
+        <div className="container mx-auto text-center">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              Ready to Optimize Your Website?
+            </h2>
+            <p className="text-xl text-gray-600 mb-8">
+              Join thousands of developers and businesses who trust WebInSight for comprehensive website analysis.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 text-lg"
+                onClick={() => document.querySelector('input[placeholder*="Enter"]')?.focus()}
+              >
+                <Globe className="w-5 h-5 mr-2" />
+                Analyze Your Website
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-purple-200 text-purple-600 hover:bg-purple-50 px-8 py-4 text-lg bg-transparent"
+                onClick={() => window.open("/docs", "_blank")}
+              >
+                <TrendingUp className="w-5 h-5 mr-2" />
+                View Documentation
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Modals */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSwitchToSignUp={() => {
+          setShowLoginModal(false)
+          setShowSignUpModal(true)
+        }}
+      />
+      <SignUpModal
+        isOpen={showSignUpModal}
+        onClose={() => setShowSignUpModal(false)}
+        onSwitchToLogin={() => {
+          setShowSignUpModal(false)
+          setShowLoginModal(true)
+        }}
+      />
+    </div>
   )
 }
