@@ -11,7 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { LoadingAnimation } from "@/components/loading-animation"
 import { Logo } from "@/components/logo"
 import { safeFetch } from "@/lib/safe-fetch"
-import { MagicalWebsiteInput } from "@/components/magical-website-input" // Import the new input
+import { MagicalWebsiteInput } from "@/components/magical-website-input"
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false)
@@ -19,7 +19,6 @@ export default function Home() {
   const [showSignUpModal, setShowSignUpModal] = useState(false)
   const [userId, setUserId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  // Removed 'url' state as it's managed within MagicalWebsiteInput
   const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
@@ -27,7 +26,6 @@ export default function Home() {
   }, [])
 
   const handleAnalyzeWebsite = async (urlToAnalyze: string) => {
-    // Renamed 'url' to 'urlToAnalyze'
     if (!isClient || !urlToAnalyze.trim()) return
 
     let formattedUrl = urlToAnalyze.trim()
@@ -114,8 +112,6 @@ export default function Home() {
     <>
       <Header />
       <main className="flex-1 flex flex-col items-center px-4 pt-12 pb-20 sm:pt-20 sm:pb-28">
-        {" "}
-        {/* Adjusted padding */}
         <div className="w-full max-w-3xl text-center mb-12">
           <div className="flex justify-center mb-8">
             <Logo size="lg" showText={true} />
@@ -132,7 +128,8 @@ export default function Home() {
 
           <MagicalWebsiteInput onAnalyze={handleAnalyzeWebsite} isLoading={isLoading} />
         </div>
-        {/* Feature cards - New Style */}
+
+        {/* Feature cards with exact descriptions requested */}
         {!isLoading && !websiteData && !error && (
           <div className="w-full max-w-5xl mt-16 mb-12">
             <h2 className="text-3xl font-bold text-center mb-10">Why WSfynder?</h2>
@@ -193,9 +190,8 @@ export default function Home() {
             </div>
           </div>
         )}
+
         <div className="w-full max-w-4xl mt-8">
-          {" "}
-          {/* Added margin-top */}
           {isLoading && !websiteData && <LoadingAnimation />}
           {error && !isLoading && (
             <Alert variant="destructive" className="shadow-lg rounded-xl p-6 futuristic-card glassmorphism-effect">
