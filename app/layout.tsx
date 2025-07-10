@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster" // Import Toaster
+import { AuthProvider } from "@/lib/auth-provider"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -22,14 +23,16 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          <div className="min-h-screen flex flex-col futuristic-bg">
-            {/* Background elements */}
-            <div className="grid-pattern"></div>
-            <div className="orb orb-1"></div>
-            <div className="orb orb-2"></div>
-            <div className="orb orb-3"></div>
-            <div className="relative z-10 flex flex-col flex-1">{children}</div>
-          </div>
+          <AuthProvider>
+            <div className="min-h-screen flex flex-col futuristic-bg">
+              {/* Background elements */}
+              <div className="grid-pattern"></div>
+              <div className="orb orb-1"></div>
+              <div className="orb orb-2"></div>
+              <div className="orb orb-3"></div>
+              <div className="relative z-10 flex flex-col flex-1">{children}</div>
+            </div>
+          </AuthProvider>
           <Toaster />
         </ThemeProvider>
       </body>
