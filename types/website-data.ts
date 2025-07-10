@@ -54,6 +54,12 @@ export interface WebsiteData {
   ip_address?: string
   technologies?: string[] // Detected technologies
 
+  // Enhanced sustainability metrics
+  carbonFootprint?: number // grams of CO2 per page view
+  energyEfficiency?: number // 0-100 score
+  greenHostingScore?: number // 0-100 score for hosting sustainability
+  futurePredictions?: string[] // AI-driven sustainability predictions
+
   // Timestamps
   analyzedAt?: string
 }

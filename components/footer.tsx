@@ -39,6 +39,11 @@ export function Footer() {
                   About WSfynder
                 </Link>
               </li>
+              <li>
+                <Link href="/recommendations" className="text-muted-foreground hover:text-primary transition-colors">
+                  Recommendations
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
@@ -63,7 +68,8 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-border/40 text-center text-sm text-muted-foreground">
-          &copy; {currentYear} WSfynder. All rights reserved. Built with passion and AI.
+          <p>&copy; {currentYear} WSfynder. All rights reserved. Built with passion and AI.</p>
+          <p className="mt-2">Made by myHerb (DevSphere Project).</p>
         </div>
       </div>
     </footer>
