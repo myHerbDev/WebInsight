@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button"
 import { Sun, MoonStar } from "lucide-react"
 import { useTheme } from "next-themes"
 import Image from "next/image"
-import logo from "/public/placeholder-logo.png"
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -26,7 +25,7 @@ export function Header() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src={logo || "/placeholder.svg"}
+            src="/placeholder-logo.png"
             alt="WSfynder Logo"
             width={32}
             height={32}
