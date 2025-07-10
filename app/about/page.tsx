@@ -3,7 +3,7 @@
 import { Logo } from "@/components/logo"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { Users, Target, Zap, Leaf, Shield, Brain } from "lucide-react"
+import { Users, Target, Zap, Leaf, Shield, Brain, Globe } from "lucide-react"
 
 export default function AboutPage() {
   return (
