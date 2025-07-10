@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 
 interface AuthUser {
   id: string
@@ -14,23 +13,23 @@ interface AuthContextValue {
   loading: boolean
   isConfigured: boolean
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
-  signUp: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   signOut: () => Promise<void>
+  signUp: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isConfigured] = useState(true) // Simplified for now
+  const [isConfigured] = useState(true)
 
-  // Check for existing session on mount
   useEffect(() => {
-    checkSession()
+    // Check if user is already logged in
+    checkAuthStatus()
   }, [])
 
-  const checkSession = async () => {
+  const checkAuthStatus = async () => {
     try {
       const response = await fetch("/api/user/data", {
         method: "GET",
@@ -39,12 +38,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok) {
         const userData = await response.json()
-        if (userData.user) {
-          setUser(userData.user)
-        }
+        setUser(userData)
       }
     } catch (error) {
-      console.error("Session check failed:", error)
+      console.error("Auth check failed:", error)
     } finally {
       setLoading(false)
     }
@@ -63,14 +60,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json()
 
-      if (response.ok && data.user) {
+      if (response.ok && data.success) {
         setUser(data.user)
         return { success: true }
       } else {
         return { success: false, error: data.error || "Login failed" }
       }
     } catch (error) {
-      return { success: false, error: "Network error" }
+      return { success: false, error: "Network error occurred" }
     }
   }
 
@@ -87,14 +84,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json()
 
-      if (response.ok && data.user) {
+      if (response.ok && data.success) {
         setUser(data.user)
         return { success: true }
       } else {
         return { success: false, error: data.error || "Signup failed" }
       }
     } catch (error) {
-      return { success: false, error: "Network error" }
+      return { success: false, error: "Network error occurred" }
     }
   }
 
@@ -116,8 +113,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     isConfigured,
     signIn,
-    signUp,
     signOut,
+    signUp,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
@@ -126,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error("useAuth must be used inside <AuthProvider>")
   }
   return context
 }

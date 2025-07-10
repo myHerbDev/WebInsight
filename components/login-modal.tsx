@@ -1,245 +1,125 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Loader2, X } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
 import { useAuth } from "@/lib/auth-provider"
-import { useToast } from "@/hooks/use-toast"
-import { LogIn, UserPlus, Loader2 } from "lucide-react"
 
 interface LoginModalProps {
-  children: React.ReactNode
+  onClose: () => void
 }
 
-export function LoginModal({ children }: LoginModalProps) {
-  const [isOpen, setIsOpen] = useState(false)
+export function LoginModal({ onClose }: LoginModalProps) {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [loginForm, setLoginForm] = useState({ email: "", password: "" })
-  const [signupForm, setSignupForm] = useState({ email: "", password: "", confirmPassword: "" })
+  const [isSignUp, setIsSignUp] = useState(false)
+  const { signIn, signUp } = useAuth()
 
-  const { signIn, signUp, isConfigured } = useAuth()
-  const { toast } = useToast()
-
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!isConfigured) {
-      toast({
-        title: "Service Unavailable",
-        description: "Authentication service is not configured. Please try again later.",
-        variant: "destructive",
-      })
-      return
-    }
-
     setIsLoading(true)
 
-    const { error } = await signIn(loginForm.email, loginForm.password)
+    try {
+      const result = isSignUp ? await signUp(email, password) : await signIn(email, password)
 
-    if (error) {
+      if (result.success) {
+        toast({
+          title: "Success!",
+          description: isSignUp ? "Account created successfully!" : "Logged in successfully!",
+        })
+        onClose()
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || `${isSignUp ? "Sign up" : "Login"} failed. Please try again.`,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Auth error:", error)
       toast({
-        title: "Login Failed",
-        description: error,
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       })
-    } else {
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
-      })
-      setIsOpen(false)
-      setLoginForm({ email: "", password: "" })
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
-  }
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!isConfigured) {
-      toast({
-        title: "Service Unavailable",
-        description: "Authentication service is not configured. Please try again later.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (signupForm.password !== signupForm.confirmPassword) {
-      toast({
-        title: "Password Mismatch",
-        description: "Passwords do not match. Please try again.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (signupForm.password.length < 6) {
-      toast({
-        title: "Password Too Short",
-        description: "Password must be at least 6 characters long.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setIsLoading(true)
-
-    const { error } = await signUp(signupForm.email, signupForm.password)
-
-    if (error) {
-      toast({
-        title: "Signup Failed",
-        description: error,
-        variant: "destructive",
-      })
-    } else {
-      toast({
-        title: "Account Created!",
-        description: "Please check your email to verify your account.",
-      })
-      setIsOpen(false)
-      setSignupForm({ email: "", password: "", confirmPassword: "" })
-    }
-
-    setIsLoading(false)
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Welcome to WebInSight</DialogTitle>
-          <DialogDescription>Sign in to your account or create a new one to get started.</DialogDescription>
-        </DialogHeader>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md relative">
+        <Button variant="ghost" size="icon" className="absolute right-4 top-4" onClick={onClose}>
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </Button>
 
-        {!isConfigured && (
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-            <p className="text-sm text-yellow-800">
-              Authentication service is currently unavailable. Please try again later.
-            </p>
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold">{isSignUp ? "Create Account" : "Welcome Back"}</h2>
+          <p className="text-gray-500 dark:text-gray-400">
+            {isSignUp ? "Create an account to save your analyses" : "Sign in to access your saved analyses"}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={isLoading}
+            />
           </div>
-        )}
 
-        <Tabs defaultValue="login" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-          </TabsList>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder={isSignUp ? "Create a password" : "Enter your password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
+              minLength={6}
+            />
+          </div>
 
-          <TabsContent value="login">
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="login-email">Email</Label>
-                <Input
-                  id="login-email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={loginForm.email}
-                  onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                  required
-                  disabled={!isConfigured}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="login-password">Password</Label>
-                <Input
-                  id="login-password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={loginForm.password}
-                  onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                  required
-                  disabled={!isConfigured}
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading || !isConfigured}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  <>
-                    <LogIn className="mr-2 h-4 w-4" />
-                    Sign In
-                  </>
-                )}
-              </Button>
-            </form>
-          </TabsContent>
+          <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-teal-600" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {isSignUp ? "Creating Account..." : "Signing In..."}
+              </>
+            ) : isSignUp ? (
+              "Create Account"
+            ) : (
+              "Sign In"
+            )}
+          </Button>
+        </form>
 
-          <TabsContent value="signup">
-            <form onSubmit={handleSignup} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">Email</Label>
-                <Input
-                  id="signup-email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={signupForm.email}
-                  onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
-                  required
-                  disabled={!isConfigured}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">Password</Label>
-                <Input
-                  id="signup-password"
-                  type="password"
-                  placeholder="Create a password (min. 6 characters)"
-                  value={signupForm.password}
-                  onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
-                  required
-                  disabled={!isConfigured}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirm Password</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  placeholder="Confirm your password"
-                  value={signupForm.confirmPassword}
-                  onChange={(e) => setSignupForm({ ...signupForm, confirmPassword: e.target.value })}
-                  required
-                  disabled={!isConfigured}
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading || !isConfigured}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Create Account
-                  </>
-                )}
-              </Button>
-            </form>
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+        <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+          {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
+          <button
+            type="button"
+            className="text-purple-600 dark:text-purple-400 hover:underline"
+            onClick={() => setIsSignUp(!isSignUp)}
+          >
+            {isSignUp ? "Sign In" : "Sign Up"}
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }
-
-export default LoginModal

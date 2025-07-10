@@ -1,85 +1,54 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { User, LogOut, Settings } from "lucide-react"
 import { useAuth } from "@/lib/auth-provider"
-import { LoginModal } from "./login-modal"
-import { LogOut, User, Settings } from "lucide-react"
+import { LoginModal } from "@/components/login-modal"
 
 export function UserProfileButton() {
-  const { user, signOut, loading, isConfigured } = useAuth()
+  const { user, signOut, loading } = useAuth()
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   if (loading) {
-    return <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
-  }
-
-  if (!isConfigured) {
     return (
       <Button variant="ghost" size="sm" disabled>
-        Login Unavailable
+        <User className="h-4 w-4" />
       </Button>
     )
   }
 
   if (!user) {
     return (
-      <LoginModal>
-        <Button variant="default" size="sm">
-          Login
+      <>
+        <Button variant="ghost" size="sm" onClick={() => setShowLoginModal(true)}>
+          <User className="h-4 w-4 mr-2" />
+          Sign In
         </Button>
-      </LoginModal>
+        {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
+      </>
     )
   }
-
-  const initials = user.email
-    .split("@")[0]
-    .split(".")
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2)
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-          </Avatar>
+        <Button variant="ghost" size="sm">
+          <User className="h-4 w-4 mr-2" />
+          {user.name || user.email}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">Account</p>
-            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+      <DropdownMenuContent align="end">
         <DropdownMenuItem>
-          <User className="mr-2 h-4 w-4" />
-          <span>Profile</span>
+          <Settings className="h-4 w-4 mr-2" />
+          Settings
         </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Settings className="mr-2 h-4 w-4" />
-          <span>Settings</span>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOut()}>
-          <LogOut className="mr-2 h-4 w-4" />
-          <span>Log out</span>
+        <DropdownMenuItem onClick={signOut}>
+          <LogOut className="h-4 w-4 mr-2" />
+          Sign Out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }
-
-export default UserProfileButton
