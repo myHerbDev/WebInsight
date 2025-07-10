@@ -1,113 +1,115 @@
 "use client"
 
 import type React from "react"
-import { createContext, useCallback, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useState, useEffect } from "react"
 
-/* ------------------------------------------------------------------ */
-/*  Types                                                             */
-/* ------------------------------------------------------------------ */
-interface User {
+interface AuthUser {
+  id: string
   email: string
+  name?: string
 }
-export type AuthResponse = { error?: string }
 
 interface AuthContextValue {
-  user: User | null
+  user: AuthUser | null
   loading: boolean
   isConfigured: boolean
-  /** POST /api/user/login */
-  signIn: (email: string, password: string) => Promise<AuthResponse>
-  /** POST /api/user/signup */
-  signUp: (email: string, password: string) => Promise<AuthResponse>
-  /** Clears local state + hits logout endpoint (if it exists) */
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  signUp: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   signOut: () => Promise<void>
 }
 
-/* ------------------------------------------------------------------ */
-/*  Context                                                           */
-/* ------------------------------------------------------------------ */
-const AuthContext = createContext<AuthContextValue | null>(null)
+const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
-/* ------------------------------------------------------------------ */
-/*  Provider                                                          */
-/* ------------------------------------------------------------------ */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
-  const [isConfigured, setIsConfigured] = useState(true)
+  const [isConfigured] = useState(true) // Simplified for now
 
-  /* -------- Fetch session on mount ------------------------------- */
+  // Check for existing session on mount
   useEffect(() => {
-    async function bootstrap() {
-      try {
-        // quick OPTIONS to see if route exists
-        const heartbeat = await fetch("/api/user/login", { method: "OPTIONS" })
-        setIsConfigured(heartbeat.ok)
+    checkSession()
+  }, [])
 
-        if (heartbeat.ok) {
-          const res = await fetch("/api/user/data")
-          if (res.ok) {
-            const data: User = await res.json()
-            setUser(data)
-          }
+  const checkSession = async () => {
+    try {
+      const response = await fetch("/api/user/data", {
+        method: "GET",
+        credentials: "include",
+      })
+
+      if (response.ok) {
+        const userData = await response.json()
+        if (userData.user) {
+          setUser(userData.user)
         }
-      } catch {
-        setIsConfigured(false)
-      } finally {
-        setLoading(false)
       }
+    } catch (error) {
+      console.error("Session check failed:", error)
+    } finally {
+      setLoading(false)
     }
-    bootstrap()
-  }, [])
+  }
 
-  /* -------- Helpers ---------------------------------------------- */
-  const signIn = useCallback(async (email: string, password: string): Promise<AuthResponse> => {
+  const signIn = async (email: string, password: string) => {
     try {
-      const res = await fetch("/api/user/login", {
+      const response = await fetch("/api/user/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email, password }),
+        credentials: "include",
       })
-      if (!res.ok) {
-        const { error } = await res.json()
-        return { error: error ?? "Login failed. Please try again." }
-      }
-      const data: User = await res.json()
-      setUser(data)
-      return {}
-    } catch (err) {
-      return { error: (err as Error).message }
-    }
-  }, [])
 
-  const signUp = useCallback(async (email: string, password: string): Promise<AuthResponse> => {
+      const data = await response.json()
+
+      if (response.ok && data.user) {
+        setUser(data.user)
+        return { success: true }
+      } else {
+        return { success: false, error: data.error || "Login failed" }
+      }
+    } catch (error) {
+      return { success: false, error: "Network error" }
+    }
+  }
+
+  const signUp = async (email: string, password: string) => {
     try {
-      const res = await fetch("/api/user/signup", {
+      const response = await fetch("/api/user/signup", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email, password }),
+        credentials: "include",
       })
-      if (!res.ok) {
-        const { error } = await res.json()
-        return { error: error ?? "Signup failed. Please try again." }
-      }
-      const data: User = await res.json()
-      setUser(data)
-      return {}
-    } catch (err) {
-      return { error: (err as Error).message }
-    }
-  }, [])
 
-  const signOut = useCallback(async () => {
+      const data = await response.json()
+
+      if (response.ok && data.user) {
+        setUser(data.user)
+        return { success: true }
+      } else {
+        return { success: false, error: data.error || "Signup failed" }
+      }
+    } catch (error) {
+      return { success: false, error: "Network error" }
+    }
+  }
+
+  const signOut = async () => {
     try {
-      await fetch("/api/user/logout", { method: "POST" })
-    } catch {
-      /* route might not exist – ignore */
+      await fetch("/api/user/logout", {
+        method: "POST",
+        credentials: "include",
+      })
+    } catch (error) {
+      console.error("Logout error:", error)
     } finally {
       setUser(null)
     }
-  }, [])
+  }
 
   const value: AuthContextValue = {
     user,
@@ -121,11 +123,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-/* ------------------------------------------------------------------ */
-/*  Hook                                                              */
-/* ------------------------------------------------------------------ */
 export function useAuth() {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>")
-  return ctx
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider")
+  }
+  return context
 }

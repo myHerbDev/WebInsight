@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2, X } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { useAuth } from "@/lib/auth-provider"
 
 interface SignUpModalProps {
   onClose: () => void
@@ -19,53 +19,56 @@ export function SignUpModal({ onClose, tempUserId, onSignUpSuccess }: SignUpModa
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const supabase = createClientComponentClient()
+  const { signUp } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${location.origin}/auth/callback`,
-        },
-      })
+      const result = await signUp(email, password)
 
-      if (error) {
-        throw error
-      }
+      if (result.success) {
+        // Generate a temporary user ID for the success callback
+        const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-      if (data.user) {
         // If there's a temp user ID, we could migrate data here
         if (tempUserId) {
           // Call API to migrate temporary data to the new user
-          await fetch("/api/user/migrate", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              tempUserId,
-              newUserId: data.user.id,
-            }),
-          })
+          try {
+            await fetch("/api/user/migrate", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                tempUserId,
+                newUserId: userId,
+              }),
+            })
+          } catch (error) {
+            console.warn("Failed to migrate temporary data:", error)
+          }
         }
 
-        onSignUpSuccess(data.user.id)
+        onSignUpSuccess(userId)
         toast({
           title: "Success!",
-          description: "Account created successfully. Please check your email to verify your account.",
+          description: "Account created successfully. You are now logged in.",
         })
         onClose()
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "Failed to create account. Please try again.",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error("Sign up error:", error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create account. Please try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       })
     } finally {
