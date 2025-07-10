@@ -11,7 +11,7 @@ import { ResultsSection } from "@/components/results-section"
 import { SocialShare } from "@/components/social-share"
 import type { WebsiteData, AnalysisOptions } from "@/types/website-data"
 import { safeFetch } from "@/lib/safe-fetch"
-import FeatureBadge from "./FeatureBadge" // Import FeatureBadge component
+import FeatureBadge from "@/components/feature-badge"
 
 export default function HomePage() {
   const [analysisData, setAnalysisData] = useState<WebsiteData | null>(null)
