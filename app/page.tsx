@@ -8,7 +8,6 @@ import { MagicalWebsiteInput } from "@/components/magical-website-input"
 import { ResultsSection } from "@/components/results-section"
 import { SocialShare } from "@/components/social-share"
 import { LoginModal } from "@/components/login-modal"
-import { SignUpModal } from "@/components/sign-up-modal"
 import { UserProfileButton } from "@/components/user-profile-button"
 import { Logo } from "@/components/logo"
 import { Zap, Leaf, Shield, Search, Eye, Brain, BarChart3, Globe, Sparkles, TrendingUp, Award } from "lucide-react"
@@ -18,7 +17,6 @@ export default function HomePage() {
   const [analysisData, setAnalysisData] = useState<WebsiteData | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
-  const [showSignUpModal, setShowSignUpModal] = useState(false)
 
   const handleAnalysisComplete = (data: WebsiteData) => {
     setAnalysisData(data)
@@ -66,10 +64,7 @@ export default function HomePage() {
             </nav>
 
             <div className="flex items-center space-x-3">
-              <UserProfileButton
-                onLoginClick={() => setShowLoginModal(true)}
-                onSignUpClick={() => setShowSignUpModal(true)}
-              />
+              <UserProfileButton onLoginClick={() => setShowLoginModal(true)} />
             </div>
           </div>
         </div>
@@ -316,15 +311,6 @@ export default function HomePage() {
         onClose={() => setShowLoginModal(false)}
         onSwitchToSignUp={() => {
           setShowLoginModal(false)
-          setShowSignUpModal(true)
-        }}
-      />
-      <SignUpModal
-        isOpen={showSignUpModal}
-        onClose={() => setShowSignUpModal(false)}
-        onSwitchToLogin={() => {
-          setShowSignUpModal(false)
-          setShowLoginModal(true)
         }}
       />
     </div>
