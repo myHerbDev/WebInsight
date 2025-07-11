@@ -27,9 +27,7 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-900/60 bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/20 dark:border-gray-700/20">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
-          <Logo size="sm" showText={true} />
-        </Link>
+        <Logo size="sm" showText />
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
