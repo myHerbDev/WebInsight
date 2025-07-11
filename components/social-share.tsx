@@ -1,76 +1,104 @@
 "use client"
+
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Share2, Twitter, Linkedin, Facebook, Copy } from "lucide-react"
-import type { WebsiteData } from "@/types/website-data"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Share2, Twitter, Facebook, Linkedin, Link, Check } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
 
 interface SocialShareProps {
-  data?: WebsiteData | null
+  data?: {
+    title?: string
+    url?: string
+    description?: string
+  }
+  className?: string
 }
 
-export function SocialShare({ data }: SocialShareProps) {
-  // If no data yet, don’t render the share menu
-  if (!data) return null
+export function SocialShare({ data, className = "" }: SocialShareProps) {
+  const [copied, setCopied] = useState(false)
 
-  const shareUrl = typeof window !== "undefined" ? window.location.href : ""
-  const title = `Check out the WSfynder analysis for ${data?.title ?? data?.url ?? "your website"}!`
-  const summary = data?.summary ?? "Get sustainability and performance insights for your website with WSfynder."
+  // Early return if no data is provided
+  if (!data?.title || !data?.url) {
+    return null
+  }
 
-  const shareOptions = [
-    {
-      name: "Twitter",
-      icon: Twitter,
-      url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(title)}`,
-    },
-    {
-      name: "LinkedIn",
-      icon: Linkedin,
-      url: `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(title)}&summary=${encodeURIComponent(summary)}`,
-    },
-    {
-      name: "Facebook",
-      icon: Facebook,
-      url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-    },
-  ]
+  const shareUrl = encodeURIComponent(data.url)
+  const shareTitle = encodeURIComponent(data.title)
+  const shareDescription = encodeURIComponent(data.description || "")
 
-  const copyLink = async () => {
+  const shareLinks = {
+    twitter: `https://twitter.com/intent/tweet?text=${shareTitle}&url=${shareUrl}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`,
+  }
+
+  const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl)
-      toast({ title: "Link Copied!", description: "Analysis link copied to clipboard." })
+      await navigator.clipboard.writeText(data.url)
+      setCopied(true)
+      toast({
+        title: "Link copied!",
+        description: "The link has been copied to your clipboard.",
+      })
+      setTimeout(() => setCopied(false), 2000)
     } catch (err) {
-      toast({ title: "Copy Failed", description: "Could not copy link.", variant: "destructive" })
+      toast({
+        title: "Failed to copy",
+        description: "Please copy the link manually.",
+        variant: "destructive",
+      })
     }
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Share2 className="mr-2 h-4 w-4" />
+    <Card className={className}>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Share2 className="h-5 w-5" />
           Share Results
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {shareOptions.map((option) => {
-          const Icon = option.icon
-          return (
-            <DropdownMenuItem
-              key={option.name}
-              onClick={() => window.open(option.url, "_blank")}
-              className="flex items-center space-x-2"
-            >
-              <Icon className="h-4 w-4" />
-              <span>Share on {option.name}</span>
-            </DropdownMenuItem>
-          )
-        })}
-        <DropdownMenuItem onClick={copyLink} className="flex items-center space-x-2">
-          <Copy className="h-4 w-4" />
-          <span>Copy Link</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(shareLinks.twitter, "_blank")}
+            className="flex items-center gap-2"
+          >
+            <Twitter className="h-4 w-4" />
+            Twitter
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(shareLinks.facebook, "_blank")}
+            className="flex items-center gap-2"
+          >
+            <Facebook className="h-4 w-4" />
+            Facebook
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.open(shareLinks.linkedin, "_blank")}
+            className="flex items-center gap-2"
+          >
+            <Linkedin className="h-4 w-4" />
+            LinkedIn
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={copyToClipboard}
+            className="flex items-center gap-2 bg-transparent"
+          >
+            {copied ? <Check className="h-4 w-4" /> : <Link className="h-4 w-4" />}
+            {copied ? "Copied!" : "Copy Link"}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }

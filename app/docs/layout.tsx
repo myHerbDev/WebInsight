@@ -20,7 +20,6 @@ import {
   Users,
   ExternalLink,
 } from "lucide-react"
-import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 
 const navigationItems = [
@@ -170,8 +169,6 @@ function SidebarContent() {
 export default function DocsLayout({ children }: DocsLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
-
       <div className="flex-1 flex">
         {/* Desktop Sidebar */}
         <aside className="hidden lg:block w-64 border-r bg-gray-50/50 dark:bg-gray-900/50">

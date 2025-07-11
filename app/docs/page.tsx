@@ -24,7 +24,7 @@ export default function DocsPage() {
       <div className="text-center space-y-6">
         <div className="space-y-4">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">
-            WebInSight Documentation
+            WSfynder Documentation
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             Comprehensive website analysis, sustainability metrics, and performance insights. Get started with our
@@ -48,7 +48,11 @@ export default function DocsPage() {
                 <Button size="lg" className="bg-white text-purple-600 hover:bg-gray-100">
                   Create Free Account
                 </Button>
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white text-white hover:bg-white/10 bg-transparent"
+                >
                   Sign In
                 </Button>
               </div>
@@ -68,7 +72,7 @@ export default function DocsPage() {
               <Zap className="h-5 w-5 text-yellow-500" />
               <CardTitle className="text-lg">Quick Start</CardTitle>
             </div>
-            <CardDescription>Get up and running with WebInSight in minutes</CardDescription>
+            <CardDescription>Get up and running with WSfynder in minutes</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
@@ -93,10 +97,10 @@ export default function DocsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Integrate WebInSight into your applications with our REST API.
+              Integrate WSfynder into your applications with our REST API.
             </p>
             <Link href="/docs/api">
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full bg-transparent">
                 View API Docs
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -117,7 +121,7 @@ export default function DocsPage() {
               Learn advanced techniques for website optimization and analysis.
             </p>
             <Link href="/docs/guides/analysis">
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full bg-transparent">
                 Browse Guides
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -200,7 +204,7 @@ export default function DocsPage() {
             <CardTitle className="text-purple-900 dark:text-purple-100">Premium Features</CardTitle>
           </div>
           <CardDescription className="text-purple-700 dark:text-purple-300">
-            Unlock advanced capabilities with a WebInSight account
+            Unlock advanced capabilities with a WSfynder account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -289,7 +293,7 @@ export default function DocsPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Read tutorials, tips, and updates from the WebInSight team.
+                Read tutorials, tips, and updates from the WSfynder team.
               </p>
               <Link href="/blog">
                 <Button variant="outline" size="sm">
@@ -306,7 +310,7 @@ export default function DocsPage() {
         <Info className="h-4 w-4" />
         <AlertDescription>
           <strong>Ready to get started?</strong> Try analyzing your first website or explore our API documentation to
-          integrate WebInSight into your workflow.
+          integrate WSfynder into your workflow.
         </AlertDescription>
       </Alert>
     </div>

@@ -11,7 +11,7 @@ import { Footer } from "@/components/footer"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "WebInSight - AI-Powered Website Analysis & Sustainability Insights",
+  title: "WSfynder - AI-Powered Website Analysis & Sustainability Insights",
   description:
     "Analyze your website's performance, sustainability, security, and SEO with AI-powered insights. Get actionable recommendations to improve your site's carbon footprint and user experience.",
   keywords: [
@@ -28,17 +28,17 @@ export const metadata: Metadata = {
   publisher: "DevSphere",
   robots: "index, follow",
   openGraph: {
-    title: "WebInSight - AI-Powered Website Analysis",
+    title: "WSfynder - AI-Powered Website Analysis",
     description: "Analyze your website's performance, sustainability, and security with AI-powered insights.",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "WebInSight - AI-Powered Website Analysis",
+    title: "WSfynder - AI-Powered Website Analysis",
     description: "Get comprehensive insights into your website's performance and sustainability.",
   },
-    generator: 'v0.dev'
+  generator: "v0.dev",
 }
 
 export default function RootLayout({

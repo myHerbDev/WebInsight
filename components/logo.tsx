@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { Brain } from "lucide-react" // Using Brain as it was in the last synced version
+import { Brain } from "lucide-react"
 import { useEffect, useRef } from "react"
 
 interface LogoProps {
@@ -42,7 +42,7 @@ export function Logo({ size = "md", showText = true, className = "", iconOnly = 
     let animationFrameId: number
     const resizeCanvas = () => {
       const { width, height } = canvas.getBoundingClientRect()
-      if (width === 0 || height === 0) return // Avoid errors if not visible
+      if (width === 0 || height === 0) return
       canvas.width = width * window.devicePixelRatio
       canvas.height = height * window.devicePixelRatio
       ctx.scale(window.devicePixelRatio, window.devicePixelRatio)
@@ -61,7 +61,7 @@ export function Logo({ size = "md", showText = true, className = "", iconOnly = 
         size: Math.random() * 2 + 0.5,
         speedX: (Math.random() - 0.5) * 0.5,
         speedY: (Math.random() - 0.5) * 0.5,
-        hue: Math.random() * 60 + 220, // Blue to purple range
+        hue: Math.random() * 60 + 220,
       })
     }
 
@@ -110,9 +110,7 @@ export function Logo({ size = "md", showText = true, className = "", iconOnly = 
         <div className="ml-3">
           <h1 className={cn(textSizeClasses[size], "font-bold tracking-tight")}>
             <span className="text-gray-800 dark:text-white">WS</span>
-            <span className="gradient-text" data-text="fynder">
-              fynder
-            </span>
+            <span className="bg-gradient-to-r from-purple-600 to-teal-600 bg-clip-text text-transparent">fynder</span>
           </h1>
         </div>
       )}

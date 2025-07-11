@@ -8,7 +8,7 @@ import { Sun, MoonStar, Menu } from "lucide-react"
 import { useTheme } from "next-themes"
 import { UserProfileButton } from "@/components/user-profile-button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import Image from "next/image"
+import { Logo } from "@/components/logo"
 
 const navItems = [
   { href: "/", label: "Home" },
@@ -27,21 +27,8 @@ export function Header() {
     <header className="sticky top-0 z-40 w-full backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-gray-900/60 bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/20 dark:border-gray-700/20">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <div className="relative">
-            <Image
-              src="/placeholder-logo.png"
-              alt="WebInSight Logo"
-              width={32}
-              height={32}
-              priority
-              className="rounded-lg shadow-sm"
-            />
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-teal-500/20 rounded-lg"></div>
-          </div>
-          <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-purple-600 via-blue-600 to-teal-600 bg-clip-text text-transparent">
-            WebInSight
-          </span>
+        <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
+          <Logo size="sm" showText={true} />
         </Link>
 
         {/* Desktop Navigation */}
