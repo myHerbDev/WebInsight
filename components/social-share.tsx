@@ -6,13 +6,16 @@ import type { WebsiteData } from "@/types/website-data"
 import { toast } from "@/components/ui/use-toast"
 
 interface SocialShareProps {
-  data: WebsiteData
+  data?: WebsiteData | null
 }
 
 export function SocialShare({ data }: SocialShareProps) {
-  const shareUrl = typeof window !== "undefined" ? window.location.href : "" // Use current page URL or a specific results page URL
-  const title = `Check out the WebInSight analysis for ${data.title || data.url}!`
-  const summary = data.summary || `Get sustainability and performance insights for your website with WebInSight.`
+  // If no data yet, don’t render the share menu
+  if (!data) return null
+
+  const shareUrl = typeof window !== "undefined" ? window.location.href : ""
+  const title = `Check out the WSfynder analysis for ${data?.title ?? data?.url ?? "your website"}!`
+  const summary = data?.summary ?? "Get sustainability and performance insights for your website with WSfynder."
 
   const shareOptions = [
     {
