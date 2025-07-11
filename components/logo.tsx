@@ -1,44 +1,18 @@
-import { cn } from "@/lib/utils"
-import { Search, Zap } from "lucide-react"
+import Link from "next/link"
+import { Zap } from "lucide-react"
 
-interface LogoProps {
-  size?: "sm" | "md" | "lg"
-  showText?: boolean
-  className?: string
-}
-
-export function Logo({ size = "md", showText = false, className }: LogoProps) {
-  const sizeClasses = {
-    sm: "h-8 w-8",
-    md: "h-10 w-10",
-    lg: "h-12 w-12",
-  }
-
-  const textSizeClasses = {
-    sm: "text-lg",
-    md: "text-xl",
-    lg: "text-2xl",
-  }
-
+export function Logo() {
   return (
-    <div className={cn("flex items-center gap-2", className)}>
-      <div className={cn("relative rounded-lg bg-gradient-to-br from-purple-500 to-teal-500 p-2", sizeClasses[size])}>
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-teal-600/20 rounded-lg"></div>
-        <div className="relative flex items-center justify-center h-full w-full">
-          <Search className="h-1/2 w-1/2 text-white" />
-          <Zap className="h-1/3 w-1/3 text-white/80 absolute -bottom-0.5 -right-0.5" />
+    <Link href="/" className="flex items-center space-x-2 group">
+      <div className="relative">
+        <div className="w-8 h-8 bg-gradient-to-br from-purple-600 via-blue-600 to-green-600 rounded-lg flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+          <Zap className="w-5 h-5 text-white" />
         </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-blue-600 to-green-600 rounded-lg opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300" />
       </div>
-      {showText && (
-        <span
-          className={cn(
-            "font-bold tracking-tight bg-gradient-to-r from-purple-600 via-blue-600 to-teal-600 bg-clip-text text-transparent",
-            textSizeClasses[size],
-          )}
-        >
-          WSfynder
-        </span>
-      )}
-    </div>
+      <span className="text-xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-green-600 bg-clip-text text-transparent">
+        WSfynder
+      </span>
+    </Link>
   )
 }

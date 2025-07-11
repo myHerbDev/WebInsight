@@ -2,105 +2,71 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Share2, Twitter, Facebook, Linkedin, Copy, Check } from "lucide-react"
-import { toast } from "@/hooks/use-toast"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import type { WebsiteData } from "@/types/website-data"
 
 interface SocialShareProps {
-  data?: {
-    title?: string
-    url?: string
-    description?: string
-  }
+  url: string
+  title: string
+  description: string
+  data?: WebsiteData
 }
 
-export function SocialShare({ data }: SocialShareProps) {
+export function SocialShare({ url, title, description, data }: SocialShareProps) {
   const [copied, setCopied] = useState(false)
 
-  // Early return if no data is provided
+  // Early return if data is not available
   if (!data) {
     return null
   }
 
-  const { title = "Check out this website analysis", url = "", description = "" } = data
+  const shareText = `${title} - ${description}`
+  const encodedUrl = encodeURIComponent(url)
+  const encodedText = encodeURIComponent(shareText)
 
-  const shareUrl = url || (typeof window !== "undefined" ? window.location.href : "")
-  const shareText = `${title} - ${description}`.trim()
+  const shareLinks = {
+    twitter: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+  }
 
-  const handleCopyLink = async () => {
+  const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl)
+      await navigator.clipboard.writeText(url)
       setCopied(true)
-      toast({
-        title: "Link copied!",
-        description: "The link has been copied to your clipboard.",
-      })
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
-      toast({
-        title: "Failed to copy",
-        description: "Please copy the link manually.",
-        variant: "destructive",
-      })
+      console.error("Failed to copy:", err)
     }
   }
 
-  const shareLinks = {
-    twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
-  }
-
   return (
-    <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
-      <CardContent className="p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Share2 className="h-5 w-5 text-purple-600" />
-          <h3 className="font-semibold text-lg">Share Results</h3>
-        </div>
-
-        <div className="flex flex-wrap gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open(shareLinks.twitter, "_blank")}
-            className="flex items-center gap-2"
-          >
-            <Twitter className="h-4 w-4" />
-            Twitter
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open(shareLinks.facebook, "_blank")}
-            className="flex items-center gap-2"
-          >
-            <Facebook className="h-4 w-4" />
-            Facebook
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open(shareLinks.linkedin, "_blank")}
-            className="flex items-center gap-2"
-          >
-            <Linkedin className="h-4 w-4" />
-            LinkedIn
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopyLink}
-            className="flex items-center gap-2 bg-transparent"
-          >
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copied ? "Copied!" : "Copy Link"}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2 bg-transparent">
+          <Share2 className="h-4 w-4" />
+          Share Analysis
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem onClick={() => window.open(shareLinks.twitter, "_blank")}>
+          <Twitter className="h-4 w-4 mr-2" />
+          Share on Twitter
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => window.open(shareLinks.facebook, "_blank")}>
+          <Facebook className="h-4 w-4 mr-2" />
+          Share on Facebook
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => window.open(shareLinks.linkedin, "_blank")}>
+          <Linkedin className="h-4 w-4 mr-2" />
+          Share on LinkedIn
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={copyToClipboard}>
+          {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
+          {copied ? "Copied!" : "Copy Link"}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
