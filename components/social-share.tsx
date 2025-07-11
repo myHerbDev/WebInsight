@@ -1,115 +1,109 @@
 "use client"
 
 import { useState } from "react"
-import { Share2, Twitter, Facebook, Linkedin, Copy, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Share2, Copy, Twitter, Facebook, Linkedin, Check } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { toast } from "@/hooks/use-toast"
 
 interface SocialShareProps {
-  url: string
-  title: string
-  description: string
+  data?: {
+    title?: string
+    url?: string
+    description?: string
+  }
 }
 
-export function SocialShare({ url, title, description }: SocialShareProps) {
+export function SocialShare({ data }: SocialShareProps) {
   const [copied, setCopied] = useState(false)
 
   // Early return if no data is provided
-  if (!url || !title) {
+  if (!data) {
     return null
   }
 
-  const shareData = {
-    title: title || "Website Analysis Report",
-    text: description || "Check out this comprehensive website analysis",
-    url: url,
-  }
+  const { title = "Website Analysis", url = "", description = "Check out this website analysis" } = data
 
-  const handleNativeShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData)
-      } catch (error) {
-        console.log("Error sharing:", error)
-      }
-    }
-  }
+  const shareUrl = typeof window !== "undefined" ? window.location.href : url
+  const shareText = `${title} - ${description}`
 
-  const handleCopyLink = async () => {
+  const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(url)
+      await navigator.clipboard.writeText(shareUrl)
       setCopied(true)
+      toast({
+        title: "Link copied!",
+        description: "The link has been copied to your clipboard.",
+      })
       setTimeout(() => setCopied(false), 2000)
-    } catch (error) {
-      console.log("Error copying to clipboard:", error)
+    } catch (err) {
+      toast({
+        title: "Failed to copy",
+        description: "Please copy the link manually.",
+        variant: "destructive",
+      })
     }
   }
 
-  const shareUrls = {
-    twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareData.text)}&url=${encodeURIComponent(url)}`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+  const shareOnTwitter = () => {
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`
+    window.open(twitterUrl, "_blank", "noopener,noreferrer")
+  }
+
+  const shareOnFacebook = () => {
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`
+    window.open(facebookUrl, "_blank", "noopener,noreferrer")
+  }
+
+  const shareOnLinkedIn = () => {
+    const linkedinUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
+    window.open(linkedinUrl, "_blank", "noopener,noreferrer")
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium text-gray-700">Share Analysis</h3>
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2 bg-transparent">
+          <Share2 className="h-4 w-4" />
+          Share
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80" align="end">
+        <div className="space-y-4">
+          <div>
+            <h4 className="font-medium text-sm mb-2">Share this analysis</h4>
+            <p className="text-xs text-muted-foreground mb-3">{description}</p>
+          </div>
 
-          <div className="flex items-center space-x-2">
-            {/* Native share button (mobile) */}
-            {navigator.share && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNativeShare}
-                className="flex items-center space-x-1 bg-transparent"
-              >
-                <Share2 className="w-4 h-4" />
-                <span>Share</span>
-              </Button>
-            )}
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={shareOnTwitter} className="flex-1 gap-2 bg-transparent">
+              <Twitter className="h-4 w-4" />
+              Twitter
+            </Button>
+            <Button variant="outline" size="sm" onClick={shareOnFacebook} className="flex-1 gap-2 bg-transparent">
+              <Facebook className="h-4 w-4" />
+              Facebook
+            </Button>
+            <Button variant="outline" size="sm" onClick={shareOnLinkedIn} className="flex-1 gap-2 bg-transparent">
+              <Linkedin className="h-4 w-4" />
+              LinkedIn
+            </Button>
+          </div>
 
-            {/* Desktop share dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Share2 className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => window.open(shareUrls.twitter, "_blank")}>
-                  <Twitter className="w-4 h-4 mr-2" />
-                  Share on Twitter
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => window.open(shareUrls.facebook, "_blank")}>
-                  <Facebook className="w-4 h-4 mr-2" />
-                  Share on Facebook
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => window.open(shareUrls.linkedin, "_blank")}>
-                  <Linkedin className="w-4 h-4 mr-2" />
-                  Share on LinkedIn
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleCopyLink}>
-                  {copied ? (
-                    <>
-                      <Check className="w-4 h-4 mr-2 text-green-500" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4 mr-2" />
-                      Copy Link
-                    </>
-                  )}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={shareUrl}
+              readOnly
+              className="flex-1 px-3 py-2 text-sm border rounded-md bg-muted"
+            />
+            <Button variant="outline" size="sm" onClick={copyToClipboard} className="gap-2 bg-transparent">
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copied ? "Copied" : "Copy"}
+            </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </PopoverContent>
+    </Popover>
   )
 }

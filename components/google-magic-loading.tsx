@@ -1,209 +1,225 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Sparkles, Zap, Brain, Search, BarChart3, Shield, Leaf, Eye } from "lucide-react"
+import type React from "react"
 
-const loadingSteps = [
+import { useEffect, useState } from "react"
+import { cn } from "@/lib/utils"
+import { Globe, Brain, Gauge, Shield, Leaf, Eye, Lightbulb, CheckCircle, Sparkles } from "lucide-react"
+
+interface LoadingStep {
+  id: string
+  label: string
+  icon: React.ReactNode
+  color: string
+  gradient: string
+}
+
+const loadingSteps: LoadingStep[] = [
   {
-    icon: Search,
-    text: "Fetching website content",
+    id: "fetch",
+    label: "Fetching website content",
+    icon: <Globe className="h-6 w-6" />,
     color: "text-blue-500",
-    bgColor: "from-blue-500/20 to-blue-600/20",
+    gradient: "from-blue-500 to-cyan-500",
   },
-  { icon: Brain, text: "Analyzing with AI", color: "text-purple-500", bgColor: "from-purple-500/20 to-purple-600/20" },
   {
-    icon: BarChart3,
-    text: "Calculating performance metrics",
+    id: "ai-analysis",
+    label: "Analyzing with AI",
+    icon: <Brain className="h-6 w-6" />,
+    color: "text-purple-500",
+    gradient: "from-purple-500 to-pink-500",
+  },
+  {
+    id: "performance",
+    label: "Calculating performance metrics",
+    icon: <Gauge className="h-6 w-6" />,
     color: "text-green-500",
-    bgColor: "from-green-500/20 to-green-600/20",
-  },
-  { icon: Shield, text: "Checking security features", color: "text-red-500", bgColor: "from-red-500/20 to-red-600/20" },
-  {
-    icon: Leaf,
-    text: "Analyzing sustainability",
-    color: "text-emerald-500",
-    bgColor: "from-emerald-500/20 to-emerald-600/20",
+    gradient: "from-green-500 to-emerald-500",
   },
   {
-    icon: Eye,
-    text: "Checking accessibility",
+    id: "security",
+    label: "Checking security features",
+    icon: <Shield className="h-6 w-6" />,
+    color: "text-red-500",
+    gradient: "from-red-500 to-orange-500",
+  },
+  {
+    id: "sustainability",
+    label: "Analyzing sustainability",
+    icon: <Leaf className="h-6 w-6" />,
+    color: "text-green-600",
+    gradient: "from-green-600 to-lime-500",
+  },
+  {
+    id: "accessibility",
+    label: "Evaluating accessibility",
+    icon: <Eye className="h-6 w-6" />,
     color: "text-indigo-500",
-    bgColor: "from-indigo-500/20 to-indigo-600/20",
+    gradient: "from-indigo-500 to-blue-500",
   },
   {
-    icon: Sparkles,
-    text: "Generating insights",
+    id: "insights",
+    label: "Generating insights",
+    icon: <Lightbulb className="h-6 w-6" />,
     color: "text-yellow-500",
-    bgColor: "from-yellow-500/20 to-yellow-600/20",
+    gradient: "from-yellow-500 to-amber-500",
   },
-  { icon: Zap, text: "Finalizing analysis", color: "text-orange-500", bgColor: "from-orange-500/20 to-orange-600/20" },
+  {
+    id: "complete",
+    label: "Finalizing analysis",
+    icon: <CheckCircle className="h-6 w-6" />,
+    color: "text-emerald-500",
+    gradient: "from-emerald-500 to-green-500",
+  },
 ]
 
-export function GoogleMagicLoading() {
+interface GoogleMagicLoadingProps {
+  className?: string
+}
+
+export function GoogleMagicLoading({ className }: GoogleMagicLoadingProps) {
   const [currentStep, setCurrentStep] = useState(0)
-  const [dots, setDots] = useState("")
   const [progress, setProgress] = useState(0)
+  const [dots, setDots] = useState("")
 
   useEffect(() => {
     const stepInterval = setInterval(() => {
       setCurrentStep((prev) => {
-        const next = (prev + 1) % loadingSteps.length
-        setProgress(((next + 1) / loadingSteps.length) * 100)
-        return next
+        if (prev < loadingSteps.length - 1) {
+          return prev + 1
+        }
+        return 0 // Loop back to start
       })
     }, 2500)
 
-    const dotsInterval = setInterval(() => {
-      setDots((prev) => (prev.length >= 3 ? "" : prev + "."))
-    }, 400)
-
-    return () => {
-      clearInterval(stepInterval)
-      clearInterval(dotsInterval)
-    }
+    return () => clearInterval(stepInterval)
   }, [])
 
-  const CurrentIcon = loadingSteps[currentStep].icon
+  useEffect(() => {
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => {
+        const targetProgress = ((currentStep + 1) / loadingSteps.length) * 100
+        if (prev < targetProgress) {
+          return Math.min(prev + 2, targetProgress)
+        }
+        return prev
+      })
+    }, 50)
+
+    return () => clearInterval(progressInterval)
+  }, [currentStep])
+
+  useEffect(() => {
+    const dotsInterval = setInterval(() => {
+      setDots((prev) => {
+        if (prev.length >= 3) return ""
+        return prev + "."
+      })
+    }, 500)
+
+    return () => clearInterval(dotsInterval)
+  }, [])
+
+  const currentStepData = loadingSteps[currentStep]
 
   return (
-    <div className="flex flex-col items-center justify-center py-20 px-4 relative overflow-hidden">
-      {/* Background gradient animation */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-purple-50/50 to-green-50/50 animate-pulse" />
-
-      {/* Floating background elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        {[...Array(12)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-gradient-to-r from-blue-400/30 to-purple-400/30 rounded-full animate-ping"
-            style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 2}s`,
-            }}
-          />
-        ))}
+    <div className={cn("flex flex-col items-center justify-center p-8", className)}>
+      {/* Background Effects */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-40 left-40 w-80 h-80 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
       </div>
 
-      {/* Main loading animation container */}
-      <div className="relative z-10 mb-12">
-        {/* Outer rotating rings */}
-        <div className="relative w-40 h-40">
-          {/* First ring */}
-          <div className="absolute inset-0 border-4 border-transparent border-t-blue-500/60 border-r-purple-500/60 rounded-full animate-spin" />
+      {/* Main Loading Container */}
+      <div className="relative z-10 flex flex-col items-center space-y-8">
+        {/* Rotating Rings */}
+        <div className="relative">
+          {/* Outer Ring */}
+          <div className="w-32 h-32 rounded-full border-4 border-transparent bg-gradient-to-r from-purple-500 via-blue-500 to-teal-500 animate-spin-slow">
+            <div className="w-full h-full rounded-full bg-white dark:bg-gray-900 m-1"></div>
+          </div>
 
-          {/* Second ring */}
-          <div
-            className="absolute inset-2 border-4 border-transparent border-b-green-500/60 border-l-red-500/60 rounded-full animate-spin"
-            style={{ animationDirection: "reverse", animationDuration: "3s" }}
-          />
+          {/* Middle Ring */}
+          <div className="absolute inset-2 w-28 h-28 rounded-full border-4 border-transparent bg-gradient-to-r from-teal-500 via-purple-500 to-blue-500 animate-spin-reverse">
+            <div className="w-full h-full rounded-full bg-white dark:bg-gray-900 m-1"></div>
+          </div>
 
-          {/* Third ring */}
-          <div
-            className="absolute inset-4 border-2 border-transparent border-t-yellow-500/60 border-r-indigo-500/60 rounded-full animate-spin"
-            style={{ animationDuration: "4s" }}
-          />
+          {/* Inner Ring */}
+          <div className="absolute inset-4 w-24 h-24 rounded-full border-4 border-transparent bg-gradient-to-r from-blue-500 via-teal-500 to-purple-500 animate-spin">
+            <div className="w-full h-full rounded-full bg-white dark:bg-gray-900 m-1"></div>
+          </div>
 
-          {/* Center pulsing circle */}
+          {/* Center Icon */}
           <div
-            className={`absolute inset-8 bg-gradient-to-br ${loadingSteps[currentStep].bgColor} rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-2xl`}
+            className={cn(
+              "absolute inset-0 flex items-center justify-center transition-all duration-500",
+              currentStepData.color,
+            )}
           >
-            <div className="w-16 h-16 bg-gradient-to-br from-white/90 to-white/70 rounded-full flex items-center justify-center animate-pulse shadow-lg">
-              <CurrentIcon className={`w-8 h-8 ${loadingSteps[currentStep].color} drop-shadow-sm`} />
-            </div>
-          </div>
-
-          {/* Orbiting particles */}
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-3 h-3 rounded-full animate-spin"
-              style={{
-                top: `${50 + Math.sin((i * 45 * Math.PI) / 180) * 45}%`,
-                left: `${50 + Math.cos((i * 45 * Math.PI) / 180) * 45}%`,
-                animationDuration: "6s",
-                animationDelay: `${i * 0.2}s`,
-              }}
-            >
+            <div className="relative">
               <div
-                className={`w-full h-full bg-gradient-to-r ${loadingSteps[currentStep].bgColor} rounded-full animate-ping`}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
+                className={cn("p-4 rounded-full bg-gradient-to-r shadow-lg animate-pulse", currentStepData.gradient)}
+              >
+                <div className="text-white">{currentStepData.icon}</div>
+              </div>
 
-      {/* Status content */}
-      <div className="text-center space-y-6 relative z-10 max-w-md">
-        {/* Main title */}
-        <div className="space-y-2">
-          <h3 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-green-600 bg-clip-text text-transparent">
-            Analyzing Your Website
-          </h3>
-          <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full mx-auto animate-pulse" />
-        </div>
-
-        {/* Current step */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/20">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className={`p-2 rounded-full bg-gradient-to-br ${loadingSteps[currentStep].bgColor}`}>
-              <CurrentIcon className={`w-6 h-6 ${loadingSteps[currentStep].color}`} />
+              {/* Sparkles */}
+              <Sparkles className="absolute -top-1 -right-1 h-4 w-4 text-yellow-400 animate-ping" />
+              <Sparkles className="absolute -bottom-1 -left-1 h-3 w-3 text-blue-400 animate-ping animation-delay-1000" />
             </div>
-            <p className="text-lg font-medium text-gray-700">
-              {loadingSteps[currentStep].text}
-              <span className="inline-block w-8 text-left font-bold text-blue-500">{dots}</span>
-            </p>
           </div>
 
-          {/* Progress bar */}
-          <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+          {/* Orbiting Particles */}
+          <div className="absolute inset-0 animate-spin-slow">
+            <div className="absolute top-0 left-1/2 w-2 h-2 bg-purple-500 rounded-full transform -translate-x-1/2 -translate-y-1"></div>
+            <div className="absolute bottom-0 left-1/2 w-2 h-2 bg-blue-500 rounded-full transform -translate-x-1/2 translate-y-1"></div>
+            <div className="absolute left-0 top-1/2 w-2 h-2 bg-teal-500 rounded-full transform -translate-y-1/2 -translate-x-1"></div>
+            <div className="absolute right-0 top-1/2 w-2 h-2 bg-pink-500 rounded-full transform -translate-y-1/2 translate-x-1"></div>
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="w-80 max-w-sm">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Progress</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{Math.round(progress)}%</span>
+          </div>
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <div
-              className="bg-gradient-to-r from-blue-500 via-purple-500 to-green-500 h-2 rounded-full transition-all duration-500 ease-out"
+              className={cn("h-2 rounded-full transition-all duration-300 bg-gradient-to-r", currentStepData.gradient)}
               style={{ width: `${progress}%` }}
-            />
+            ></div>
+          </div>
+        </div>
+
+        {/* Current Step */}
+        <div className="text-center space-y-2">
+          <div className={cn("text-lg font-semibold transition-colors duration-500", currentStepData.color)}>
+            {currentStepData.label}
+            {dots}
           </div>
 
-          {/* Step indicators */}
-          <div className="flex justify-center space-x-2">
+          {/* Step Indicators */}
+          <div className="flex space-x-2 justify-center">
             {loadingSteps.map((step, index) => (
               <div
-                key={index}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  index === currentStep
-                    ? `bg-gradient-to-r ${step.bgColor.replace("/20", "")} scale-125 shadow-lg`
-                    : index < currentStep
-                      ? "bg-green-400 shadow-sm"
-                      : "bg-gray-300"
-                }`}
-                title={step.text}
+                key={step.id}
+                className={cn(
+                  "w-2 h-2 rounded-full transition-all duration-300",
+                  index <= currentStep ? `bg-gradient-to-r ${step.gradient}` : "bg-gray-300 dark:bg-gray-600",
+                )}
               />
             ))}
           </div>
         </div>
 
-        {/* Magic sparkles section */}
-        <div className="space-y-3">
-          <div className="flex justify-center space-x-1">
-            {[...Array(7)].map((_, i) => (
-              <Sparkles
-                key={i}
-                className="w-5 h-5 text-yellow-400 animate-pulse drop-shadow-sm"
-                style={{
-                  animationDelay: `${i * 0.15}s`,
-                  animationDuration: "1.8s",
-                }}
-              />
-            ))}
+        {/* WSfynder Branding */}
+        <div className="text-center mt-8">
+          <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">Powered by</div>
+          <div className="font-bold text-xl bg-gradient-to-r from-purple-600 via-blue-600 to-teal-600 bg-clip-text text-transparent">
+            WSfynder
           </div>
-          <p className="text-sm text-gray-500 font-medium">WSfynder AI is working its magic...</p>
-        </div>
-
-        {/* Fun facts */}
-        <div className="text-xs text-gray-400 space-y-1">
-          <p>✨ Analyzing {loadingSteps.length} different aspects</p>
-          <p>🚀 Powered by advanced AI algorithms</p>
-          <p>🌱 Checking sustainability metrics</p>
         </div>
       </div>
     </div>
