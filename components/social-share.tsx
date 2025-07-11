@@ -1,72 +1,115 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Share2, Twitter, Facebook, Linkedin, Copy, Check } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import type { WebsiteData } from "@/types/website-data"
 
 interface SocialShareProps {
   url: string
   title: string
   description: string
-  data?: WebsiteData
 }
 
-export function SocialShare({ url, title, description, data }: SocialShareProps) {
+export function SocialShare({ url, title, description }: SocialShareProps) {
   const [copied, setCopied] = useState(false)
 
-  // Early return if data is not available
-  if (!data) {
+  // Early return if no data is provided
+  if (!url || !title) {
     return null
   }
 
-  const shareText = `${title} - ${description}`
-  const encodedUrl = encodeURIComponent(url)
-  const encodedText = encodeURIComponent(shareText)
-
-  const shareLinks = {
-    twitter: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+  const shareData = {
+    title: title || "Website Analysis Report",
+    text: description || "Check out this comprehensive website analysis",
+    url: url,
   }
 
-  const copyToClipboard = async () => {
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (error) {
+        console.log("Error sharing:", error)
+      }
+    }
+  }
+
+  const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      console.error("Failed to copy:", err)
+    } catch (error) {
+      console.log("Error copying to clipboard:", error)
     }
   }
 
+  const shareUrls = {
+    twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareData.text)}&url=${encodeURIComponent(url)}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
+  }
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2 bg-transparent">
-          <Share2 className="h-4 w-4" />
-          Share Analysis
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuItem onClick={() => window.open(shareLinks.twitter, "_blank")}>
-          <Twitter className="h-4 w-4 mr-2" />
-          Share on Twitter
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => window.open(shareLinks.facebook, "_blank")}>
-          <Facebook className="h-4 w-4 mr-2" />
-          Share on Facebook
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => window.open(shareLinks.linkedin, "_blank")}>
-          <Linkedin className="h-4 w-4 mr-2" />
-          Share on LinkedIn
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={copyToClipboard}>
-          {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
-          {copied ? "Copied!" : "Copy Link"}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Card className="w-full max-w-md mx-auto">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-medium text-gray-700">Share Analysis</h3>
+
+          <div className="flex items-center space-x-2">
+            {/* Native share button (mobile) */}
+            {navigator.share && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNativeShare}
+                className="flex items-center space-x-1 bg-transparent"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>Share</span>
+              </Button>
+            )}
+
+            {/* Desktop share dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Share2 className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => window.open(shareUrls.twitter, "_blank")}>
+                  <Twitter className="w-4 h-4 mr-2" />
+                  Share on Twitter
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.open(shareUrls.facebook, "_blank")}>
+                  <Facebook className="w-4 h-4 mr-2" />
+                  Share on Facebook
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => window.open(shareUrls.linkedin, "_blank")}>
+                  <Linkedin className="w-4 h-4 mr-2" />
+                  Share on LinkedIn
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleCopyLink}>
+                  {copied ? (
+                    <>
+                      <Check className="w-4 h-4 mr-2 text-green-500" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy Link
+                    </>
+                  )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
