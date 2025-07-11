@@ -5,162 +5,108 @@ import type React from "react"
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu, BookOpen, Zap, Code, Settings, HelpCircle, FileText } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Menu, BookOpen, Zap, Code, Rocket, HelpCircle, FileText } from "lucide-react"
 
-const navigation = [
+const sidebarNavItems = [
   {
     title: "Getting Started",
-    items: [
-      { title: "Introduction", href: "/docs", icon: BookOpen },
-      { title: "Quick Start", href: "/docs/quick-start", icon: Zap },
-    ],
+    href: "/docs",
+    icon: BookOpen,
+  },
+  {
+    title: "Quick Start",
+    href: "/docs/quick-start",
+    icon: Zap,
   },
   {
     title: "API Reference",
-    items: [
-      { title: "API Overview", href: "/docs/api", icon: Code },
-      { title: "Authentication", href: "/docs/api/auth", icon: Settings },
-      { title: "Endpoints", href: "/docs/api/endpoints", icon: FileText },
-    ],
+    href: "/docs/api",
+    icon: Code,
   },
   {
-    title: "Guides",
-    items: [
-      { title: "Website Analysis", href: "/docs/guides/analysis", icon: BookOpen },
-      { title: "Performance Optimization", href: "/docs/guides/performance", icon: Zap },
-      { title: "Sustainability Metrics", href: "/docs/guides/sustainability", icon: Zap },
-    ],
+    title: "Examples",
+    href: "/docs/examples",
+    icon: Rocket,
   },
   {
-    title: "Support",
-    items: [
-      { title: "FAQ", href: "/docs/faq", icon: HelpCircle },
-      { title: "Contact", href: "/docs/contact", icon: HelpCircle },
-    ],
+    title: "FAQ",
+    href: "/docs/faq",
+    icon: HelpCircle,
+  },
+  {
+    title: "Changelog",
+    href: "/docs/changelog",
+    icon: FileText,
   },
 ]
 
-function Sidebar() {
-  const pathname = usePathname()
+interface DocsLayoutProps {
+  children: React.ReactNode
+}
 
-  return (
-    <div className="w-64 border-r bg-gray-50/50 dark:bg-gray-900/50">
+export default function DocsLayout({ children }: DocsLayoutProps) {
+  const pathname = usePathname()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const SidebarContent = () => (
+    <div className="flex h-full flex-col">
       <div className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Documentation</h2>
-        <ScrollArea className="h-[calc(100vh-200px)]">
-          <nav className="space-y-6">
-            {navigation.map((section) => (
-              <div key={section.title}>
-                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">{section.title}</h3>
-                <ul className="space-y-1">
-                  {section.items.map((item) => {
-                    const Icon = item.icon
-                    return (
-                      <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          className={cn(
-                            "flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors",
-                            pathname === item.href
-                              ? "bg-purple-100 text-purple-900 dark:bg-purple-900 dark:text-purple-100"
-                              : "text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800",
-                          )}
-                        >
-                          <Icon className="h-4 w-4" />
-                          {item.title}
-                        </Link>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            ))}
-          </nav>
-        </ScrollArea>
+        <h2 className="text-lg font-semibold">Documentation</h2>
+        <p className="text-sm text-muted-foreground">
+          Learn how to use WSfynder to analyze and optimize your websites.
+        </p>
       </div>
+      <ScrollArea className="flex-1 px-6">
+        <div className="space-y-2">
+          {sidebarNavItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
+                  pathname === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground",
+                )}
+                onClick={() => setSidebarOpen(false)}
+              >
+                <Icon className="h-4 w-4" />
+                {item.title}
+              </Link>
+            )
+          })}
+        </div>
+      </ScrollArea>
     </div>
   )
-}
 
-function MobileSidebar() {
-  const [open, setOpen] = useState(false)
-  const pathname = usePathname()
-
-  return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="md:hidden bg-transparent">
-          <Menu className="h-4 w-4" />
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="left" className="w-64 p-0">
-        <div className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Documentation</h2>
-          <ScrollArea className="h-[calc(100vh-200px)]">
-            <nav className="space-y-6">
-              {navigation.map((section) => (
-                <div key={section.title}>
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">{section.title}</h3>
-                  <ul className="space-y-1">
-                    {section.items.map((item) => {
-                      const Icon = item.icon
-                      return (
-                        <li key={item.href}>
-                          <Link
-                            href={item.href}
-                            onClick={() => setOpen(false)}
-                            className={cn(
-                              "flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors",
-                              pathname === item.href
-                                ? "bg-purple-100 text-purple-900 dark:bg-purple-900 dark:text-purple-100"
-                                : "text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800",
-                            )}
-                          >
-                            <Icon className="h-4 w-4" />
-                            {item.title}
-                          </Link>
-                        </li>
-                      )
-                    })}
-                  </ul>
-                </div>
-              ))}
-            </nav>
-          </ScrollArea>
-        </div>
-      </SheetContent>
-    </Sheet>
-  )
-}
-
-export default function DocsLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
   return (
     <div className="flex min-h-screen">
       {/* Desktop Sidebar */}
-      <div className="hidden md:block">
-        <Sidebar />
+      <div className="hidden w-64 border-r bg-background md:block">
+        <SidebarContent />
       </div>
+
+      {/* Mobile Sidebar */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="md:hidden fixed top-20 left-4 z-40">
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle sidebar</span>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-64 p-0">
+          <SidebarContent />
+        </SheetContent>
+      </Sheet>
 
       {/* Main Content */}
       <div className="flex-1">
-        {/* Mobile Header */}
-        <div className="md:hidden border-b p-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-lg font-semibold">Documentation</h1>
-            <MobileSidebar />
-          </div>
-        </div>
-
-        {/* Content */}
-        <main className="p-6 md:p-8">{children}</main>
+        <main className="container mx-auto px-4 py-8 md:px-8">{children}</main>
       </div>
     </div>
   )

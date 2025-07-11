@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator"
 import { Calendar, User, Clock, ArrowLeft, BookOpen, Tag, TrendingUp, Zap, Shield, Globe } from "lucide-react"
 import Link from "next/link"
 import { SocialShare } from "@/components/social-share"
+import { BlogComments } from "@/components/blog-comments"
 import { notFound } from "next/navigation"
 
 const blogPosts = [
@@ -574,6 +575,9 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
               </Card>
             </aside>
           </div>
+
+          {/* Comments Section */}
+          <BlogComments postId={params.id} postTitle={post.title} />
 
           {/* Navigation */}
           <div className="mt-12 pt-8 border-t">

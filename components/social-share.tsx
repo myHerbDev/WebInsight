@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Share2, Twitter, Facebook, Linkedin, Link2, Check } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { toast } from "@/hooks/use-toast"
 
 interface SocialShareProps {
   data?: {
@@ -35,9 +36,18 @@ export function SocialShare({ data }: SocialShareProps) {
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
+      toast({
+        title: "Link copied!",
+        description: "The link has been copied to your clipboard.",
+      })
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
       console.error("Failed to copy URL:", err)
+      toast({
+        title: "Failed to copy",
+        description: "Please copy the link manually.",
+        variant: "destructive",
+      })
     }
   }
 
