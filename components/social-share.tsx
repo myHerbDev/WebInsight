@@ -2,9 +2,9 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Share2, Twitter, Facebook, Linkedin, Link, Check } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+import { Card, CardContent } from "@/components/ui/card"
+import { Share2, Twitter, Facebook, Linkedin, Copy, Check } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
 
 interface SocialShareProps {
   data?: {
@@ -12,30 +12,24 @@ interface SocialShareProps {
     url?: string
     description?: string
   }
-  className?: string
 }
 
-export function SocialShare({ data, className = "" }: SocialShareProps) {
+export function SocialShare({ data }: SocialShareProps) {
   const [copied, setCopied] = useState(false)
 
   // Early return if no data is provided
-  if (!data?.title || !data?.url) {
+  if (!data) {
     return null
   }
 
-  const shareUrl = encodeURIComponent(data.url)
-  const shareTitle = encodeURIComponent(data.title)
-  const shareDescription = encodeURIComponent(data.description || "")
+  const { title = "Check out this website analysis", url = "", description = "" } = data
 
-  const shareLinks = {
-    twitter: `https://twitter.com/intent/tweet?text=${shareTitle}&url=${shareUrl}`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`,
-    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`,
-  }
+  const shareUrl = url || (typeof window !== "undefined" ? window.location.href : "")
+  const shareText = `${title} - ${description}`.trim()
 
-  const copyToClipboard = async () => {
+  const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(data.url)
+      await navigator.clipboard.writeText(shareUrl)
       setCopied(true)
       toast({
         title: "Link copied!",
@@ -51,16 +45,21 @@ export function SocialShare({ data, className = "" }: SocialShareProps) {
     }
   }
 
+  const shareLinks = {
+    twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
+  }
+
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Share2 className="h-5 w-5" />
-          Share Results
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-wrap gap-2">
+    <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+      <CardContent className="p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Share2 className="h-5 w-5 text-purple-600" />
+          <h3 className="font-semibold text-lg">Share Results</h3>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
           <Button
             variant="outline"
             size="sm"
@@ -70,6 +69,7 @@ export function SocialShare({ data, className = "" }: SocialShareProps) {
             <Twitter className="h-4 w-4" />
             Twitter
           </Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -79,6 +79,7 @@ export function SocialShare({ data, className = "" }: SocialShareProps) {
             <Facebook className="h-4 w-4" />
             Facebook
           </Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -88,13 +89,14 @@ export function SocialShare({ data, className = "" }: SocialShareProps) {
             <Linkedin className="h-4 w-4" />
             LinkedIn
           </Button>
+
           <Button
             variant="outline"
             size="sm"
-            onClick={copyToClipboard}
+            onClick={handleCopyLink}
             className="flex items-center gap-2 bg-transparent"
           >
-            {copied ? <Check className="h-4 w-4" /> : <Link className="h-4 w-4" />}
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             {copied ? "Copied!" : "Copy Link"}
           </Button>
         </div>

@@ -20,7 +20,6 @@ import {
   Users,
   ExternalLink,
 } from "lucide-react"
-import { Footer } from "@/components/footer"
 
 const navigationItems = [
   {
@@ -168,38 +167,34 @@ function SidebarContent() {
 
 export default function DocsLayout({ children }: DocsLayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1 flex">
-        {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-64 border-r bg-gray-50/50 dark:bg-gray-900/50">
-          <ScrollArea className="h-[calc(100vh-4rem)] p-6">
+    <div className="flex-1 flex">
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:block w-64 border-r bg-gray-50/50 dark:bg-gray-900/50">
+        <ScrollArea className="h-[calc(100vh-4rem)] p-6">
+          <SidebarContent />
+        </ScrollArea>
+      </aside>
+
+      {/* Mobile Sidebar */}
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="lg:hidden fixed top-20 left-4 z-40">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-64 p-0">
+          <ScrollArea className="h-full p-6">
             <SidebarContent />
           </ScrollArea>
-        </aside>
+        </SheetContent>
+      </Sheet>
 
-        {/* Mobile Sidebar */}
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="lg:hidden fixed top-20 left-4 z-40">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
-            <ScrollArea className="h-full p-6">
-              <SidebarContent />
-            </ScrollArea>
-          </SheetContent>
-        </Sheet>
-
-        {/* Main Content */}
-        <main className="flex-1 lg:pl-0 pl-16">
-          <div className="max-w-4xl mx-auto px-6 py-8">
-            <Suspense fallback={<div className="animate-pulse">Loading...</div>}>{children}</Suspense>
-          </div>
-        </main>
-      </div>
-
-      <Footer />
+      {/* Main Content */}
+      <main className="flex-1 lg:pl-0 pl-16">
+        <div className="max-w-4xl mx-auto px-6 py-8">
+          <Suspense fallback={<div className="animate-pulse">Loading...</div>}>{children}</Suspense>
+        </div>
+      </main>
     </div>
   )
 }
